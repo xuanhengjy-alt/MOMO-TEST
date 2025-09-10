@@ -17,7 +17,10 @@
         <span class="text-gray-400">/</span>
         <span id="breadcrumb-subview" class="text-gray-600">详情</span>
       </div>
-      <a href="index.html" class="text-sm text-gray-600 hover:text-gray-900">MOMO TEST</a>
+      <a href="index.html" class="flex items-center gap-2">
+        <img src="assets/images/logo.png" alt="MOMO TEST" class="w-6 h-6" />
+        <span class="text-sm text-gray-600 hover:text-gray-900">MOMO TEST</span>
+      </a>
     </div>
   </header>
 
@@ -31,11 +34,16 @@
             <span id="tested-count" class="text-amber-600 font-semibold"></span> 人已经测试
           </div>
           <div class="flex items-center gap-2">
-            <button id="like-btn" class="px-3 py-1.5 rounded border text-sm hover:bg-gray-50">点赞</button>
-            <span id="like-count" class="text-gray-800 font-medium"></span> 人点赞
+            <button id="like-btn" class="p-2 text-sm cursor-pointer" aria-label="点赞">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-7 w-7 text-blue-600 hover:text-blue-700" fill="currentColor" aria-hidden="true">
+                <path d="M2 10.5a1.5 1.5 0 011.5-1.5H6v10H3.5A1.5 1.5 0 012 17.5v-7z"/>
+                <path d="M7.5 20h7a3 3 0 002.82-1.96l2-5.5A2 2 0 0017.5 10H13V6.5A2.5 2.5 0 0010.5 4h-.25A1.25 1.25 0 009 5.25V7c0 .52-.11 1.03-.32 1.5L7.5 11v9z"/>
+              </svg>
+            </button>
+            <span id="like-count" class="font-semibold text-rose-600"></span><span class="ml-1">人点赞</span>
           </div>
         </div>
-        <div id="info-line" class="text-sm text-gray-600">共有0个测试问题，预计用时0分钟</div>
+        <div id="info-line" class="text-sm text-gray-600">共有 <span class="font-semibold text-rose-600">0</span> 个测试问题，预计用时 <span class="font-semibold text-rose-600">0</span> 分钟</div>
         <button id="goto-start" class="inline-flex items-center justify-center px-5 py-2.5 rounded bg-blue-600 text-white hover:bg-blue-700 text-sm">开始测试</button>
       </div>
 
