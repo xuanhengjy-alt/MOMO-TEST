@@ -1,6 +1,13 @@
 {
   "projects": [
     {
+      "id": "disc40",
+      "name": "DISC Personality Test",
+      "image": "assets/images/disc.jpg",
+      "intro": "In the 1920s, American psychologist William Moulton Marston developed a theory to explain human emotional responses. Prior to this, such research had been largely confined to studies of psychiatric patients or individuals with mental disorders. Dr. Marston sought to broaden the scope of this research to apply it to the general population with normal mental health. Consequently, he structured his theory into a systematic framework titled The Emotions of Normal People.\nTo test his theory, Dr. Marston needed a psychological assessment method to measure emotional responses—specifically, “personality traits.” He identified four highly representative personality factors: Dominance, Influence, Steadiness, and Compliance. DISC represents the initial letters of these four English words. In 1928, Dr. Marston formally introduced the DISC assessment and its theoretical framework within his book The Emotions of Normal People.\nToday, DISC theory is extensively applied in talent recruitment by Fortune 500 companies worldwide, distinguished by its longstanding history, strong professionalism, and high authority.",
+      "type": "disc40"
+    },
+    {
       "id": "disc",
       "name": "DISC性格测试",
       "image": "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=1200&auto=format&fit=crop",
@@ -14,42 +21,7 @@
       "intro": "管理能力自测是一个帮助个人评估和提升其管理技能的重要工具。通过自测，管理者可以识别自己的优势和需要改进的领域，从而为职业发展制定更有效的计划。",
       "type": "mgmt"
     },
-    {
-      "id": "creative",
-      "name": "发散思维测试",
-      "image": "https://images.unsplash.com/photo-1555252586-0f9853fca31a?q=80&w=1200&auto=format&fit=crop",
-      "intro": "探索你的创造力与发散思维能力。",
-      "type": "placeholder"
-    },
-    {
-      "id": "focus",
-      "name": "专注力测试",
-      "image": "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=1200&auto=format&fit=crop",
-      "intro": "了解你的专注力水平。",
-      "type": "placeholder"
-    },
-    {
-      "id": "memory",
-      "name": "记忆力测试",
-      "image": "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?q=80&w=1200&auto=format&fit=crop",
-      "intro": "评估短时与工作记忆能力。",
-      "type": "placeholder"
-    },
-    {
-      "id": "eq",
-      "name": "情商EQ测试",
-      "image": "https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=1200&auto=format&fit=crop",
-      "intro": "了解自我情绪认知与人际互动。",
-      "type": "placeholder"
-    },
-    {
-      "id": "logic",
-      "name": "逻辑推理测试",
-      "image": "https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?q=80&w=1200&auto=format&fit=crop",
-      "intro": "检验你的逻辑分析与推理能力。",
-      "type": "placeholder"
-    }
-  ]
+    
 }
 
 

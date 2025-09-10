@@ -66,6 +66,69 @@ const TestLogic = (function() {
     { t:'习惯于在掌握有关信息基础上制定目标和计划？', opts:['是','否'] }
   ];
 
+  // DISC 40 英文题目（根据用户提供）
+  const disc40Questions = [
+    { t:'(1) Choose the option that feels most natural at first glance. If unsure, recall childhood experiences or consider how those who know you best would describe you.', opts:['Adventurous','Adaptable','Lively','Analytical'] },
+    { t:'(2) Choose the option that best reflects your first impression. If unsure, recall childhood experiences or consider how someone who knows you well would describe you.', opts:['Persistent','Playful','Persuasive','Calm'] },
+    { t:'(3) Select the option that gives you the strongest first impression. If unsure, recall childhood experiences or consider how someone who knows you best might describe you.', opts:['Compliant','Self-sacrificing','Socially adept','Strong-willed'] },
+    { t:'(4) Select the option that gives you the strongest first impression. If unsure, recall childhood experiences or consider how someone who knows you best might describe you.', opts:['Inspiring','Considerate','Competitive','Self-Controlled'] },
+    { t:'(5) Please select based on your first impression. If unsure, recall childhood experiences or choose based on how someone who knows you best would describe you.', opts:['Energizing','Respectful','Adaptable','Reserved'] },
+    { t:'(6) Select the option that comes to mind most quickly based on your first impression. If unsure, recall childhood experiences or consider how someone who knows you best might describe you.', opts:['Vibrant','Content','Sensitive','Self-reliant'] },
+    { t:'(7) Select the option that gives you the strongest first impression. If unsure, recall childhood experiences or consider how someone who knows you best would describe you.', opts:['Planner','Patient','Proactive','Motivator'] },
+    { t:'(8) Select the option that best reflects your first impression. If uncertain, recall childhood experiences or consider how someone who knows you well might describe you.', opts:['Assertive','Unrestrained','Shy','Time-oriented'] },
+    { t:'(9) Please select the option that feels most natural at first glance. If unsure, recall childhood experiences or consider how someone you know best would describe you.', opts:['Accommodating','Organized','Frank','Optimistic'] },
+    { t:'(10) Choose the option that feels most accurate at first glance. If unsure, recall childhood experiences or consider how those who know you best would describe you.', opts:['Controlling','Loyal','Entertaining','Friendly'] },
+    { t:'(11) Select the option that feels most immediate upon first impression. If unsure, recall childhood experiences or consider how someone who knows you best would describe you.', opts:['Brave','Considerate','Detail-oriented','Charming'] },
+    { t:'(12) Select the option that best reflects your first impression. If unsure, recall childhood experiences or consider how someone who knows you well might describe you.', opts:['Joyful','Cultured','Confident','Steadfast'] },
+    { t:'(13) Select based on your first instinct. If unsure, recall childhood experiences or consider how someone who knows you best would describe you.', opts:['Idealistic','Independent','Non-confrontational','Motivating'] },
+    { t:'(14) Choose the option that feels most accurate at first glance. If unsure, recall childhood experiences or consider how someone who knows you well might describe you.', opts:['Emotionally Expressive','Deep-thinking','Decisive','Humorous'] },
+    { t:'(15) Please select the option that gives you the strongest first impression. If unsure, recall childhood experiences or choose based on how someone who knows you best would describe you.', opts:['Mediator','Musical','Initiator','Social Butterfly'] },
+    { t:'(16) Select the option that best reflects your first impression. If uncertain, recall childhood experiences or consider how someone you know well might describe you.', opts:['Thoughtful','Persistent','Talkative','Tolerant'] },
+    { t:'(17) Select the option that feels most accurate at first glance. If unsure, recall childhood experiences or consider how someone who knows you best might describe you.', opts:['Listener','Loyal','Leader','Energetic'] },
+    { t:'(18) Please select the option that best reflects your first impression. If unsure, recall childhood experiences or consider how someone you know best describes you.', opts:['Contentment','Leader','Planner','Adorable'] },
+    { t:'(19) Choose the option that feels most accurate at first glance. If unsure, recall childhood experiences or consider how someone who knows you best would describe you.', opts:['Perfectionist','Easygoing','Diligent','Popular'] },
+    { t:'(20) Select the option that gives you the strongest first impression. If unsure, recall childhood experiences or choose based on how someone who knows you best would describe you.', opts:['Energetic','Fearless','Principled','Balanced'] },
+    { t:'(21) Select the option that best captures your first impression. If uncertain, recall childhood experiences or consider how someone who knows you well might describe you.', opts:['Dull','Shy','Flashy','Bossy'] },
+    { t:'(22) Please select based on your first instinct. If unsure, recall childhood experiences or choose based on how someone who knows you best would describe you.', opts:['Disorganized','Unempathetic','Lacking enthusiasm','Unforgiving'] },
+    { t:'(23) Select the option that feels most accurate at first glance. If unsure, recall childhood experiences or consider how someone who knows you best might describe you.', opts:['Withholding','Resentful','Defiant','Repetitive'] },
+    { t:'(24) Please select based on your first instinct. If unsure, recall childhood experiences or choose based on how someone you know best describes you.', opts:['Picky','Timid','Forgetful','Outspoken'] },
+    { t:'(25) Choose the option that feels most accurate at first glance. If unsure, recall childhood experiences or consider how someone who knows you well might describe you.', opts:['Impatient','Insecure','Indecisive','Interruptive'] },
+    { t:'(26) Select the option that gives you the strongest first impression. If unsure, recall childhood experiences or choose based on how someone who knows you best would describe you.', opts:['Unpopular','Uninvolved','Unpredictable','Lacking Empathy'] },
+    { t:'(27) Please select the option that best reflects your first impression. If unsure, recall childhood experiences or consider how someone you know well might describe you.', opts:['Stubborn','Whimsical','Hard to please','Slow to Act'] },
+    { t:'(28) Choose the option that comes to mind first. If unsure, recall childhood experiences or consider how someone who knows you well would describe you.', opts:['Unassuming','Pessimistic','Arrogant','Permissive'] },
+    { t:'(29) Select the option that best reflects your first impression. If unsure, recall childhood experiences or choose based on how someone who knows you well would describe you.', opts:['Irritable','Aimless','Argumentative','Self-absorbed'] },
+    { t:'(30) Please select based on your first instinct. If unsure, recall childhood experiences or consider how someone you know best would describe you.', opts:['Innocent','Pessimistic','Reckless','Indifferent'] },
+    { t:'(31) Choose the option that comes to mind first. If unsure, recall childhood experiences or consider how someone who knows you well might describe you.', opts:['Worried','Unsociable','Workaholic','Seeks Approval'] },
+    { t:'(32) Please select based on your first instinct. If unsure, recall childhood experiences or choose from descriptions provided by those who know you best.', opts:['Overly Sensitive','Lack of Tact','Timid','Verbose'] },
+    { t:'(33) Choose the option that feels most accurate at first glance. If unsure, recall childhood experiences or consider how someone who knows you well might describe you.', opts:['Shy','Disorganized','Domineering','Depressed'] },
+    { t:'(34) Select the option that best reflects your immediate first impression. If uncertain, recall childhood experiences or consider how someone who knows you best might describe you.', opts:['Lack of Perseverance','Introverted','Intolerant','Indifferent'] },
+    { t:'(35) Choose the option that best reflects your first impression. If unsure, recall childhood experiences or consider how someone you know best would describe you.', opts:['Disorganized','Emotional','Mumbles','Manipulative'] },
+    { t:'(36) Choose the option that feels most accurate at first glance. If unsure, recall childhood experiences or consider how someone who knows you best might describe you.', opts:['Slow','Stubborn','Attention-Seeking','Suspicious'] },
+    { t:'(37) Choose based on your first instinct. If unsure, recall childhood experiences or select based on how someone who knows you best describes you.', opts:['Solitary','Dominant','Indolent','Loudmouth'] },
+    { t:'(38) Choose the option that feels most accurate at first glance. If unsure, recall childhood experiences or consider how someone who knows you well might describe you.', opts:['Procrastinator','Suspicious','Irritable','Inattentive'] },
+    { t:'(39) Select the option that best reflects your first impression. If unsure, recall childhood experiences or choose based on how someone who knows you well would describe you.', opts:['Vindictive','Restless','Reluctant','Impulsive'] },
+    { t:'(40) Select the option that best reflects your immediate impression. If uncertain, recall childhood experiences or consider how someone who knows you well might describe you.', opts:['Compromising','Critical','Cunning','Fickle'] }
+  ];
+
+  // DISC 40 计分表（按题1-40，对应 D/I/S/C 的序号 1..4）
+  const disc40Values = [
+    [1,3,2,4],[3,2,4,1],[4,3,1,2],[3,1,4,2],[3,1,4,2],
+    [4,1,2,3],[3,4,2,1],[1,2,3,4],[4,3,1,2],[1,3,4,2],
+    [1,4,2,3],[3,1,4,2],[2,4,3,1],[3,1,4,2],[3,4,1,2],
+    [2,3,4,1],[3,4,1,2],[2,4,1,3],[3,4,2,1],[2,1,4,3],
+    [4,3,1,2],[2,1,3,4],[3,4,1,2],[4,3,2,1],[1,4,2,3],
+    [4,3,2,1],[1,2,4,3],[3,4,1,2],[3,1,2,4],[3,1,4,2],
+    [3,4,1,2],[2,4,3,1],[3,2,1,4],[3,1,4,2],[4,1,3,2],
+    [2,3,1,4],[2,4,3,1],[3,4,1,2],[4,2,3,1],[3,4,1,2]
+  ];
+
+  const discAnalysisEn = {
+    D: 'Individuals with high D traits can be described as “natural-born leaders.”\n\nEmotionally, D types are resolute and decisive, crave change, enjoy control, possess tremendous drive, are highly independent, and exhibit extreme self-confidence. However, their tendency to overlook others\' feelings can make them appear rude, domineering, impatient, relentless, and unable to relax. They are uncomfortable with emotional exchanges, offer little flattery, dislike displays of tears, and lack empathy.\n\nIn work, D-types are pragmatic and efficiency-driven. They possess clear goals, broad vision, strong organizational skills, and swift action. They resolve issues promptly, persevere decisively, and thrive amid opposition. Yet, their intense focus on outcomes often leads to overlooking details and insufficient meticulousness in problem-solving. Their tendency to micromanage and direct others enables them to drive team progress, yet may provoke resentment among colleagues.\n\nIn interpersonal relationships, Type D individuals prefer making decisions for others—a practice that aids choice-making but can feel coercive. Focused on their own objectives, they value others primarily for their utility. They enjoy exerting control and rarely apologize.\n\nDescriptive Terms: Proactive, competitive, assertive, inquisitive, direct, pioneering, opinionated, confident, candid',
+    I: 'High-I individuals are typically lively organizers of group activities.\n\nType I personalities are emotionally expressive and outgoing... (abridged)\n\nDescriptive words: Influential, persuasive, friendly, articulate, talkative, optimistic and positive, sociable',
+    S: 'High-S types are typically calm, content with what they have, and reluctant to take initiative...\n\nDescriptive traits: Reliable, thoughtful, warm and friendly, persistent, tenacious, good listener, thorough and considerate, strong self-control',
+    C: 'High C types are typically perfectionist professionals...\n\nDescriptive Terms: Compliant, Meticulous, Methodical, Rigorous, Precise, Perfectionist, Logical'
+  };
+
   function scoreDisc(answers) { // answers: 0-based index per question
     const counts = { D:0, I:0, S:0, C:0 };
     answers.forEach((optIndex, qi) => {
@@ -93,11 +156,36 @@ const TestLogic = (function() {
   return {
     getQuestions(type) {
       if (type === 'disc') return discQuestions;
+      if (type === 'disc40') return disc40Questions;
       if (type === 'mgmt') return mgmtQuestions;
       return [];
     },
     score(type, answers) {
       if (type === 'disc') return scoreDisc(answers);
+      if (type === 'disc40') {
+        // Convert 1..4 rank table to mapping for quick lookup
+        const map = disc40Values.map(row => {
+          const order = ['D','I','S','C'];
+          const arr = [];
+          // row: [D,I,S,C] ranks; we need index->type by option index 0..3
+          // We pick the type whose rank equals (option+1)
+          for (let opt = 1; opt <= 4; opt++) {
+            const idx = row.findIndex(r => r === opt);
+            arr.push(order[idx]);
+          }
+          return arr;
+        });
+        const counts = { D:0, I:0, S:0, C:0 };
+        answers.forEach((optIndex, qi) => {
+          const typeKey = (map[qi] || map[0])[optIndex];
+          counts[typeKey] += 1;
+        });
+        const tops = Object.entries(counts).filter(([k,v]) => v > 10).map(([k]) => k);
+        const names = { D: 'Dominance', I: 'Influence', S: 'Steadiness', C: 'Compliance' };
+        const summary = tops.length ? tops.map(k => names[k]).join(', ') : 'No dominant traits';
+        const analysis = tops.map(k => `${names[k]}:\n\n${discAnalysisEn[k]}`).join('\n\n');
+        return { counts, tops, summary, analysis };
+      }
       if (type === 'mgmt') return scoreMgmt(answers);
       return { summary: '暂不支持的测试类型', analysis: '' };
     }
