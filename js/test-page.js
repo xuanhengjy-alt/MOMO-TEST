@@ -64,6 +64,18 @@
   projectTitle.textContent = project.name;
   projectIntro.textContent = project.intro || '';
 
+  // Pretty URL for DISC Personality Test: domain + project name (slug)
+  if (project && project.id === 'disc40') {
+    try {
+      const slug = project.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      const baseDir = location.pathname.replace(/[^\/]+$/, '');
+      const prettyPath = baseDir + slug;
+      if (location.pathname !== prettyPath) {
+        history.replaceState(null, '', prettyPath);
+      }
+    } catch (_) {}
+  }
+
   const testedKey = `tested_${project.id}`;
   const likesKey = `likes_${project.id}`;
   const tested = loadLocal(testedKey, '1.1W+');
