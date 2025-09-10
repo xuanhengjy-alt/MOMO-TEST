@@ -128,18 +128,34 @@
   function renderQuestion() {
     const q = qlist[qIndex];
     if (!q) { // 结束
-      const result = window.TestLogic.score(project.type, answers);
+      const result = await window.TestLogic.score(project.type, answers);
       resultTitle.textContent = project.name;
       resultImage.src = project.image;
-      resultSummary.textContent = (project.type === 'disc' || project.type === 'disc40')
-        ? result.summary // e.g., "Dominance, Influence" for ties
-        : `Total: ${result.total} - ${result.summary}`;
+      if (project.type === 'disc' || project.type === 'disc40') {
+        resultSummary.textContent = result.summary; // e.g., "Dominance, Influence" for ties
+      } else if (project.type === 'mbti') {
+        // Show MBTI code prominently
+        resultSummary.innerHTML = `After testing, you are <span class="font-semibold text-blue-700">${result.summary}</span> personality type.`;
+      } else {
+        resultSummary.textContent = `Total: ${result.total} - ${result.summary}`;
+      }
       const rawAnalysis = result.analysis || '';
       if (project.type === 'disc' || project.type === 'disc40') {
-        const highlighted = rawAnalysis.replace(/^(Dominance|Influence|Steadiness|Compliance)/gm, '<span class="font-semibold text-orange-600">$1</span>');
-        resultAnalysis.innerHTML = highlighted.replace(/\n/g, '<br>');
+        // Split paragraphs by double newlines for better readability
+        const parts = rawAnalysis.split(/\n\n+/).map(s => s.trim()).filter(Boolean);
+        const html = parts.map(p => {
+          const h = p.replace(/^(Dominance|Influence|Steadiness|Compliance)/, '<span class="analysis-key">$1</span>');
+          return `<p>${h}</p>`;
+        }).join('');
+        resultAnalysis.innerHTML = html;
+      } else if (project.type === 'mbti') {
+        // For MBTI, highlight the type code
+        const html = rawAnalysis.replace(/\*\*(.*?)\*\*/g, '<strong class="text-rose-600">$1</strong>');
+        resultAnalysis.innerHTML = `<p>${html}</p>`;
       } else {
-        resultAnalysis.textContent = rawAnalysis;
+        // Default: paragraphize by double newlines
+        const parts = rawAnalysis.split(/\n\n+/).map(s => s.trim()).filter(Boolean);
+        resultAnalysis.innerHTML = parts.map(p => `<p>${p.replace(/\n/g,'<br>')}</p>`).join('');
       }
       show('result');
       return;

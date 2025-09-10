@@ -185,7 +185,7 @@ Compliant, Meticulous, Methodical, Rigorous, Precise, Perfectionist, Logical`
   }
 
   function scoreMgmt(answers) { // answers: 0/1 (是=1，否=0)
-    const total = answers.reduce((s,v) => s + (v === 0 ? 1 : 0), 0); // 选项索引0为“是”
+    const total = answers.reduce((s,v) => s + (v === 0 ? 1 : 0), 0); // 选项索引0为"是"
     let summary = '';
     if (total <= 5) summary = '管理能力很差。但你具有较高的艺术创造力，适合从事与艺术有关的具体工作。';
     else if (total <= 9) summary = '管理能力较差。这可能与你言行自由，不服约束有关。';
@@ -195,10 +195,160 @@ Compliant, Meticulous, Methodical, Rigorous, Precise, Perfectionist, Logical`
     return { total, summary, analysis: summary };
   }
 
+  // MBTI mapping loader with fallback
+  let mbtiMapping = null;
+  async function loadMbtiMapping() {
+    if (mbtiMapping) return mbtiMapping;
+    try {
+      const response = await fetch('/assets/data/mbti-mapping.json');
+      if (response.ok) {
+        mbtiMapping = await response.json();
+        return mbtiMapping;
+      }
+    } catch (e) {
+      console.warn('Failed to load MBTI mapping, using fallback');
+    }
+    // Fallback: generate from provided table
+    mbtiMapping = {
+      questions: [
+        { "q": 1,  "axis": "J-P", "sideA": "J", "sideB": "P" },
+        { "q": 2,  "axis": "J-P", "sideA": "P", "sideB": "J" },
+        { "q": 3,  "axis": "S-N", "sideA": "S", "sideB": "N" },
+        { "q": 4,  "axis": "E-I", "sideA": "E", "sideB": "I" },
+        { "q": 5,  "axis": "S-N", "sideA": "N", "sideB": "S" },
+        { "q": 6,  "axis": "T-F", "sideA": "F", "sideB": "T" },
+        { "q": 7,  "axis": "J-P", "sideA": "P", "sideB": "J" },
+        { "q": 8,  "axis": "E-I", "sideA": "E", "sideB": "I" },
+        { "q": 9,  "axis": "J-P", "sideA": "J", "sideB": "P" },
+        { "q": 10, "axis": "J-P", "sideA": "J", "sideB": "P" },
+        { "q": 11, "axis": "J-P", "sideA": "P", "sideB": "J" },
+        { "q": 12, "axis": "E-I", "sideA": "I", "sideB": "E" },
+        { "q": 13, "axis": "S-N", "sideA": "S", "sideB": "N" },
+        { "q": 14, "axis": "E-I", "sideA": "E", "sideB": "I" },
+        { "q": 15, "axis": "S-N", "sideA": "N", "sideB": "S" },
+        { "q": 16, "axis": "T-F", "sideA": "F", "sideB": "T" },
+        { "q": 17, "axis": "J-P", "sideA": "P", "sideB": "J" },
+        { "q": 18, "axis": "E-I", "sideA": "I", "sideB": "E" },
+        { "q": 19, "axis": "E-I", "sideA": "E", "sideB": "I" },
+        { "q": 20, "axis": "J-P", "sideA": "J", "sideB": "P" },
+        { "q": 21, "axis": "J-P", "sideA": "P", "sideB": "J" },
+        { "q": 22, "axis": "E-I", "sideA": "I", "sideB": "E" },
+        { "q": 23, "axis": "E-I", "sideA": "E", "sideB": "I" },
+        { "q": 24, "axis": "S-N", "sideA": "N", "sideB": "S" },
+        { "q": 25, "axis": "J-P", "sideA": "P", "sideB": "J" },
+        { "q": 26, "axis": "E-I", "sideA": "I", "sideB": "E" },
+        { "q": 27, "axis": "E-I", "sideA": "I", "sideB": "E" },
+        { "q": 28, "axis": "J-P", "sideA": "J", "sideB": "P" },
+        { "q": 29, "axis": "S-N", "sideA": "N", "sideB": "S" },
+        { "q": 30, "axis": "T-F", "sideA": "F", "sideB": "T" },
+        { "q": 31, "axis": "T-F", "sideA": "T", "sideB": "F" },
+        { "q": 32, "axis": "S-N", "sideA": "S", "sideB": "N" },
+        { "q": 33, "axis": "J-P", "sideA": "P", "sideB": "J" },
+        { "q": 34, "axis": "E-I", "sideA": "E", "sideB": "I" },
+        { "q": 35, "axis": "E-I", "sideA": "I", "sideB": "E" },
+        { "q": 36, "axis": "J-P", "sideA": "J", "sideB": "P" },
+        { "q": 37, "axis": "S-N", "sideA": "N", "sideB": "S" },
+        { "q": 38, "axis": "T-F", "sideA": "F", "sideB": "T" },
+        { "q": 39, "axis": "T-F", "sideA": "T", "sideB": "F" },
+        { "q": 40, "axis": "S-N", "sideA": "S", "sideB": "N" },
+        { "q": 41, "axis": "J-P", "sideA": "P", "sideB": "J" },
+        { "q": 42, "axis": "E-I", "sideA": "I", "sideB": "E" },
+        { "q": 43, "axis": "J-P", "sideA": "J", "sideB": "P" },
+        { "q": 44, "axis": "S-N", "sideA": "N", "sideB": "S" },
+        { "q": 45, "axis": "T-F", "sideA": "F", "sideB": "T" },
+        { "q": 46, "axis": "T-F", "sideA": "T", "sideB": "F" },
+        { "q": 47, "axis": "S-N", "sideA": "S", "sideB": "N" },
+        { "q": 48, "axis": "E-I", "sideA": "I", "sideB": "E" },
+        { "q": 49, "axis": "J-P", "sideA": "J", "sideB": "P" },
+        { "q": 50, "axis": "S-N", "sideA": "N", "sideB": "S" },
+        { "q": 51, "axis": "T-F", "sideA": "F", "sideB": "T" },
+        { "q": 52, "axis": "T-F", "sideA": "T", "sideB": "F" },
+        { "q": 53, "axis": "S-N", "sideA": "S", "sideB": "N" },
+        { "q": 54, "axis": "E-I", "sideA": "I", "sideB": "E" },
+        { "q": 55, "axis": "S-N", "sideA": "N", "sideB": "S" },
+        { "q": 56, "axis": "T-F", "sideA": "F", "sideB": "T" },
+        { "q": 57, "axis": "T-F", "sideA": "T", "sideB": "F" },
+        { "q": 58, "axis": "S-N", "sideA": "S", "sideB": "N" },
+        { "q": 59, "axis": "J-P", "sideA": "J", "sideB": "P" },
+        { "q": 60, "axis": "E-I", "sideA": "I", "sideB": "E" },
+        { "q": 61, "axis": "S-N", "sideA": "S", "sideB": "N" },
+        { "q": 62, "axis": "E-I", "sideA": "E", "sideB": "I" },
+        { "q": 63, "axis": "S-N", "sideA": "N", "sideB": "S" },
+        { "q": 64, "axis": "T-F", "sideA": "F", "sideB": "T" },
+        { "q": 65, "axis": "J-P", "sideA": "P", "sideB": "J" },
+        { "q": 66, "axis": "E-I", "sideA": "I", "sideB": "E" },
+        { "q": 67, "axis": "E-I", "sideA": "E", "sideB": "I" },
+        { "q": 68, "axis": "J-P", "sideA": "J", "sideB": "P" },
+        { "q": 69, "axis": "T-F", "sideA": "T", "sideB": "F" },
+        { "q": 70, "axis": "J-P", "sideA": "J", "sideB": "P" },
+        { "q": 71, "axis": "J-P", "sideA": "P", "sideB": "J" },
+        { "q": 72, "axis": "E-I", "sideA": "I", "sideB": "E" },
+        { "q": 73, "axis": "S-N", "sideA": "S", "sideB": "N" },
+        { "q": 74, "axis": "S-N", "sideA": "N", "sideB": "S" },
+        { "q": 75, "axis": "T-F", "sideA": "T", "sideB": "F" },
+        { "q": 76, "axis": "J-P", "sideA": "P", "sideB": "J" },
+        { "q": 77, "axis": "E-I", "sideA": "E", "sideB": "I" },
+        { "q": 78, "axis": "T-F", "sideA": "T", "sideB": "F" },
+        { "q": 79, "axis": "S-N", "sideA": "N", "sideB": "S" },
+        { "q": 80, "axis": "T-F", "sideA": "F", "sideB": "T" },
+        { "q": 81, "axis": "T-F", "sideA": "T", "sideB": "F" },
+        { "q": 82, "axis": "S-N", "sideA": "S", "sideB": "N" },
+        { "q": 83, "axis": "S-N", "sideA": "N", "sideB": "S" },
+        { "q": 84, "axis": "T-F", "sideA": "F", "sideB": "T" },
+        { "q": 85, "axis": "T-F", "sideA": "T", "sideB": "F" },
+        { "q": 86, "axis": "S-N", "sideA": "S", "sideB": "N" },
+        { "q": 87, "axis": "S-N", "sideA": "N", "sideB": "S" },
+        { "q": 88, "axis": "T-F", "sideA": "F", "sideB": "T" },
+        { "q": 89, "axis": "T-F", "sideA": "T", "sideB": "F" },
+        { "q": 90, "axis": "S-N", "sideA": "S", "sideB": "N" },
+        { "q": 91, "axis": "T-F", "sideA": "F", "sideB": "T" },
+        { "q": 92, "axis": "T-F", "sideA": "T", "sideB": "F" },
+        { "q": 93, "axis": "S-N", "sideA": "S", "sideB": "N" }
+      ]
+    };
+    return mbtiMapping;
+  }
+
+  async function scoreMbti(answers) {
+    const mapping = await loadMbtiMapping();
+    const traits = { E:0, I:0, S:0, N:0, T:0, F:0, J:0, P:0 };
+    
+    answers.forEach((answer, index) => {
+      const questionNum = index + 1;
+      const question = mapping.questions.find(q => q.q === questionNum);
+      if (question) {
+        const trait = answer === 0 ? question.sideA : question.sideB;
+        traits[trait] += 1;
+      }
+    });
+    
+    const ei = traits.E >= traits.I ? 'E' : 'I';
+    const sn = traits.S >= traits.N ? 'S' : 'N';
+    const tf = traits.T >= traits.F ? 'T' : 'F';
+    const jp = traits.J >= traits.P ? 'J' : 'P';
+    const code = `${ei}${sn}${tf}${jp}`;
+    
+    return { 
+      summary: code, 
+      analysis: `After testing, you are **${code}** personality type.`,
+      traits,
+      code
+    };
+  }
+
   return {
     getQuestions(type) {
       if (type === 'disc') return discQuestions;
       if (type === 'disc40') return disc40Questions;
+      if (type === 'mbti') {
+        // Placeholder: 93 single-choice questions would be defined here; for now, generate stubs
+        const total = 93;
+        const arr = [];
+        for (let i = 1; i <= total; i += 1) {
+          arr.push({ t: `(${i}) Choose the option that best describes you.`, opts: ['A', 'B'] });
+        }
+        return arr;
+      }
       if (type === 'mgmt') return mgmtQuestions;
       return [];
     },
@@ -227,6 +377,9 @@ Compliant, Meticulous, Methodical, Rigorous, Precise, Perfectionist, Logical`
         const summary = tops.length ? tops.map(k => names[k]).join(', ') : 'No dominant traits';
         const analysis = tops.map(k => `${names[k]}:\n\n${discAnalysisEn[k]}`).join('\n\n');
         return { counts, tops, summary, analysis };
+      }
+      if (type === 'mbti') {
+        return await scoreMbti(answers);
       }
       if (type === 'mgmt') return scoreMgmt(answers);
       return { summary: '暂不支持的测试类型', analysis: '' };
