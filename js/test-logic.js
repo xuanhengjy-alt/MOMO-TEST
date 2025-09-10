@@ -68,8 +68,8 @@ const TestLogic = (function() {
 
   // DISC 40 英文题目（根据用户提供）
   const disc40Questions = [
-    { t:'(1) Choose the option that feels most natural at first glance. If unsure, recall childhood experiences or consider how those who know you best would describe you.', opts:['Adventurous','Adaptable','Lively','Analytical'] },
-    { t:'(2) Choose the option that best reflects your first impression. If unsure, recall childhood experiences or consider how someone who knows you well would describe you.', opts:['Persistent','Playful','Persuasive','Calm'] },
+    { t:'(1) Please select the option that feels most natural at first glance. If unsure, recall childhood experiences or consider how someone you know best would describe you.', opts:['Adventurous','Adaptable','Lively','Analytical'] },
+    { t:'(2) Please select the option that feels most natural at first glance. If unsure, recall childhood experiences or consider how someone you know best would describe you.', opts:['Persistent','Playful','Persuasive','Calm'] },
     { t:'(3) Select the option that gives you the strongest first impression. If unsure, recall childhood experiences or consider how someone who knows you best might describe you.', opts:['Compliant','Self-sacrificing','Socially adept','Strong-willed'] },
     { t:'(4) Select the option that gives you the strongest first impression. If unsure, recall childhood experiences or consider how someone who knows you best might describe you.', opts:['Inspiring','Considerate','Competitive','Self-Controlled'] },
     { t:'(5) Please select based on your first impression. If unsure, recall childhood experiences or choose based on how someone who knows you best would describe you.', opts:['Energizing','Respectful','Adaptable','Reserved'] },
@@ -110,6 +110,12 @@ const TestLogic = (function() {
     { t:'(40) Select the option that best reflects your immediate impression. If uncertain, recall childhood experiences or consider how someone who knows you well might describe you.', opts:['Compromising','Critical','Cunning','Fickle'] }
   ];
 
+  // Unify DISC40 question stems as requested
+  const disc40UnifiedStem = 'Please select the option that feels most natural at first glance. If unsure, recall childhood experiences or consider how someone you know best would describe you.';
+  for (let i = 0; i < disc40Questions.length; i += 1) {
+    disc40Questions[i] = { ...disc40Questions[i], t: `(${i+1}) ${disc40UnifiedStem}` };
+  }
+
   // DISC 40 计分表（按题1-40，对应 D/I/S/C 的序号 1..4）
   const disc40Values = [
     [1,3,2,4],[3,2,4,1],[4,3,1,2],[3,1,4,2],[3,1,4,2],
@@ -123,10 +129,46 @@ const TestLogic = (function() {
   ];
 
   const discAnalysisEn = {
-    D: 'Individuals with high D traits can be described as “natural-born leaders.”\n\nEmotionally, D types are resolute and decisive, crave change, enjoy control, possess tremendous drive, are highly independent, and exhibit extreme self-confidence. However, their tendency to overlook others\' feelings can make them appear rude, domineering, impatient, relentless, and unable to relax. They are uncomfortable with emotional exchanges, offer little flattery, dislike displays of tears, and lack empathy.\n\nIn work, D-types are pragmatic and efficiency-driven. They possess clear goals, broad vision, strong organizational skills, and swift action. They resolve issues promptly, persevere decisively, and thrive amid opposition. Yet, their intense focus on outcomes often leads to overlooking details and insufficient meticulousness in problem-solving. Their tendency to micromanage and direct others enables them to drive team progress, yet may provoke resentment among colleagues.\n\nIn interpersonal relationships, Type D individuals prefer making decisions for others—a practice that aids choice-making but can feel coercive. Focused on their own objectives, they value others primarily for their utility. They enjoy exerting control and rarely apologize.\n\nDescriptive Terms: Proactive, competitive, assertive, inquisitive, direct, pioneering, opinionated, confident, candid',
-    I: 'High-I individuals are typically lively organizers of group activities.\n\nType I personalities are emotionally expressive and outgoing... (abridged)\n\nDescriptive words: Influential, persuasive, friendly, articulate, talkative, optimistic and positive, sociable',
-    S: 'High-S types are typically calm, content with what they have, and reluctant to take initiative...\n\nDescriptive traits: Reliable, thoughtful, warm and friendly, persistent, tenacious, good listener, thorough and considerate, strong self-control',
-    C: 'High C types are typically perfectionist professionals...\n\nDescriptive Terms: Compliant, Meticulous, Methodical, Rigorous, Precise, Perfectionist, Logical'
+    D: `Individuals with high D traits can be described as “natural-born leaders.”
+
+Emotionally, D types are resolute and decisive, crave change, enjoy control, possess tremendous drive, are highly independent, and exhibit extreme self-confidence. However, their tendency to overlook others' feelings can make them appear rude, domineering, impatient, relentless, and unable to relax. They are uncomfortable with emotional exchanges, offer little flattery, dislike displays of tears, and lack empathy.
+
+In work, D-types are pragmatic and efficiency-driven. They possess clear goals, broad vision, strong organizational skills, and swift action. They resolve issues promptly, persevere decisively, and thrive amid opposition. Yet, their intense focus on outcomes often leads to overlooking details and insufficient meticulousness in problem-solving. Their tendency to micromanage and direct others enables them to drive team progress, yet may provoke resentment among colleagues.
+
+In interpersonal relationships, Type D individuals prefer making decisions for others—a practice that aids choice-making but can feel coercive. Focused on their own objectives, they value others primarily for their utility. They enjoy exerting control and rarely apologize.
+
+Descriptive Terms:
+Proactive, competitive, assertive, inquisitive, direct, pioneering, opinionated, confident, candid`,
+    I: `High-I individuals are typically lively organizers of group activities.
+
+Type I personalities are emotionally expressive and outgoing. Their animated nature, love of conversation, storytelling, humor, and vivid memories captivate audiences, often making them the life of the party. They are natural performers—innocent, warm-hearted, and enthusiastic about giving and receiving gifts, valuing connections above all. Your emotional nature makes you easily excited, prone to boasting and exaggeration, innocent, perpetually youthful, and comically endearing. However, you also seem quick to anger, prone to complaining, loud-voiced, and immature.
+
+At work, Type I individuals are enthusiastic drivers of progress, constantly generating fresh, colorful ideas. You jump right into action, capable of inspiring and leading others to engage actively in tasks. Yet, Type I individuals often let emotions dictate everything, speaking impulsively without planning. They tend to talk more than they act, lose confidence easily when facing challenges, and approach tasks in a disorganized, incomplete manner—often zoning out or making excuses. They thrive in relaxed, friendly environments and deeply fear rejection.
+
+In interpersonal relationships, Type I individuals easily make friends and have many. They care for friends and are praised by them. They enjoy being the center of attention, thrive on popularity, and like to steer conversations. Yet, their tendency toward improvisation often prevents them from fully understanding others, and they can be forgetful and inconsistent.
+
+Descriptive words:
+Influential, persuasive, friendly, articulate, talkative, optimistic and positive, sociable`,
+    S: `High-S types are typically calm, content with what they have, and reluctant to take initiative.
+
+Emotionally, S types are moderates—leisurely, peaceful, patient, and reserved in their affections. They are amiable, good listeners, and remain composed in crises, adapting easily to circumstances. S types often use the catchphrase, “It's no big deal.” This trait makes them seem lacking in enthusiasm and resistant to change.
+
+Professionally, S-types manage tasks methodically, perform competently, and demonstrate perseverance. They embrace moderation, maintaining an approachable demeanor—avoiding conflict while remaining unflappable in crises. However, S-types often appear sluggish, resistant to motivation, lazy, careless, and content to coast by. Fearful of risk and responsibility, they frequently opt to stand aside as observers. Often, S-types remain indecisive, withholding opinions, or opting for compromise.
+
+In interpersonal relationships, S-types are easygoing, enjoying observing and understanding others, listening attentively, and offering support. Yet, due to their detached nature, they may also appear indifferent or even sarcastic.
+
+Descriptive traits:
+Reliable, thoughtful, warm and friendly, persistent, tenacious, good listener, thorough and considerate, strong self-control`,
+    C: `High C types are typically perfectionist professionals.
+
+Emotionally, C types are deep-thinking individuals—serious, purpose-driven, analytical, contemplative about life and work, appreciative of beauty, sensitive to others, and idealistic. However, they habitually dwell on negativity, prone to low moods, excessive self-reflection, self-deprecation, isolation, and depressive tendencies.
+
+Professionally, Type C individuals are perfectionists with high standards, strong planning skills, attention to detail, and a preference for order and organization. They excel at identifying problems and devising solutions, favor charts and checklists, hold firm to their convictions, and see tasks through to completion. Yet they may also be indecisive, prone to gathering information and analyzing it while struggling to engage in practical implementation. Susceptible to self-doubt, they seek validation from others. Simultaneously, they habitually critique others and cannot tolerate subpar work.
+
+In interpersonal relationships, Type C individuals seek ideal partners while remaining cautious in forming friendships. They demonstrate deep empathy, excel at listening to grievances, and assist others in overcoming challenges. Yet, Type C individuals often carry an underlying sense of insecurity, leading to emotional withdrawal, suspicion of others, a tendency to criticize, and an aversion to being contradicted.
+
+Descriptive Terms:
+Compliant, Meticulous, Methodical, Rigorous, Precise, Perfectionist, Logical`
   };
 
   function scoreDisc(answers) { // answers: 0-based index per question

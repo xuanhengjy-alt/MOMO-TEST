@@ -14,16 +14,23 @@
         {
           id: 'disc',
           name: 'DISC性格测试',
-          image: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=1200&auto=format&fit=crop',
+          image: 'assets/images/discceshi.png',
           intro: 'DISC 理论起源于马斯顿博士提出的“正常人的情绪”，用于衡量人格特质的四个典型因子：D/I/S/C。',
           type: 'disc'
         },
         {
           id: 'mgmt',
           name: '管理能力测试',
-          image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=1200&auto=format&fit=crop',
+          image: 'assets/images/guanli.png',
           intro: '评估管理能力强弱与改进方向。',
           type: 'mgmt'
+        },
+        {
+          id: 'disc40',
+          name: 'DISC Personality Test',
+          image: 'assets/images/disc-personality-test.png',
+          intro: 'In the 1920s, American psychologist William Moulton Marston developed a theory to explain human emotional responses. Prior to this, such research had been largely confined to studies of psychiatric patients or individuals with mental disorders. Dr. Marston sought to broaden the scope of this research to apply it to the general population with normal mental health. Consequently, he structured his theory into a systematic framework titled The Emotions of Normal People.\n\nTo test his theory, Dr. Marston needed a psychological assessment method to measure emotional responses—specifically, “personality traits.” He identified four highly representative personality factors: Dominance, Influence, Steadiness, and Compliance. DISC represents the initial letters of these four English words. In 1928, Dr. Marston formally introduced the DISC assessment and its theoretical framework within his book The Emotions of Normal People.\n\nToday, DISC theory is extensively applied in talent recruitment by Fortune 500 companies worldwide, distinguished by its longstanding history, strong professionalism, and high authority.',
+          type: 'disc40'
         }
       ]
     };
