@@ -118,7 +118,7 @@
       resultTitle.textContent = project.name;
       resultImage.src = project.image;
       resultSummary.textContent = project.type === 'disc'
-        ? (result.tops && result.tops.length ? result.tops.join('、') : '结果')
+        ? result.summary // 如：Influence－活泼型/社交者；并列时为“A、B”
         : `总分：${result.total} 分 - ${result.summary}`;
       resultAnalysis.textContent = result.analysis || '';
       show('result');
