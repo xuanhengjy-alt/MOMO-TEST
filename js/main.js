@@ -4,7 +4,11 @@
   if (!container) return;
   let data;
   try {
-    const res = await fetch('assets/data/tests.json', { cache: 'no-store' });
+    // Try absolute-from-root first, then relative fallback (handles subpaths and pretty URLs)
+    let res = await fetch('/assets/data/tests.json', { cache: 'no-store' });
+    if (!res.ok) {
+      res = await fetch('assets/data/tests.json', { cache: 'no-store' });
+    }
     if (!res.ok) throw new Error('Network response was not ok');
     data = await res.json();
   } catch (err) {
@@ -36,7 +40,7 @@
     };
     const hint = document.createElement('div');
     hint.className = 'mb-4 p-3 rounded border bg-yellow-50 text-yellow-800 text-sm';
-    hint.textContent = '提示：本页面直接用浏览器打开可能无法读取本地JSON数据，已使用内置示例数据。建议使用本地服务器预览（如 VSCode Live Server 或 npx serve）。';
+    hint.textContent = 'Tip: Using built-in sample data because assets/data/tests.json could not be loaded. On a server, ensure the JSON is deployed at /assets/data/tests.json.';
     container.parentElement.insertBefore(hint, container);
   }
   const tpl = document.getElementById('test-card-template');
