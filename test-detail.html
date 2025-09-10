@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MOMO TEST - 测试项目</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <header class="sticky top-0 z-10 bg-white/80 backdrop-blur border-b">
+    <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="text-blue-600 hover:underline">首页</a>
+        <span class="text-gray-400">/</span>
+        <span id="breadcrumb-project" class="font-semibold">测试项目</span>
+        <span class="text-gray-400">/</span>
+        <span id="breadcrumb-subview" class="text-gray-600">详情</span>
+      </div>
+      <a href="index.html" class="text-sm text-gray-600 hover:text-gray-900">MOMO TEST</a>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    <section id="view-detail" class="view">
+      <div class="w-full max-w-5xl mx-auto bg-white border rounded-2xl shadow p-6 md:p-8 flex flex-col items-center gap-6">
+        <h1 id="project-title" class="text-3xl md:text-4xl font-extrabold text-center"></h1>
+        <img id="project-image" class="w-full rounded-xl object-cover aspect-video" />
+        <div class="flex items-center gap-6 text-sm text-gray-600">
+          <div>
+            <span id="tested-count" class="text-amber-600 font-semibold"></span> 人已经测试
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="like-btn" class="px-3 py-1.5 rounded border text-sm hover:bg-gray-50">点赞</button>
+            <span id="like-count" class="text-gray-800 font-medium"></span> 人点赞
+          </div>
+        </div>
+        <div id="info-line" class="text-sm text-gray-600">共有0个测试问题，预计用时0分钟</div>
+        <button id="goto-start" class="inline-flex items-center justify-center px-5 py-2.5 rounded bg-blue-600 text-white hover:bg-blue-700 text-sm">开始测试</button>
+      </div>
+
+      <div class="w-full max-w-3xl mx-auto mt-8 section-card">
+        <div class="section-title mb-3"><span class="dots"></span><h3>测试介绍</h3><span class="dots"></span></div>
+        <div id="project-intro" class="content whitespace-pre-line"></div>
+      </div>
+
+      <div class="w-full max-w-3xl mx-auto mt-4 section-card">
+        <div class="section-title mb-3"><span class="dots"></span><h3>测试须知</h3><span class="dots"></span></div>
+        <ol class="content numbered list-decimal pl-6">
+          <li>请根据自我情况或感受来选择。</li>
+          <li>测试结果仅供参考，不可替代诊断。</li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="view-start" class="view hidden">
+      <div class="mb-4 flex items-center justify-between">
+        <div class="w-full bg-gray-200 rounded h-2 overflow-hidden mr-4">
+          <div id="progress-bar" class="h-2 bg-blue-600" style="width:0%"></div>
+        </div>
+        <div id="progress-text" class="text-sm text-gray-600 whitespace-nowrap">0/0</div>
+      </div>
+
+      <div class="p-4 bg-white border rounded space-y-4">
+        <h2 id="question-title" class="font-semibold"></h2>
+        <div id="options" class="space-y-2"></div>
+        <div class="pt-2">
+          <button id="restart-btn" class="px-3 py-2 rounded border text-sm hover:bg-gray-50">重新开始测试</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-result" class="view hidden">
+      <div class="space-y-4">
+        <h1 id="result-title" class="text-2xl font-bold text-center"></h1>
+        <img id="result-image" class="w-full rounded-lg object-cover aspect-video" />
+        <div class="section-card">
+          <div class="section-title mb-2"><span class="dots"></span><h3>测试结果</h3><span class="dots"></span></div>
+          <div id="result-summary" class="content"></div>
+        </div>
+        <div class="section-card">
+          <div class="section-title mb-2"><span class="dots"></span><h3>结果分析</h3><span class="dots"></span></div>
+          <div id="result-analysis" class="content"></div>
+        </div>
+        <div>
+          <button id="result-restart" class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 text-sm">重新开始测试</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/utils.js"></script>
+  <script src="js/test-logic.js"></script>
+  <script src="js/test-page.js"></script>
+</body>
+</html>
+
+

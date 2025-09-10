@@ -1,0 +1,42 @@
+.prose p { margin: 0.25rem 0; }
+.view.hidden { display: none; }
+.aspect-video { aspect-ratio: 16 / 9; }
+
+.view { opacity: 1; transition: opacity .2s ease; }
+.view.is-transitioning { opacity: 0; }
+
+/* 首页卡片优化 */
+.card { border-radius: 12px; overflow: hidden; border: 1px solid #e5e7eb; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+.card:hover { box-shadow: 0 6px 20px rgba(0,0,0,.08); transform: translateY(-1px); transition: all .2s ease; }
+.card-title { display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis; }
+.stat { font-size:.875rem; color:#6b7280; }
+.stat b { color:#111827; }
+.start-primary { background:#2563eb; color:#fff; border-radius:8px; padding:.5rem .875rem; }
+.start-primary:hover { background:#1d4ed8; }
+.badge-new { font-size:.75rem; color:#ef4444; border:1px solid #fecaca; background:#fff1f2; padding:.125rem .375rem; border-radius:6px; }
+
+/* 详情页信息模块美化 */
+.section-card { background:#fff; border:1px solid #e5e7eb; border-radius:14px; box-shadow: 0 4px 20px rgba(0,0,0,.04); padding:1rem; }
+.section-card .content { color:#374151; line-height:1.8; }
+.section-title { position:relative; text-align:center; font-weight:700; }
+.section-title .dots { position:relative; display:inline-block; padding:0 .75rem; }
+.section-title .dots::before, .section-title .dots::after { content:''; width:6px; height:6px; border-radius:9999px; background:#2563eb; display:inline-block; margin:0 .35rem; transform:translateY(-2px); }
+.section-title h3 { display:inline-block; font-size:1.125rem; }
+.numbered li { margin: .4rem 0; }
+
+/* 骨架屏与过渡 */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #e5e7eb;
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.6), transparent);
+  animation: shimmer 1.2s infinite;
+}
+@keyframes shimmer { 100% { transform: translateX(100%); } }
+

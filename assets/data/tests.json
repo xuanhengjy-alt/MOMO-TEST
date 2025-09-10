@@ -1,0 +1,55 @@
+{
+  "projects": [
+    {
+      "id": "disc",
+      "name": "DISC性格测试",
+      "image": "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=1200&auto=format&fit=crop",
+      "intro": "0世纪20年代，美国心理学家威廉·莫尔顿·马斯顿创建了一个理论来解释人的情绪反应，在此之前，这种工作主要局限在对于精神病患者或精神失常人群的研究，而马斯顿博士则希望扩大这个研究范围，以运用于心理健康的普通人群，因此，马斯顿博士将他的理论构建为一个体系，即 The Emotions of Normal People——“正常人的情绪”。为了检验他的理论，马斯顿博士需要采用某种心理测评的方式来衡量人群的情绪反映——“人格特征”，因此，他采用了四个他认为是非常典型的人格特质因子，即 Dominance－支配，Influence－影响，Steady－稳健，以及 Compliance－服从。而 DISC，正是代表了这四个英文单词的首字母。在1928年，马斯顿博士正是在他的“正常人的情绪”一书中，提出了 DISC 测评，以及理论说明。目前，DISC 理论已被广泛应用于世界500强企业的人才招聘，历史悠久、专业性强、权威性高。",
+      "type": "disc"
+    },
+    {
+      "id": "mgmt",
+      "name": "管理能力测试",
+      "image": "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=1200&auto=format&fit=crop",
+      "intro": "管理能力自测是一个帮助个人评估和提升其管理技能的重要工具。通过自测，管理者可以识别自己的优势和需要改进的领域，从而为职业发展制定更有效的计划。",
+      "type": "mgmt"
+    },
+    {
+      "id": "creative",
+      "name": "发散思维测试",
+      "image": "https://images.unsplash.com/photo-1555252586-0f9853fca31a?q=80&w=1200&auto=format&fit=crop",
+      "intro": "探索你的创造力与发散思维能力。",
+      "type": "placeholder"
+    },
+    {
+      "id": "focus",
+      "name": "专注力测试",
+      "image": "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=1200&auto=format&fit=crop",
+      "intro": "了解你的专注力水平。",
+      "type": "placeholder"
+    },
+    {
+      "id": "memory",
+      "name": "记忆力测试",
+      "image": "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?q=80&w=1200&auto=format&fit=crop",
+      "intro": "评估短时与工作记忆能力。",
+      "type": "placeholder"
+    },
+    {
+      "id": "eq",
+      "name": "情商EQ测试",
+      "image": "https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=1200&auto=format&fit=crop",
+      "intro": "了解自我情绪认知与人际互动。",
+      "type": "placeholder"
+    },
+    {
+      "id": "logic",
+      "name": "逻辑推理测试",
+      "image": "https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?q=80&w=1200&auto=format&fit=crop",
+      "intro": "检验你的逻辑分析与推理能力。",
+      "type": "placeholder"
+    }
+  ]
+}
+
+
