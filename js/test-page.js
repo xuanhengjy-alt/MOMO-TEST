@@ -100,7 +100,7 @@
   const totalQ = qlist.length;
   const estMinutes = Math.max(1, Math.round((totalQ * 12) / 60));
   if (infoLine) {
-    infoLine.innerHTML = `共有 <span class="font-semibold text-rose-600">${totalQ}</span> 个测试问题，预计用时 <span class="font-semibold text-rose-600">${estMinutes}</span> 分钟`;
+    infoLine.innerHTML = `Total <span class="font-semibold text-rose-600">${totalQ}</span> questions, estimated <span class="font-semibold text-rose-600">${estMinutes}</span> minutes`;
   }
 
   function renderProgress() {

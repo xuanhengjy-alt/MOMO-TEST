@@ -16,7 +16,7 @@
   </header>
 
   <main class="max-w-6xl mx-auto px-4 py-6">
-    <h2 class="text-xl font-semibold mb-4">热门测试</h2>
+    <h2 class="text-xl font-semibold mb-4">Popular Tests</h2>
 
     <div id="card-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
       <!-- 卡片由 JS 渲染 -->
@@ -30,15 +30,16 @@
       <div class="p-4 flex flex-col grow">
         <h3 class="text-lg font-semibold mb-2"></h3>
         <div class="text-sm text-gray-600 mb-3">
-          <span class="people text-amber-600 font-medium"></span> 人已经测试
+          <span class="people text-amber-600 font-medium"></span> people tested
         </div>
         <button class="mt-auto start-btn inline-flex items-center justify-center px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 text-sm">
-          开始测试
+          Start Test
         </button>
       </div>
     </article>
   </template>
 
+  <script src="js/i18n.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/masonry.js"></script>
   <script src="js/test-logic.js"></script>
@@ -61,6 +62,13 @@
           img.src = 'assets/images/logo.svg?v=' + Date.now();
         }
       };
+      // 语言切换
+      var zh = document.getElementById('lang-zh');
+      var en = document.getElementById('lang-en');
+      function updateText(){ I18N && I18N.applyI18n(document); }
+      if (zh) zh.onclick = function(){ I18N.setLang('zh-CN'); updateText(); };
+      if (en) en.onclick = function(){ I18N.setLang('en'); updateText(); };
+      updateText();
     })();
   </script>
   <script src="js/main.js"></script>
