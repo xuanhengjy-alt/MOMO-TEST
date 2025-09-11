@@ -197,6 +197,7 @@ Compliant, Meticulous, Methodical, Rigorous, Precise, Perfectionist, Logical`
 
   // MBTI mapping loader with fallback
   let mbtiMapping = null;
+  let mbtiDescriptions = null;
   async function loadMbtiMapping() {
     if (mbtiMapping) return mbtiMapping;
     try {
@@ -309,8 +310,23 @@ Compliant, Meticulous, Methodical, Rigorous, Precise, Perfectionist, Logical`
     return mbtiMapping;
   }
 
+  async function loadMbtiDescriptions() {
+    if (mbtiDescriptions) return mbtiDescriptions;
+    try {
+      // 支持绝对与相对路径两种加载方式
+      let res = await fetch('/assets/data/mbti-descriptions.json', { cache: 'no-store' });
+      if (!res.ok) res = await fetch('assets/data/mbti-descriptions.json', { cache: 'no-store' });
+      if (!res.ok) throw new Error('no desc');
+      mbtiDescriptions = await res.json();
+    } catch (e) {
+      mbtiDescriptions = { meta: { version: 1 }, data: {} };
+    }
+    return mbtiDescriptions;
+  }
+
   async function scoreMbti(answers) {
     const mapping = await loadMbtiMapping();
+    const descriptions = await loadMbtiDescriptions();
     const traits = { E:0, I:0, S:0, N:0, T:0, F:0, J:0, P:0 };
     
     answers.forEach((answer, index) => {
@@ -322,37 +338,130 @@ Compliant, Meticulous, Methodical, Rigorous, Precise, Perfectionist, Logical`
       }
     });
     
-    const ei = traits.E >= traits.I ? 'E' : 'I';
-    const sn = traits.S >= traits.N ? 'S' : 'N';
-    const tf = traits.T >= traits.F ? 'T' : 'F';
-    const jp = traits.J >= traits.P ? 'J' : 'P';
+    // Tie-breaking per spec: if E ≤ I take I else E; similarly S ≤ N -> N; T ≤ F -> F; J ≤ P -> P
+    const ei = traits.E > traits.I ? 'E' : 'I';
+    const sn = traits.S > traits.N ? 'S' : 'N';
+    const tf = traits.T > traits.F ? 'T' : 'F';
+    const jp = traits.J > traits.P ? 'J' : 'P';
     const code = `${ei}${sn}${tf}${jp}`;
     
-    return { 
-      summary: code, 
-      analysis: `After testing, you are **${code}** personality type.`,
+    // 合成结果文案（若有详细文案文件则拼接展示）
+    const head = `After testing, you are **${code}** personality type.`;
+    const detailed = (descriptions && descriptions.data && descriptions.data[code]) ? `\n\n${descriptions.data[code]}` : '';
+    return {
+      summary: code,
+      analysis: `${head}${detailed}`,
       traits,
       code
     };
   }
 
+  // MBTI 93 English questions (two options each)
+  const mbtiQuestions = [
+    { t: '1. When you\'re going out all day, you will', opts: ['plans what you are going to do and when you are going to do it', 'just goes'] },
+    { t: '2. You think you are one', opts: ['is more spontaneous', 'is more organized'] },
+    { t: '3. If you were a teacher, you would choose to teach', opts: ['factual course', 'theoretical course'] },
+    { t: '4. You usually', opts: ['is easy to get along with, while', 'is rather quiet or reserved'] },
+    { t: '5. Generally speaking, who do you get along well with?', opts: ['Imaginative person', 'realistic person'] },
+    { t: '6. Do you often let', opts: ['Your emotions dominate your reason', 'your reason dominates your emotions'] },
+    { t: '7. You\'ll enjoy dealing with a lot of things', opts: ['act on impulse', 'act according to the plan'] },
+    { t: '8. Are you?', opts: ['is easy to understand', 'is difficult to understand'] },
+    { t: '9. Do things according to the schedule', opts: ['is to your liking', 'makes you feel bound'] },
+    { t: '10. When you have a particular task, you\'ll enjoy it', opts: ['Carefully organize and plan before you start', 'find out what to do as you go along'] },
+    { t: '11. In most cases, you will choose', opts: ['Go with the flow', 'do things according to the schedule'] },
+    { t: '12. Most people would say you are one', opts: ['values personal privacy', 'is very candid and open'] },
+    { t: '13. You\'d rather be regarded as one', opts: ['realistic person', 'smart person'] },
+    { t: '14. In a large crowd, usually', opts: ['You introduce everyone', 'someone else introduces you'] },
+    { t: '15. Who will you be friends with?', opts: ['always brings out new ideas', 'down-to-earth'] },
+    { t: '16. You tend', opts: ['values emotion more than logic', 'values logic more than emotion'] },
+    { t: '17. You prefer', opts: ['plans after watching things develop', 'plans very early'] },
+    { t: '18. You like spending a lot of time', opts: ['Alone', 'with others'] },
+    { t: '19. With a lot of people', opts: ['boosts your energy', 'often wears you out'] },
+    { t: '20. You prefer', opts: ['arranges dates, social gatherings, etc. very early', 'is unrestrained and does whatever is fun at the time'] },
+    { t: '21. When planning a trip, you prefer', opts: ['Most of the time you act according to how you feel that day', 'Know in advance what you\'ll do most of the day'] },
+    { t: '22. At social gatherings, you', opts: ['sometimes feels depressed', 'often enjoys it'] },
+    { t: '23. You usually', opts: ['tends to get along well with others, while', 'prefers to stay in a corner'] },
+    { t: '24. Who will be more attractive to you?', opts: ['quick-witted and very intelligent person', 'A person who is honest and has a lot of common sense'] },
+    { t: '25. In your daily work, you will', opts: ['is quite fond of dealing with emergencies that force you to race against time', 'usually plans ahead to avoid having to work under pressure'] },
+    { t: '26. You think others are average', opts: ['takes a long time to get to know you', 'takes a short time to get to know you'] },
+    { t: '27. Which of the following pairs of words is more to your liking? Regardless of form or pronunciation.', opts: ['values privacy', 'candid and open'] },
+    { t: '28. Which of the following pairs of words is more to your liking? Regardless of form or pronunciation.', opts: ['is pre-arranged', 'is unplanned'] },
+    { t: '29. Which of the following pairs of words is more to your liking? Regardless of form or pronunciation.', opts: ['Abstract', 'Concrete'] },
+    { t: '30. Which of the following pairs of words is more to your liking? Regardless of form or pronunciation.', opts: ['gentle', 'Firm'] },
+    { t: '31. Which of the following pairs of words is more to your liking? Regardless of form or pronunciation.', opts: ['thinks', 'feels'] },
+    { t: '32. Which of the following pairs of words is more to your liking? Regardless of form or pronunciation.', opts: ['Fact', 'thought'] },
+    { t: '33. Which of the following pairs of words is more to your liking? Regardless of form or pronunciation.', opts: ['Impulse', 'Decision'] },
+    { t: '34. Which of the following pairs of words is more to your liking? Regardless of form or pronunciation.', opts: ['is passionate', 'is quietness'] },
+    { t: '35. Which of the following pairs of words is more to your liking? Regardless of form or pronunciation.', opts: ['Quiet', 'Outgoing'] },
+    { t: '36. Which of the following pairs of words is more to your liking? Regardless of form or pronunciation.', opts: ['has a system', 'is casual'] },
+    { t: '37. Which of the following pairs of words is more to your liking? Regardless of form or pronunciation.', opts: ['Theory', 'Affirmative'] },
+    { t: '38. Which of the following pairs of words is more to your liking? Regardless of form or pronunciation.', opts: ['Sensitive', 'Fair'] },
+    { t: '39. Which of the following pairs of words is more to your liking? Regardless of form or pronunciation.', opts: ['Convincing', 'Touching'] },
+    { t: '40. Which of the following pairs of words is more to your liking? Regardless of form or pronunciation.', opts: ['declares', 'concept'] },
+    { t: '41. Which of the following pairs of words is more to your liking? Regardless of form or pronunciation.', opts: ['Unconstrained', 'Pre-arranged'] },
+    { t: '42. Which of the following pairs of words is more to your liking? Regardless of form or pronunciation.', opts: ['Reserved', 'talkative'] },
+    { t: '43. Which of the following pairs of words is more to your liking? Regardless of form or pronunciation.', opts: ['is methodical', 'is casual'] },
+    { t: '44. Which of the following pairs of words is more to your liking? Regardless of form or pronunciation.', opts: ['Thought', 'Reality'] },
+    { t: '45. Which of the following pairs of words is more to your liking? Regardless of form or pronunciation.', opts: ['Compassion', 'Vision'] },
+    { t: '46. Which of the following pairs of words is more to your liking? Regardless of form or pronunciation.', opts: ['Benefit', 'Blessing'] },
+    { t: '47. Which of the following pairs of words is more to your liking? Regardless of form or pronunciation.', opts: ['pragmatic', 'theoretical'] },
+    { t: '48. Which of the following pairs of words is more to your liking? Regardless of form or pronunciation.', opts: ['doesn\'t have many friends', 'has many friends'] },
+    { t: '49. Which of the following pairs of words is more to your liking? Regardless of form or pronunciation.', opts: ['is systematic', 'Improvisational'] },
+    { t: '50. Which of the following pairs of words is more to your liking? Regardless of form or pronunciation.', opts: ['Imaginative', 'matter-of-fact'] },
+    { t: '51. Which of the following pairs of words is more to your liking? Regardless of form or pronunciation.', opts: ['Kind', 'objective'] },
+    { t: '52. Which of the following pairs of words is more to your liking? Regardless of form or pronunciation.', opts: ['Objective', 'Passionate'] },
+    { t: '53. Which of the following pairs of words is more to your liking? Regardless of form or pronunciation.', opts: ['builds', 'invent'] },
+    { t: '54. Which of the following pairs of words is more to your liking? Regardless of form or pronunciation.', opts: ['Quiet', 'Sociable'] },
+    { t: '55. Which of the following pairs of words is more to your liking? Regardless of form or pronunciation.', opts: ['Theory', 'Fact'] },
+    { t: '56. Which of the following pairs of words is more to your liking? Regardless of form or pronunciation.', opts: ['is sympathetic', 'is logical'] },
+    { t: '57. Which of the following pairs of words is more to your liking? Regardless of form or pronunciation.', opts: ['Analytical', 'Sentimental'] },
+    { t: '58. Which of the following pairs of words is more to your liking? Regardless of form or pronunciation.', opts: ['makes sense', 'fascinates'] },
+    { t: '59. When you are going to finish a big project in a week, you will at the beginning', opts: ['List the different tasks to be done one by one', 'Start working right away'] },
+    { t: '60. In social situations, you often feel', opts: ['Have difficulty opening up and maintaining a conversation with certain people', 'Be able to have a long conversation with most people'] },
+    { t: '61. Do what many people do, which you prefer', opts: ['Do it in the generally accepted way', 'Come up with an idea of your own'] },
+    { t: '62. Can a friend you just met say what interests you have?', opts: ['Right away', 'Wait until they really get to know you'] },
+    { t: '63. The subjects you usually prefer are', opts: ['Teach concepts and principles', 'Teach facts and data'] },
+    { t: '64. Which is higher praise, or commendation?', opts: ['A person who is always sentimental', 'A person who is always rational'] },
+    { t: '65. You think doing things according to the schedule', opts: ['Sometimes it is necessary, but generally you don\'t like to do it', 'Most of the time it\'s helpful and something you enjoy doing'] },
+    { t: '66. When you\'re with a group of people, you usually choose', opts: ['Talk to a few people you know well', 'Join in a group conversation'] },
+    { t: '67. At social gatherings, you will', opts: ['Be the one who talks a lot', 'Get others to talk more'] },
+    { t: '68. The idea is to make a list of things to do over the weekend', opts: ['To your liking', 'Making you lose your energy'] },
+    { t: '69. Which is higher praise, or commendation', opts: ['Capable', 'Compassionate'] },
+    { t: '70. You usually like', opts: ['Schedule your social appointments in advance', 'Do things on a whim'] },
+    { t: '71. In general, when it comes to doing a large assignment, you would choose', opts: ['Think about what to do as you do it', 'Break down the work step by step first'] },
+    { t: '72. Can you talk non-stop with people', opts: ['Only those who share the same interests as you', 'Almost anyone can do it'] },
+    { t: '73. You will', opts: ['Follow some proven effective methods', 'Analyze what else is wrong and what problems have not been solved yet'] },
+    { t: '74. When you read for pleasure, you will', opts: ['Like peculiar or innovative expressions', 'Like the author\'s straightforwardness'] },
+    { t: '75. Which kind of boss (or teacher) would you rather work for?', opts: ['is naturally kind, but often inconsistent', 'Sharp-tongued but always logical'] },
+    { t: '76. Most of the time you do things', opts: ['Do things according to your mood for the day', 'do things according to the prepared schedule'] },
+    { t: '77. Are you?', opts: ['can talk freely to anyone as needed', 'can only speak freely to certain people or in certain circumstances'] },
+    { t: '78. When it comes to making decisions, what you think is more important is', opts: ['Measure by facts', 'consider the feelings and opinions of others'] },
+    { t: '79. Which of the following pairs of words is more to your liking?', opts: ['Imagined', 'real'] },
+    { t: '80. Which of the following pairs of words is more to your liking?', opts: ['Kind and generous', 'Determined'] },
+    { t: '81. Which of the following pairs of words is more to your liking?', opts: ['is fair and', 'is caring'] },
+    { t: '82. Which of the following pairs of words is more to your liking?', opts: ['makes', 'design'] },
+    { t: '83. Which of the following pairs of words is more to your liking?', opts: ['possibility', 'necessity'] },
+    { t: '84. Which of the following pairs of words is more to your liking?', opts: ['Gentle', 'Strength'] },
+    { t: '85. Which of the following pairs of words is more to your liking?', opts: ['Actually', 'is sentimental'] },
+    { t: '86. Which of the following pairs of words is more to your liking?', opts: ['makes', 'creates'] },
+    { t: '87. Which of the following pairs of words is more to your liking?', opts: ['Novel', 'known'] },
+    { t: '88. Which of the following pairs of words is more to your liking?', opts: ['sympathizes with', 'analysis'] },
+    { t: '89. Which of the following pairs of words is more to your liking?', opts: ['stands firm', 'Gentle and loving'] },
+    { t: '90. Which of the following pairs of words is more to your liking?', opts: ['concrete', 'Abstract'] },
+    { t: '91. Which of the following pairs of words is more to your liking?', opts: ['fully committed', 'Determined'] },
+    { t: '92. Which of the following pairs of words is more to your liking?', opts: ['Capable', 'Kind'] },
+    { t: '93. Which of the following pairs of words is more to your liking?', opts: ['Actual', 'Innovation'] }
+  ];
+
   return {
     getQuestions(type) {
-      if (type === 'disc') return discQuestions;
-      if (type === 'disc40') return disc40Questions;
-      if (type === 'mbti') {
-        // Placeholder: 93 single-choice questions would be defined here; for now, generate stubs
-        const total = 93;
-        const arr = [];
-        for (let i = 1; i <= total; i += 1) {
-          arr.push({ t: `(${i}) Choose the option that best describes you.`, opts: ['A', 'B'] });
-        }
-        return arr;
-      }
+      if (type === 'disc') return discQuestions.slice();
+      if (type === 'disc40') return disc40Questions.slice();
+      if (type === 'mbti') return mbtiQuestions;
       if (type === 'mgmt') return mgmtQuestions;
       return [];
     },
-    score(type, answers) {
+    async score(type, answers) {
       if (type === 'disc') return scoreDisc(answers);
       if (type === 'disc40') {
         // Convert 1..4 rank table to mapping for quick lookup

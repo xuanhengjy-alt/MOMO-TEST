@@ -41,7 +41,10 @@
 
   <script src="js/i18n.js"></script>
   <script src="js/utils.js"></script>
-  <script src="js/masonry.js"></script>
+  <script>
+    // inline fallback to avoid missing file issues under file://
+    try { document.write(''); } catch(_) {}
+  </script>
   <script src="js/test-logic.js"></script>
   <script>
     // 确保 logo 可加载，失败则给出兜底

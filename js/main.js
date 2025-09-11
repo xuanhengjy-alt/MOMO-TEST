@@ -4,10 +4,10 @@
   if (!container) return;
   let data;
   try {
-    // Try absolute-from-root first, then relative fallback (handles subpaths and pretty URLs)
-    let res = await fetch('/assets/data/tests.json', { cache: 'no-store' });
+    // Under file:// CORS will fail; attempt relative first then absolute
+    let res = await fetch('assets/data/tests.json', { cache: 'no-store' });
     if (!res.ok) {
-      res = await fetch('assets/data/tests.json', { cache: 'no-store' });
+      res = await fetch('/assets/data/tests.json', { cache: 'no-store' });
     }
     if (!res.ok) throw new Error('Network response was not ok');
     data = await res.json();
@@ -15,6 +15,13 @@
     console.warn('加载测试数据失败，使用内置数据。可能是本地直接打开导致JSON无法读取。建议使用本地静态服务器（如 VSCode Live Server 或 npx serve）。', err);
     data = {
       projects: [
+        {
+          id: 'mbti',
+          name: 'MBTI Career Personality Test',
+          image: 'assets/images/mbti-career personality-test.png',
+          intro: 'The MBTI personality theory is based on the classification of psychological types by Carl Jung, later developed by Katharine Cook Briggs and Isabel Briggs Myers. It helps explain why people have different interests, excel at different jobs, and sometimes misunderstand each other. For decades, MBTI has been used worldwide by couples, teachers and students, young people choosing careers, and organizations to improve relationships, team communication, organizational building and diagnostics. In the Fortune 500, 80% of companies have experience applying MBTI.',
+          type: 'mbti'
+        },
         {
           id: 'disc',
           name: 'DISC性格测试',
@@ -38,10 +45,7 @@
         }
       ]
     };
-    const hint = document.createElement('div');
-    hint.className = 'mb-4 p-3 rounded border bg-yellow-50 text-yellow-800 text-sm';
-    hint.textContent = 'Tip: Using built-in sample data because assets/data/tests.json could not be loaded. On a server, ensure the JSON is deployed at /assets/data/tests.json.';
-    container.parentElement.insertBefore(hint, container);
+    // 在 file:// 下隐藏提示，直接使用内置数据避免打断体验
   }
   const tpl = document.getElementById('test-card-template');
 

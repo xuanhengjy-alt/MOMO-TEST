@@ -5,12 +5,16 @@
 
   let data;
   try {
-    const res = await fetch('assets/data/tests.json', { cache: 'no-store' });
+    // file:// 优先使用相对路径
+    let res = await fetch('assets/data/tests.json', { cache: 'no-store' });
     if (!res.ok) throw new Error('Network error');
     data = await res.json();
   } catch (e) {
-    console.warn('加载测试数据失败，使用内置数据。建议使用本地服务器预览。', e);
+    // file:// 下回退至内置数据
     data = { projects: [
+      { id:'mbti', name:'MBTI Career Personality Test', image:'assets/images/mbti-career personality-test.png',
+        intro:'The MBTI personality theory is based on the classification of psychological types by Carl Jung, later developed by Katharine Cook Briggs and Isabel Briggs Myers. It helps explain why people have different interests, excel at different jobs, and sometimes misunderstand each other. For decades, MBTI has been used worldwide by couples, teachers and students, young people choosing careers, and organizations to improve relationships, team communication, organizational building and diagnostics. In the Fortune 500, 80% of companies have experience applying MBTI.',
+        type:'mbti' },
       { id:'disc', name:'DISC性格测试', image:'assets/images/discceshi.png',
         intro:'0世纪20年代，美国心理学家威廉·莫尔顿·马斯顿创建了一个理论来解释人的情绪反应，在此之前，这种工作主要局限在对于精神病患者或精神失常人群的研究，而马斯顿博士则希望扩大这个研究范围，以运用于心理健康的普通人群，因此，马斯顿博士将他的理论构建为一个体系，即 The Emotions of Normal People——“正常人的情绪”。\n\n为了检验他的理论，马斯顿博士需要采用某种心理测评的方式来衡量人群的情绪反映——“人格特征”，因此，他采用了四个他认为是非常典型的人格特质因子，即 Dominance－支配，Influence－影响，Steady－稳健，以及 Compliance－服从。而 DISC，正是代表了这四个英文单词的首字母。在1928年，马斯顿博士正是在他的“正常人的情绪”一书中，提出了 DISC 测评，以及理论说明。\n\n目前，DISC 理论已被广泛应用于世界500强企业的人才招聘，历史悠久、专业性强、权威性高。',
         type:'disc' },
@@ -63,6 +67,31 @@
   projectImage.alt = project.name;
   projectTitle.textContent = project.name;
   projectIntro.textContent = project.intro || '';
+  // 对 MBTI 项目，尝试加载完整介绍文件（若存在）
+  if (project && project.id === 'mbti') {
+    try {
+      let res = await fetch('/assets/data/mbti-intro.txt', { cache: 'no-store' });
+      if (!res.ok) res = await fetch('assets/data/mbti-intro.txt', { cache: 'no-store' });
+      if (res.ok) {
+        const txt = await res.text();
+        if (txt && txt.trim()) {
+          projectIntro.textContent = txt;
+        }
+      }
+    } catch (_) {
+      // 本地 file:// 打开可能导致 fetch 失败：提供内置兜底全文
+      var fullIntro = [
+        "The MBTI personality theory is based on the classification of psychological types by the renowned psychologist Carl Jung, which was later studied and developed by a mother and daughter, Katharine Cook Briggs and Isabel Briggs Myers. This theory can help explain why different people are interested in different things, excel at different jobs, and sometimes don't understand each other. This tool has been in use around the world for nearly 30 years. Couples use it to enhance harmony, teachers and students use it to improve learning and teaching efficiency, young people use it to choose careers, organizations use it to improve interpersonal relationships, team communication, organizational building, organizational diagnosis and many other aspects. In the Fortune 500, 80 percent of companies have experience in applying MBTI.",
+        "",
+        "People tend to develop their personalities during adolescence, after which they have a relatively stable personality type, which then develops and improves dynamically over the years. We usually think that as a person grows older, his character changes. According to Jung's theory, once a person's character is formed, it is very difficult to change. The reason for showing different manifestations is that the character is developing dynamically due to changes in factors such as environment and experience, and functions that were not used before are also being exerted accordingly. If we use the left hand and the right hand as a metaphor, a person's MBTI tendencies are the hand he is most familiar with using, and as he gains more experience, he begins to practice using the other hand.",
+        "",
+        "The personality type description provided by MBTI is only for the test-taker to determine their own personality type. There are no good or bad personality types, only differences. Each personality trait has its own value and merits, as well as weaknesses and points to note. A clear understanding of one's strengths and weaknesses helps to better utilize one's strengths, and to avoid weaknesses in one's personality as much as possible in dealing with people and matters, to get along better with others, and to make better important decisions.",
+        "",
+        "Those who take part in the test must answer the questions honestly and independently. Only in this way can effective results be obtained."
+      ].join('\n');
+      projectIntro.textContent = fullIntro;
+    }
+  }
 
   // Pretty URL for DISC Personality Test: domain + project name (slug)
   if (project && project.id === 'disc40') {
@@ -105,27 +134,75 @@
     }, 150);
   }
 
-  // 测试进程
-  const qlist = window.TestLogic.getQuestions(project.type);
+  // 确保 TestLogic 已加载（兼容某些环境脚本加载顺序异常）
+  let ensureLogicPromise = null;
+  function ensureTestLogicLoaded() {
+    if (window.TestLogic && typeof window.TestLogic.getQuestions === 'function') return Promise.resolve();
+    if (ensureLogicPromise) return ensureLogicPromise;
+    ensureLogicPromise = new Promise((resolve) => {
+      var s = document.createElement('script');
+      s.src = 'js/test-logic.js';
+      s.onload = function(){ resolve(); };
+      s.onerror = function(){ resolve(); };
+      document.head.appendChild(s);
+    });
+    return ensureLogicPromise;
+  }
+
+  // 测试进程（实时获取题库，避免初始化时机问题）
+  function getQList() {
+    try {
+      if (!(window.TestLogic && typeof window.TestLogic.getQuestions === 'function')) return [];
+      let t = project && project.type ? project.type : '';
+      let qs = window.TestLogic.getQuestions(t) || [];
+      if (qs.length) return qs;
+      // 兼容性兜底：按 id 猜测类型
+      const fallbackTypeById = {
+        disc: 'disc',
+        disc40: 'disc40',
+        mgmt: 'mgmt',
+        mbti: 'mbti'
+      };
+      if (project && project.id && fallbackTypeById[project.id]) {
+        qs = window.TestLogic.getQuestions(fallbackTypeById[project.id]) || [];
+        if (qs.length) return qs;
+      }
+      // 最后再尝试常用题库，确保不为空
+      const tryTypes = ['mbti','disc40','disc','mgmt'];
+      for (var i=0;i<tryTypes.length;i++) {
+        qs = window.TestLogic.getQuestions(tryTypes[i]) || [];
+        if (qs.length) return qs;
+      }
+      return [];
+    } catch(_) { return []; }
+  }
   let qIndex = 0;
   const answers = [];
 
   // 统计信息：题数与预计时长（按每题约12秒估算）
-  const totalQ = qlist.length;
+  const totalQ = getQList().length;
   const estMinutes = Math.max(1, Math.round((totalQ * 12) / 60));
   if (infoLine) {
     infoLine.innerHTML = `Total <span class="font-semibold text-rose-600">${totalQ}</span> questions, estimated <span class="font-semibold text-rose-600">${estMinutes}</span> minutes`;
   }
 
   function renderProgress() {
-    const total = qlist.length;
+    const total = getQList().length;
     const done = Math.min(qIndex, total);
     const pct = total ? Math.round(done / total * 100) : 0;
     progressBar.style.width = pct + '%';
     progressText.textContent = `${done}/${total}`;
   }
 
-  function renderQuestion() {
+  async function renderQuestion() {
+    await ensureTestLogicLoaded();
+    const qlist = getQList();
+    // 若题库为空，给出友好提示
+    if (!qlist || !qlist.length) {
+      questionTitle.textContent = 'Question set failed to load. Please open with a local server and try again.';
+      options.innerHTML = '';
+      return;
+    }
     const q = qlist[qIndex];
     if (!q) { // 结束
       const result = await window.TestLogic.score(project.type, answers);
@@ -151,7 +228,7 @@
       } else if (project.type === 'mbti') {
         // For MBTI, highlight the type code
         const html = rawAnalysis.replace(/\*\*(.*?)\*\*/g, '<strong class="text-rose-600">$1</strong>');
-        resultAnalysis.innerHTML = `<p>${html}</p>`;
+        resultAnalysis.innerHTML = `<p>${html.replace(/\n/g,'<br>')}</p>`;
       } else {
         // Default: paragraphize by double newlines
         const parts = rawAnalysis.split(/\n\n+/).map(s => s.trim()).filter(Boolean);
@@ -177,27 +254,38 @@
     });
   }
 
-  gotoStart.addEventListener('click', () => {
+  gotoStart.addEventListener('click', async (e) => {
+    e.preventDefault();
     qIndex = 0;
     answers.length = 0;
+    show('start');
+    // 进入开始页时再次刷新题量与预估
+    await ensureTestLogicLoaded();
+    const qs = getQList();
+    if (infoLine) {
+      const total = qs.length;
+      const mins = Math.max(1, Math.round((total * 12) / 60));
+      infoLine.innerHTML = `Total <span class="font-semibold text-rose-600">${total}</span> questions, estimated <span class="font-semibold text-rose-600">${mins}</span> minutes`;
+    }
     renderProgress();
     renderQuestion();
-    show('start');
   });
 
-  restartBtn.addEventListener('click', () => {
+  restartBtn.addEventListener('click', (e) => {
+    e.preventDefault();
     qIndex = 0;
     answers.length = 0;
     renderProgress();
     renderQuestion();
   });
 
-  resultRestart.addEventListener('click', () => {
+  resultRestart.addEventListener('click', (e) => {
+    e.preventDefault();
     qIndex = 0;
     answers.length = 0;
+    show('start');
     renderProgress();
     renderQuestion();
-    show('start');
   });
 
   // 初始显示
