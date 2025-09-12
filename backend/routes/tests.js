@@ -165,4 +165,37 @@ router.post('/:projectId/like', async (req, res) => {
   }
 });
 
+// 获取项目的结果类型与分析（英文优先）
+router.get('/:projectId/analyses', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const pr = await query(`
+      SELECT id FROM test_projects WHERE project_id = $1 AND is_active = true
+    `, [projectId]);
+    if (!pr.rows.length) return res.status(404).json({ error: 'Test project not found' });
+
+    const rows = await query(`
+      SELECT type_code, type_name, type_name_en, description, description_en, analysis, analysis_en
+      FROM result_types
+      WHERE project_id = $1
+      ORDER BY type_code ASC
+    `, [pr.rows[0].id]);
+
+    res.json({
+      items: rows.rows.map(r => ({
+        code: r.type_code,
+        name: r.type_name,
+        nameEn: r.type_name_en,
+        description: r.description,
+        descriptionEn: r.description_en,
+        analysis: r.analysis,
+        analysisEn: r.analysis_en
+      }))
+    });
+  } catch (error) {
+    console.error('Error fetching analyses:', error);
+    res.status(500).json({ error: 'Failed to fetch analyses' });
+  }
+});
+
 module.exports = router;

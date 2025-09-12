@@ -28,19 +28,49 @@ class TestLogicService {
     };
   }
 
-  // DISC 5题测试计算
-  scoreDisc(answers) {
+  // 从数据库读取 DISC 分析（英文）与名称（英文）
+  async fetchDiscFromDatabase(projectKey, typeCodes) {
+    try {
+      const result = await query(`
+        SELECT rt.type_code, rt.type_name_en, COALESCE(rt.analysis_en, '') AS analysis_en
+        FROM result_types rt
+        JOIN test_projects tp ON rt.project_id = tp.id
+        WHERE tp.project_id = $1 AND rt.type_code = ANY($2::text[])
+      `, [projectKey, typeCodes]);
+
+      const map = {};
+      result.rows.forEach(r => { map[r.type_code] = r; });
+      return map;
+    } catch (e) {
+      console.error('Error fetching DISC analysis from DB:', e);
+      return null;
+    }
+  }
+
+  // DISC 5题测试计算（优先使用数据库英文分析）
+  async scoreDisc(answers, projectKey = 'disc') {
     const counts = { D: 0, I: 0, S: 0, C: 0 };
     answers.forEach((optIndex, qi) => {
-      const type = this.discMap[qi][optIndex];
-      counts[type] += 1;
+      const type = this.discMap[qi] && this.discMap[qi][optIndex];
+      if (type && counts[type] != null) counts[type] += 1;
     });
-    
+
     const max = Math.max(counts.D, counts.I, counts.S, counts.C);
-    const tops = Object.entries(counts).filter(([k, v]) => v === max).map(([k]) => k);
+    const tops = Object.entries(counts).filter(([_, v]) => v === max).map(([k]) => k);
+
+    // 尝试从数据库读取英文分析
+    const dbMap = await this.fetchDiscFromDatabase(projectKey, tops);
+    if (dbMap) {
+      const names = tops.map(k => (dbMap[k] && dbMap[k].type_name_en) ? dbMap[k].type_name_en : k);
+      const analysis = tops.map(k => (dbMap[k] && dbMap[k].analysis_en) ? dbMap[k].analysis_en : '').filter(Boolean).join('\n\n');
+      if (analysis) {
+        return { counts, tops, summary: names.join(', '), analysis };
+      }
+    }
+
+    // 兜底：使用内置中文
     const summary = tops.map(k => this.discNames[k]).join('、');
     const analysis = tops.map(k => `${this.discNames[k]}：${this.discAnalysis[k]}`).join('\n\n');
-    
     return { counts, tops, summary, analysis };
   }
 
@@ -61,11 +91,11 @@ class TestLogicService {
   async calculateResult(testType, answers) {
     switch (testType) {
       case 'disc':
-        return this.scoreDisc(answers);
+        return await this.scoreDisc(answers, 'disc');
       case 'mgmt':
         return this.scoreMgmt(answers);
       case 'disc40':
-        return this.scoreDisc40(answers);
+        return await this.scoreDisc40(answers);
       case 'mbti':
         return await this.scoreMbti(answers);
       default:
@@ -73,11 +103,9 @@ class TestLogicService {
     }
   }
 
-  // DISC 40题测试计算（简化版）
-  scoreDisc40(answers) {
-    // 这里需要根据实际的DISC 40题计分规则来实现
-    // 暂时使用5题版本的逻辑
-    return this.scoreDisc(answers.slice(0, 5));
+  // DISC 40题测试计算（当前沿用5题映射，取前5题；优先DB英文分析）
+  async scoreDisc40(answers) {
+    return await this.scoreDisc(answers.slice(0, 5), 'disc40');
   }
 
   // MBTI测试计算
