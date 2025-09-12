@@ -312,16 +312,92 @@ Compliant, Meticulous, Methodical, Rigorous, Precise, Perfectionist, Logical`
 
   async function loadMbtiDescriptions() {
     if (mbtiDescriptions) return mbtiDescriptions;
+    // file:// 场景：优先尝试页面内嵌脚本，避免 CORS
+    try {
+      if (typeof location !== 'undefined' && location.protocol === 'file:' && typeof document !== 'undefined') {
+        const embedJson = document.getElementById('mbti-descriptions');
+        if (embedJson && embedJson.textContent) {
+          try {
+            const obj = JSON.parse(embedJson.textContent);
+            if (obj && obj.data) { mbtiDescriptions = obj; return mbtiDescriptions; }
+          } catch (_) {}
+        }
+        const embedText = document.getElementById('mbti-descriptions-text');
+        if (embedText && embedText.textContent) {
+          const parsed = parseMbtiLongText(embedText.textContent);
+          if (parsed) { mbtiDescriptions = { meta: { version: 1 }, data: parsed }; return mbtiDescriptions; }
+        }
+      }
+    } catch(_) {}
     try {
       // 支持绝对与相对路径两种加载方式
       let res = await fetch('/assets/data/mbti-descriptions.json', { cache: 'no-store' });
       if (!res.ok) res = await fetch('assets/data/mbti-descriptions.json', { cache: 'no-store' });
-      if (!res.ok) throw new Error('no desc');
-      mbtiDescriptions = await res.json();
-    } catch (e) {
-      mbtiDescriptions = { meta: { version: 1 }, data: {} };
+      if (res && res.ok) {
+        const raw = await res.text();
+        // 尝试严格 JSON 解析
+        try {
+          mbtiDescriptions = JSON.parse(raw);
+          return mbtiDescriptions;
+        } catch (_) {
+          // 若不是合法 JSON，尝试按长文格式解析
+          const parsed = parseMbtiLongText(raw);
+          if (parsed) {
+            mbtiDescriptions = { meta: { version: 1 }, data: parsed };
+            return mbtiDescriptions;
+          }
+        }
+      }
+      // 再尝试 .txt 版本
+      let resTxt = await fetch('/assets/data/mbti-descriptions.txt', { cache: 'no-store' }).catch(()=>null);
+      if (!resTxt || !resTxt.ok) resTxt = await fetch('assets/data/mbti-descriptions.txt', { cache: 'no-store' }).catch(()=>null);
+      if (resTxt && resTxt.ok) {
+        const txt = await resTxt.text();
+        const parsed = parseMbtiLongText(txt);
+        if (parsed) {
+          mbtiDescriptions = { meta: { version: 1 }, data: parsed };
+          return mbtiDescriptions;
+        }
+      }
+    } catch (_) {
+      // ignore and use fallback below
     }
+    // Fallback 内置16型简版完整分析，确保 file:// 也可展示
+    mbtiDescriptions = { meta: { version: 1 }, data: {
+        ISTJ: "ISTJ (Introverted • Sensing • Thinking • Judging)\n\nSerious, reliable, structured, and pragmatic. Value facts and proven methods. Decide with logic; execute稳健且守时。\n\nStrengths: organization, detail, responsibility, persistence.\nWatchouts: rigidity, under-valuing others’ feelings, resisting change.\n\nFit: accounting, engineering, law, administration, operations.",
+        ISFJ: "ISFJ (Introverted • Sensing • Feeling • Judging)\n\nQuiet, considerate, dependable, and caring. Remember meaningful details; provide实在的关照；维护秩序与传统。\n\nStrengths: loyalty, thoroughness, patience, service mindset.\nWatchouts: conflict avoidance, self-effacement, rigidity to routine.\n\nFit: education, healthcare, office admin, customer service.",
+        INFJ: "INFJ (Introverted • iNtuitive • Feeling • Judging)\n\nInsightful idealist with values-driven determination. See patterns and long-term meaning; care深切并愿意引导。\n\nStrengths: vision, empathy, dedication, persuasive guidance.\nWatchouts: perfectionism, overextension, difficulty delegating.\n\nFit: education, counseling, writing, R&D, organizational development.",
+        INTJ: "INTJ (Introverted • iNtuitive • Thinking • Judging)\n\nStrategic, independent, and decisive. 构建体系与长期方案；综合复杂信息并优化效率。\n\nStrengths: systems thinking, planning, focus, high standards.\nWatchouts: aloofness, impatience with ambiguity/inefficiency.\n\nFit: science, architecture, engineering, product/strategy.",
+        ISTP: "ISTP (Introverted • Sensing • Thinking • Perceiving)\n\nCalm, analytical troubleshooter. Understand how things work;在压力下迅速定位问题并解决。\n\nStrengths: practicality, adaptability, hands‑on skill, crisis composure.\nWatchouts: detachment,短期导向、表达情感困难。\n\nFit: engineering, forensics, operations, field tech, entrepreneurship.",
+        ISFP: "ISFP (Introverted • Sensing • Feeling • Perceiving)\n\nGentle, warm, authentic, and present-focused. 以行动关怀他人，追求个人与环境的和谐与美感。\n\nStrengths: empathy, flexibility, aesthetics, loyalty to values.\nWatchouts: 不善拒绝、过度自责、回避冲突。\n\nFit: design, healthcare support, arts, artisan crafts, service.",
+        INFP: "INFP (Introverted • iNtuitive • Feeling • Perceiving)\n\nIdealistic, imaginative, values-driven. 寻找意义与可能性，促进自我与他人潜能发展。\n\nStrengths: creativity, empathy, inspiration, integrity.\nWatchouts: 犹豫不决、把完美置于行动之前。\n\nFit: counseling, writing, education, media, social impact.",
+        INTP: "INTP (Introverted • iNtuitive • Thinking • Perceiving)\n\nTheoretical, logical, independent. 喜爱模型与框架；发现矛盾并重构思路。\n\nStrengths: deep analysis, innovation, problem modeling.\nWatchouts: 过度理论化、忽视落地细节与人际。\n\nFit: research, algorithms, architecture (systems), analysis.",
+        ESTP: "ESTP (Extraverted • Sensing • Thinking • Perceiving)\n\nEnergetic, pragmatic, action‑oriented. 面向实时情境快速出手解决问题并享受挑战。\n\nStrengths: adaptability, realism, decisive action.\nWatchouts: 冒险、忽略准备与长期影响。\n\nFit: sales, trading, operations, emergency response, sports.",
+        ESFP: "ESFP (Extraverted • Sensing • Feeling • Perceiving)\n\nFriendly, lively, people‑centered. 带来氛围、迅速回应他人需要、促进协作。\n\nStrengths: warmth, engagement, practicality.\nWatchouts: 过度社交/放松、回避复杂事。\n\nFit: events, hospitality, healthcare support, retail, performance.",
+        ENFP: "ENFP (Extraverted • iNtuitive • Feeling • Perceiving)\n\nEnthusiastic, imaginative, inspiring. 连接人和点子，激发可能性与行动。\n\nStrengths: creativity, empathy, persuasion, vision.\nWatchouts: 分散、善始难终、忽视细节。\n\nFit: product evangelism, education, media/marketing, coaching.",
+        ENTP: "ENTP (Extraverted • iNtuitive • Thinking • Perceiving)\n\nQuick, inventive, challenging. 发现机会、辩证推演、将概念转为策略。\n\nStrengths: ingenuity, flexibility, big‑picture problem solving.\nWatchouts: 好辩、忽视常规、缺少收尾。\n\nFit: entrepreneurship, strategy, consulting, innovation roles.",
+        ESTJ: "ESTJ (Extraverted • Sensing • Thinking • Judging)\n\nPractical organizer and decisive executor. 设定标准、管理流程并确保结果。\n\nStrengths: structure, discipline, accountability.\nWatchouts: 刻板、低估情感因素。\n\nFit: operations, project/program management, administration.",
+        ESFJ: "ESFJ (Extraverted • Sensing • Feeling • Judging)\n\nWarm, responsible, cooperative. 构建和谐、传递关怀并维护传统。\n\nStrengths: reliability, service, coordination.\nWatchouts: 取悦他人、回避冲突。\n\nFit: education, healthcare, HR, client service, community.",
+        ENFJ: "ENFJ (Extraverted • iNtuitive • Feeling • Judging)\n\nEmpathic guide and organizer. 发展他人潜能、对齐团队并以价值观领导。\n\nStrengths: communication, facilitation, mentoring.\nWatchouts: 过度承担、对评价敏感。\n\nFit: leadership development, education, consulting, advocacy.",
+        ENTJ: "ENTJ (Extraverted • iNtuitive • Thinking • Judging)\n\nStrategic leader and change driver. 设计系统、推进变革、设定宏大目标并落地。\n\nStrengths: vision, execution, decision.\nWatchouts: 急躁、忽视情感影响。\n\nFit: executive leadership, strategy, large‑scale programs."
+      } };
     return mbtiDescriptions;
+  }
+
+  // 将 PRD/文本格式的 16 型长文解析为 { code: content }
+  function parseMbtiLongText(raw) {
+    if (!raw || typeof raw !== 'string') return null;
+    const text = raw.replace(/\r\n?/g, '\n');
+    const codes = ['ISTJ','ISFJ','INFJ','INTJ','ISTP','ISFP','INFP','INTP','ESTP','ESFP','ENFP','ENTP','ESTJ','ESFJ','ENFJ','ENTJ'];
+    const pattern = /(\n|^)(\d+、)?(ISTJ|ISFJ|INFJ|INTJ|ISTP|ISFP|INFP|INTP|ESTP|ESFP|ENFP|ENTP|ESTJ|ESFJ|ENFJ|ENTJ)\b([\s\S]*?)(?=(\n\d+、)?(ISTJ|ISFJ|INFJ|INTJ|ISTP|ISFP|INFP|INTP|ESTP|ESFP|ENFP|ENTP|ESTJ|ESFJ|ENFJ|ENTJ)\b|$)/g;
+    const map = {};
+    let m;
+    while ((m = pattern.exec(text)) !== null) {
+      const code = m[3];
+      const body = (m[4] || '').trim();
+      if (codes.includes(code) && body.length > 0) map[code] = body;
+    }
+    return Object.keys(map).length ? map : null;
   }
 
   async function scoreMbti(answers) {

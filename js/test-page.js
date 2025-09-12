@@ -3,32 +3,131 @@
   const id = params.get('id');
   if (!id) { location.replace('index.html'); return; }
 
-  let data;
+  // 使用API服务获取项目数据
+  let project;
   try {
-    // file:// 优先使用相对路径
-    let res = await fetch('assets/data/tests.json', { cache: 'no-store' });
-    if (!res.ok) throw new Error('Network error');
-    data = await res.json();
+    project = await window.ApiService.getTestProject(id);
   } catch (e) {
-    // file:// 下回退至内置数据
-    data = { projects: [
-      { id:'mbti', name:'MBTI Career Personality Test', image:'assets/images/mbti-career personality-test.png',
-        intro:'The MBTI personality theory is based on the classification of psychological types by Carl Jung, later developed by Katharine Cook Briggs and Isabel Briggs Myers. It helps explain why people have different interests, excel at different jobs, and sometimes misunderstand each other. For decades, MBTI has been used worldwide by couples, teachers and students, young people choosing careers, and organizations to improve relationships, team communication, organizational building and diagnostics. In the Fortune 500, 80% of companies have experience applying MBTI.',
-        type:'mbti' },
-      { id:'disc', name:'DISC性格测试', image:'assets/images/discceshi.png',
-        intro:'0世纪20年代，美国心理学家威廉·莫尔顿·马斯顿创建了一个理论来解释人的情绪反应，在此之前，这种工作主要局限在对于精神病患者或精神失常人群的研究，而马斯顿博士则希望扩大这个研究范围，以运用于心理健康的普通人群，因此，马斯顿博士将他的理论构建为一个体系，即 The Emotions of Normal People——“正常人的情绪”。\n\n为了检验他的理论，马斯顿博士需要采用某种心理测评的方式来衡量人群的情绪反映——“人格特征”，因此，他采用了四个他认为是非常典型的人格特质因子，即 Dominance－支配，Influence－影响，Steady－稳健，以及 Compliance－服从。而 DISC，正是代表了这四个英文单词的首字母。在1928年，马斯顿博士正是在他的“正常人的情绪”一书中，提出了 DISC 测评，以及理论说明。\n\n目前，DISC 理论已被广泛应用于世界500强企业的人才招聘，历史悠久、专业性强、权威性高。',
-        type:'disc' },
-      { id:'mgmt', name:'管理能力测试', image:'assets/images/guanli.png',
-        intro:'管理能力自测是一个帮助个人评估和提升其管理技能的重要工具。通过自测，管理者可以识别自己的优势和需要改进的领域，从而为职业发展制定更有效的计划。',
-        type:'mgmt' },
-      { id:'disc40', name:'DISC Personality Test', image:'assets/images/disc-personality-test.png',
-        intro:'In the 1920s, American psychologist William Moulton Marston developed a theory to explain human emotional responses. Prior to this, such research had been largely confined to studies of psychiatric patients or individuals with mental disorders. Dr. Marston sought to broaden the scope of this research to apply it to the general population with normal mental health. Consequently, he structured his theory into a systematic framework titled The Emotions of Normal People.\n\nTo test his theory, Dr. Marston needed a psychological assessment method to measure emotional responses—specifically, “personality traits.” He identified four highly representative personality factors: Dominance, Influence, Steadiness, and Compliance. DISC represents the initial letters of these four English words. In 1928, Dr. Marston formally introduced the DISC assessment and its theoretical framework within his book The Emotions of Normal People.\n\nToday, DISC theory is extensively applied in talent recruitment by Fortune 500 companies worldwide, distinguished by its longstanding history, strong professionalism, and high authority.', type:'disc40' }
-    ] };
+    console.warn('Failed to fetch project from API, using fallback data', e);
+    // 回退到内置数据
+    const fallbackProjects = window.ApiService.getFallbackProjects();
+    project = fallbackProjects.find(p => p.id === id);
   }
-  const project = data.projects.find(p => p.id === id);
   if (!project) { location.replace('index.html'); return; }
 
   const { $, $all, loadLocal, saveLocal, getRandomLikes } = window.Utils;
+
+  // MBTI分析格式化函数
+  function formatMbtiAnalysis(rawAnalysis, mbtiType) {
+    if (!rawAnalysis) return '<p class="text-gray-500">No analysis available.</p>';
+    
+    // 清理和分割内容
+    const lines = rawAnalysis.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+    
+    let html = '';
+    let currentSection = '';
+    let inBulletList = false;
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      
+      // 检测标题
+      if (line.match(/^(A brief description|Their best|Personality traits|Other.*opinions?|Potential areas|General|Specific|Suitable|Contribution|Preferred|Development)/i)) {
+        if (inBulletList) {
+          html += '</ul>';
+          inBulletList = false;
+        }
+        currentSection = line;
+        html += `<div class="mb-6">
+          <h3 class="text-xl font-bold text-gray-800 mb-4 pb-2 border-b-2 border-blue-200">${line}</h3>`;
+      }
+      // 检测子标题
+      else if (line.match(/^(People of the|The opinions|For .* types?|Under .* pressure|This type|Such people|Your characteristics|Your best|Strengths|Potential flaws|Development)/i)) {
+        if (inBulletList) {
+          html += '</ul>';
+          inBulletList = false;
+        }
+        html += `<h4 class="text-lg font-semibold text-gray-700 mt-6 mb-3">${line}</h4>`;
+      }
+      // 检测列表项
+      else if (line.match(/^[•▪▫▪▫\u2713\u2714\u2022\u25CF\u25CB\u25A0\u25A1]/) || line.match(/^[A-Za-z]\u2022/)) {
+        if (!inBulletList) {
+          html += '<ul class="space-y-3 ml-6">';
+          inBulletList = true;
+        }
+        const cleanLine = line.replace(/^[•▪▫▪▫\u2713\u2714\u2022\u25CF\u25CB\u25A0\u25A1\s]+/, '').trim();
+        html += `<li class="flex items-start">
+          <span class="text-blue-500 mr-3 mt-1 flex-shrink-0">•</span>
+          <span class="text-gray-700">${cleanLine}</span>
+        </li>`;
+      }
+      // 检测段落结束
+      else if (line === '' || line.match(/^[A-Z][a-z]+ [a-z]+ [a-z]+ type$/)) {
+        if (inBulletList) {
+          html += '</ul>';
+          inBulletList = false;
+        }
+        if (currentSection && line === '') {
+          html += '</div>';
+          currentSection = '';
+        }
+      }
+      // 普通段落
+      else {
+        if (inBulletList) {
+          html += '</ul>';
+          inBulletList = false;
+        }
+        
+        // 高亮MBTI类型代码
+        let processedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-rose-600">$1</strong>');
+        processedLine = processedLine.replace(new RegExp(`\\b${mbtiType}\\b`, 'g'), `<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-md font-semibold">${mbtiType}</span>`);
+        
+        html += `<p class="text-gray-700 leading-relaxed mb-4">${processedLine}</p>`;
+      }
+    }
+    
+    // 关闭未关闭的标签
+    if (inBulletList) {
+      html += '</ul>';
+    }
+    if (currentSection) {
+      html += '</div>';
+    }
+    
+    return html;
+  }
+
+  // 将原始 MBTI 文本粗加工为 Markdown：按常见关键词插入多级标题与列表符号
+  function toMarkdownWithHeadings(raw) {
+    if (!raw) return '';
+    const lines = String(raw).split('\n');
+    const out = [];
+    const headingRules = [
+      { re: /^(A\s*brief\s*description|Brief\s*Description)\b/i, h: '# A Brief Description' },
+      { re: /^(Personality\s*traits)\b/i, h: '## Personality Traits' },
+      { re: /^(Their\s*best)\b/i, h: '## Their Best' },
+      { re: /^(Strengths)\b/i, h: '## Strengths' },
+      { re: /^(Potential\s*(areas|flaws).*)\b/i, h: '## Potential Areas' },
+      { re: /^(Suitable\s*(occupations|jobs)?)\b/i, h: '## Suitable Occupations' },
+      { re: /^(Contribution)\b/i, h: '## Contribution' },
+      { re: /^(Preferred\s*(work|environment))\b/i, h: '## Preferred Work Environment' },
+      { re: /^(Development\s*(suggestions?|advice))\b/i, h: '## Development Suggestions' }
+    ];
+    for (let rawLine of lines) {
+      const line = rawLine.trim();
+      if (!line) { out.push(''); continue; }
+      const rule = headingRules.find(r => r.re.test(line));
+      if (rule) { out.push(rule.h); continue; }
+      // 列表符号归一化
+      if (/^[•▪▫\u2713\u2714\u2022\u25CF\u25CB\u25A0\u25A1\-\*]/.test(line)) {
+        out.push('- ' + line.replace(/^[•▪▫\u2713\u2714\u2022\u25CF\u25CB\u25A0\u25A1\-\*]\s*/, ''));
+        continue;
+      }
+      out.push(line);
+    }
+    return out.join('\n').replace(/\n{3,}/g, '\n\n');
+  }
 
   // 元素
   const breadcrumbProject = $('#breadcrumb-project');
@@ -63,8 +162,24 @@
 
   // 初始化项目信息
   breadcrumbProject.textContent = project.name;
-  projectImage.src = project.image;
+  // 统一从 assets/images 取图：优先按项目 id 匹配本地图，其次使用返回图，再退回 logo
+  (function(){
+    var map = {
+      mbti: 'assets/images/mbti-career-personality-test.png',
+      disc: 'assets/images/discceshi.png',
+      disc40: 'assets/images/disc-personality-test.png',
+      mgmt: 'assets/images/guanli.png'
+    };
+    var preferred = (project && project.id && map[project.id]) ? map[project.id] : '';
+    projectImage.src = preferred || project.image || 'assets/images/logo.png';
+  })();
   projectImage.alt = project.name;
+  try {
+    projectImage.onerror = function(){
+      projectImage.onerror = null;
+      projectImage.src = 'assets/images/mbti-career%20personality-test.png';
+    };
+  } catch(_) {}
   projectTitle.textContent = project.name;
   projectIntro.textContent = project.intro || '';
   // 对 MBTI 项目，尝试加载完整介绍文件（若存在）
@@ -107,17 +222,29 @@
 
   const testedKey = `tested_${project.id}`;
   const likesKey = `likes_${project.id}`;
-  const tested = loadLocal(testedKey, '1.1W+');
-  let likes = loadLocal(likesKey, getRandomLikes());
+  
+  // 使用API数据或本地存储
+  const tested = project.testedCount || loadLocal(testedKey, '1.1W+');
+  let likes = project.likes || loadLocal(likesKey, getRandomLikes());
+  
   testedCount.textContent = tested;
   likeCount.textContent = likes;
 
-  likeBtn.addEventListener('click', () => {
-    likes += 1;
-    likeCount.textContent = likes;
+  likeBtn.addEventListener('click', async () => {
+    try {
+      // 尝试通过API更新点赞数
+      const result = await window.ApiService.likeTestProject(project.id);
+      likes = result.likes;
+      likeCount.textContent = likes;
+    } catch (error) {
+      // API失败时使用本地存储
+      likes += 1;
+      likeCount.textContent = likes;
+      saveLocal(likesKey, likes);
+    }
+    
     likeBtn.classList.add('animate-pulse');
     setTimeout(() => likeBtn.classList.remove('animate-pulse'), 300);
-    saveLocal(likesKey, likes);
   });
 
   // 视图状态
@@ -149,13 +276,40 @@
     return ensureLogicPromise;
   }
 
-  // 测试进程（实时获取题库，避免初始化时机问题）
-  function getQList() {
+  // 测试进程（优先从API获取，回退到本地逻辑）
+  let cachedQuestions = null;
+  
+  async function getQList() {
+    if (cachedQuestions) return cachedQuestions;
+    
+    try {
+      // 尝试从API获取题目
+      const questions = await window.ApiService.getTestQuestions(project.id);
+      if (questions && questions.length > 0) {
+        // 一致性校验：MBTI 必须 93题且每题2选项(A/B)
+        if (project && project.id === 'mbti') {
+          const okLen = questions.length === 93;
+          const okOpts = questions.every(q => Array.isArray(q.opts) && q.opts.length === 2);
+          if (!okLen || !okOpts) {
+            console.warn('MBTI questions integrity check failed', { okLen, okOpts, len: questions.length });
+          }
+        }
+        cachedQuestions = questions;
+        return questions;
+      }
+    } catch (error) {
+      console.warn('Failed to fetch questions from API, using local logic', error);
+    }
+    
+    // 回退到本地逻辑
     try {
       if (!(window.TestLogic && typeof window.TestLogic.getQuestions === 'function')) return [];
       let t = project && project.type ? project.type : '';
       let qs = window.TestLogic.getQuestions(t) || [];
-      if (qs.length) return qs;
+      if (qs.length) {
+        cachedQuestions = qs;
+        return qs;
+      }
       // 兼容性兜底：按 id 猜测类型
       const fallbackTypeById = {
         disc: 'disc',
@@ -165,13 +319,19 @@
       };
       if (project && project.id && fallbackTypeById[project.id]) {
         qs = window.TestLogic.getQuestions(fallbackTypeById[project.id]) || [];
-        if (qs.length) return qs;
+        if (qs.length) {
+          cachedQuestions = qs;
+          return qs;
+        }
       }
       // 最后再尝试常用题库，确保不为空
       const tryTypes = ['mbti','disc40','disc','mgmt'];
       for (var i=0;i<tryTypes.length;i++) {
         qs = window.TestLogic.getQuestions(tryTypes[i]) || [];
-        if (qs.length) return qs;
+        if (qs.length) {
+          cachedQuestions = qs;
+          return qs;
+        }
       }
       return [];
     } catch(_) { return []; }
@@ -180,14 +340,14 @@
   const answers = [];
 
   // 统计信息：题数与预计时长（按每题约12秒估算）
-  const totalQ = getQList().length;
+  const totalQ = await getQList().then(q => q.length).catch(() => 0);
   const estMinutes = Math.max(1, Math.round((totalQ * 12) / 60));
   if (infoLine) {
     infoLine.innerHTML = `Total <span class="font-semibold text-rose-600">${totalQ}</span> questions, estimated <span class="font-semibold text-rose-600">${estMinutes}</span> minutes`;
   }
 
-  function renderProgress() {
-    const total = getQList().length;
+  async function renderProgress() {
+    const total = (await getQList()).length;
     const done = Math.min(qIndex, total);
     const pct = total ? Math.round(done / total * 100) : 0;
     progressBar.style.width = pct + '%';
@@ -196,7 +356,7 @@
 
   async function renderQuestion() {
     await ensureTestLogicLoaded();
-    const qlist = getQList();
+    const qlist = await getQList();
     // 若题库为空，给出友好提示
     if (!qlist || !qlist.length) {
       questionTitle.textContent = 'Question set failed to load. Please open with a local server and try again.';
@@ -205,18 +365,49 @@
     }
     const q = qlist[qIndex];
     if (!q) { // 结束
+      // 计算测试结果
       const result = await window.TestLogic.score(project.type, answers);
+      
+      // 尝试提交结果到API并获取完整分析
+      let apiResult = null;
+      try {
+        const sessionId = window.ApiService.generateSessionId();
+        apiResult = await window.ApiService.submitTestResult(project.id, answers, sessionId);
+        console.log('Test result submitted to API successfully');
+      } catch (error) {
+        console.warn('Failed to submit test result to API:', error);
+        // 继续使用本地计算，即使API提交失败
+      }
+      
+      // 优先使用API返回的结果，如果没有则使用本地计算结果
+      const finalResult = apiResult && apiResult.result ? apiResult.result : result;
+      
       resultTitle.textContent = project.name;
-      resultImage.src = project.image;
+      (function(){
+        var map = {
+          mbti: 'assets/images/mbti-career-personality-test.png',
+          disc: 'assets/images/discceshi.png',
+          disc40: 'assets/images/disc-personality-test.png',
+          mgmt: 'assets/images/guanli.png'
+        };
+        var preferred = (project && project.id && map[project.id]) ? map[project.id] : '';
+        resultImage.src = preferred || project.image || 'assets/images/logo.png';
+      })();
+      try {
+        resultImage.onerror = function(){
+          resultImage.onerror = null;
+          resultImage.src = 'assets/images/mbti-career%20personality-test.png';
+        };
+      } catch(_) {}
       if (project.type === 'disc' || project.type === 'disc40') {
-        resultSummary.textContent = result.summary; // e.g., "Dominance, Influence" for ties
+        resultSummary.textContent = finalResult.summary; // e.g., "Dominance, Influence" for ties
       } else if (project.type === 'mbti') {
         // Show MBTI code prominently
-        resultSummary.innerHTML = `After testing, you are <span class="font-semibold text-blue-700">${result.summary}</span> personality type.`;
+        resultSummary.innerHTML = `After testing, you are <span class="font-semibold text-blue-700">${finalResult.summary}</span> personality type.`;
       } else {
-        resultSummary.textContent = `Total: ${result.total} - ${result.summary}`;
+        resultSummary.textContent = `Total: ${finalResult.total} - ${finalResult.summary}`;
       }
-      const rawAnalysis = result.analysis || '';
+      const rawAnalysis = finalResult.analysis || '';
       if (project.type === 'disc' || project.type === 'disc40') {
         // Split paragraphs by double newlines for better readability
         const parts = rawAnalysis.split(/\n\n+/).map(s => s.trim()).filter(Boolean);
@@ -224,28 +415,44 @@
           const h = p.replace(/^(Dominance|Influence|Steadiness|Compliance)/, '<span class="analysis-key">$1</span>');
           return `<p>${h}</p>`;
         }).join('');
+        try { resultAnalysis.classList.add('analysis-rich'); } catch(_) {}
         resultAnalysis.innerHTML = html;
       } else if (project.type === 'mbti') {
-        // For MBTI, highlight the type code
-        const html = rawAnalysis.replace(/\*\*(.*?)\*\*/g, '<strong class="text-rose-600">$1</strong>');
-        resultAnalysis.innerHTML = `<p>${html.replace(/\n/g,'<br>')}</p>`;
+        // 确保应用专用样式容器
+        try { resultAnalysis.classList.add('mbti-analysis'); } catch(_) {}
+        try { resultAnalysis.classList.add('analysis-rich'); } catch(_) {}
+        // 始终优先用 Markdown（若库已加载），在渲染前先进行“加标题”的粗加工
+        try {
+          if (window.marked && window.DOMPurify) {
+            const enhanced = toMarkdownWithHeadings(rawAnalysis || '');
+            const mdHtml = window.marked.parse(enhanced);
+            resultAnalysis.innerHTML = window.DOMPurify.sanitize(mdHtml);
+          } else {
+            resultAnalysis.innerHTML = formatMbtiAnalysis(rawAnalysis, finalResult.summary);
+          }
+        } catch(_) {
+          resultAnalysis.innerHTML = formatMbtiAnalysis(rawAnalysis, finalResult.summary);
+        }
       } else {
         // Default: paragraphize by double newlines
         const parts = rawAnalysis.split(/\n\n+/).map(s => s.trim()).filter(Boolean);
+        try { resultAnalysis.classList.add('analysis-rich'); } catch(_) {}
         resultAnalysis.innerHTML = parts.map(p => `<p>${p.replace(/\n/g,'<br>')}</p>`).join('');
       }
       show('result');
       return;
     }
-    questionTitle.textContent = q.t;
+    questionTitle.textContent = q.t || q.text || '';
     options.innerHTML = '';
-    q.opts.forEach((text, idx) => {
+    q.opts.forEach((opt, idx) => {
+      const text = typeof opt === 'string' ? opt : (opt.text || '');
       const btn = document.createElement('button');
       btn.className = 'w-full text-left px-4 py-3 rounded border hover:bg-gray-50';
       btn.textContent = text;
       btn.addEventListener('click', () => {
         // 保存答案
-        answers.push(idx);
+        var answerIndex = (opt && typeof opt.n === 'number') ? (opt.n - 1) : idx;
+        answers.push(answerIndex);
         qIndex += 1;
         renderProgress();
         renderQuestion();

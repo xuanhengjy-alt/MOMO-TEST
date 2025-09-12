@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MOMO TEST - 测试首页</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="icon" href="assets/images/logo.png" type="image/png" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body class="bg-gray-50 text-gray-900">
@@ -41,6 +42,7 @@
 
   <script src="js/i18n.js"></script>
   <script src="js/utils.js"></script>
+  <script src="js/api.js"></script>
   <script>
     // inline fallback to avoid missing file issues under file://
     try { document.write(''); } catch(_) {}
@@ -68,9 +70,23 @@
       // 语言切换
       var zh = document.getElementById('lang-zh');
       var en = document.getElementById('lang-en');
-      function updateText(){ I18N && I18N.applyI18n(document); }
-      if (zh) zh.onclick = function(){ I18N.setLang('zh-CN'); updateText(); };
-      if (en) en.onclick = function(){ I18N.setLang('en'); updateText(); };
+      function updateText(){ 
+        if (window.I18N && window.I18N.applyI18n) {
+          window.I18N.applyI18n(document); 
+        }
+      }
+      if (zh) zh.onclick = function(){ 
+        if (window.I18N && window.I18N.setLang) {
+          window.I18N.setLang('zh-CN'); 
+          updateText(); 
+        }
+      };
+      if (en) en.onclick = function(){ 
+        if (window.I18N && window.I18N.setLang) {
+          window.I18N.setLang('en'); 
+          updateText(); 
+        }
+      };
       updateText();
     })();
   </script>
