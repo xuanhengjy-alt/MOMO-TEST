@@ -3,14 +3,14 @@ echo 🚀 Starting MOMO TEST...
 
 REM 启动后端服务
 echo 🔧 Starting backend server...
-start "Backend Server" cmd /k "cd backend && node server.js"
+start "Backend Server" cmd /k "cd /d %~dp0backend && node server.js"
 
 REM 等待后端启动
 timeout /t 3 /nobreak >nul
 
 REM 启动前端服务
 echo 🌐 Starting frontend server...
-start "Frontend Server" cmd /k "python -m http.server 8000"
+start "Frontend Server" cmd /k "cd /d %~dp0 && python -m http.server 8000"
 
 echo ✅ MOMO TEST started!
 echo 📱 Frontend: http://localhost:8000

@@ -11,22 +11,8 @@
       "id": "disc40",
       "name": "DISC Personality Test",
       "image": "assets/images/disc-personality-test.png",
-      "intro": "In the 1920s, American psychologist William Moulton Marston developed a theory to explain human emotional responses. Prior to this, such research had been largely confined to studies of psychiatric patients or individuals with mental disorders. Dr. Marston sought to broaden the scope of this research to apply it to the general population with normal mental health. Consequently, he structured his theory into a systematic framework titled The Emotions of Normal People.\nTo test his theory, Dr. Marston needed a psychological assessment method to measure emotional responses—specifically, “personality traits.” He identified four highly representative personality factors: Dominance, Influence, Steadiness, and Compliance. DISC represents the initial letters of these four English words. In 1928, Dr. Marston formally introduced the DISC assessment and its theoretical framework within his book The Emotions of Normal People.\nToday, DISC theory is extensively applied in talent recruitment by Fortune 500 companies worldwide, distinguished by its longstanding history, strong professionalism, and high authority.",
+      "intro": "In the 1920s, American psychologist William Moulton Marston developed a theory to explain human emotional responses. Prior to this, such research had been largely confined to studies of psychiatric patients or individuals with mental disorders. Dr. Marston sought to broaden the scope of this research to apply it to the general population with normal mental health. Consequently, he structured his theory into a systematic framework titled The Emotions of Normal People.\nTo test his theory, Dr. Marston needed a psychological assessment method to measure emotional responses—specifically, "personality traits." He identified four highly representative personality factors: Dominance, Influence, Steadiness, and Compliance. DISC represents the initial letters of these four English words. In 1928, Dr. Marston formally introduced the DISC assessment and its theoretical framework within his book The Emotions of Normal People.\nToday, DISC theory is extensively applied in talent recruitment by Fortune 500 companies worldwide, distinguished by its longstanding history, strong professionalism, and high authority.",
       "type": "disc40"
-    },
-    {
-      "id": "disc",
-      "name": "DISC性格测试",
-      "image": "assets/images/discceshi.png",
-      "intro": "20世纪20年代，美国心理学家威廉·莫尔顿·马斯顿创建了一个理论来解释人的情绪反应，在此之前，这种工作主要局限在对于精神病患者或精神失常人群的研究，而马斯顿博士则希望扩大这个研究范围，以运用于心理健康的普通人群，因此，马斯顿博士将他的理论构建为一个体系，即 The Emotions of Normal People——“正常人的情绪”。为了检验他的理论，马斯顿博士需要采用某种心理测评的方式来衡量人群的情绪反映——“人格特征”，因此，他采用了四个他认为是非常典型的人格特质因子，即 Dominance－支配，Influence－影响，Steady－稳健，以及 Compliance－服从。而 DISC，正是代表了这四个英文单词的首字母。在1928年，马斯顿博士正是在他的“正常人的情绪”一书中，提出了 DISC 测评，以及理论说明。目前，DISC 理论已被广泛应用于世界500强企业的人才招聘，历史悠久、专业性强、权威性高。",
-      "type": "disc"
-    },
-    {
-      "id": "mgmt",
-      "name": "管理能力测试",
-      "image": "assets/images/guanli.png",
-      "intro": "管理能力自测是一个帮助个人评估和提升其管理技能的重要工具。通过自测，管理者可以识别自己的优势和需要改进的领域，从而为职业发展制定更有效的计划。",
-      "type": "mgmt"
     }
   ]
 }

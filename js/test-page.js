@@ -104,6 +104,7 @@
     const lines = String(raw).split('\n');
     const out = [];
     const headingRules = [
+      // MBTI 相关标题
       { re: /^(A\s*brief\s*description|Brief\s*Description)\b/i, h: '# A Brief Description' },
       { re: /^(Personality\s*traits)\b/i, h: '## Personality Traits' },
       { re: /^(Their\s*best)\b/i, h: '## Their Best' },
@@ -112,7 +113,14 @@
       { re: /^(Suitable\s*(occupations|jobs)?)\b/i, h: '## Suitable Occupations' },
       { re: /^(Contribution)\b/i, h: '## Contribution' },
       { re: /^(Preferred\s*(work|environment))\b/i, h: '## Preferred Work Environment' },
-      { re: /^(Development\s*(suggestions?|advice))\b/i, h: '## Development Suggestions' }
+      { re: /^(Development\s*(suggestions?|advice))\b/i, h: '## Development Suggestions' },
+      // DISC 相关标题
+      { re: /^(Dominance|Influence|Steadiness|Compliance)\b/i, h: '## $1' },
+      { re: /^(在情感方面|在情感上)\b/i, h: '### Emotional Aspects' },
+      { re: /^(在工作方面|在工作上)\b/i, h: '### Work Aspects' },
+      { re: /^(在人际关系方面|在人际关系上)\b/i, h: '### Interpersonal Relationships' },
+      { re: /^(描述性词语|特点|特征)\b/i, h: '### Key Characteristics' },
+      { re: /^(高.*型.*特质.*人|高.*型.*人)\b/i, h: '## $1' }
     ];
     for (let rawLine of lines) {
       const line = rawLine.trim();
@@ -166,9 +174,7 @@
   (function(){
     var map = {
       mbti: 'assets/images/mbti-career-personality-test.png',
-      disc: 'assets/images/discceshi.png',
-      disc40: 'assets/images/disc-personality-test.png',
-      mgmt: 'assets/images/guanli.png'
+      disc40: 'assets/images/disc-personality-test.png'
     };
     var preferred = (project && project.id && map[project.id]) ? map[project.id] : '';
     projectImage.src = preferred || project.image || 'assets/images/logo.png';
@@ -208,17 +214,7 @@
     }
   }
 
-  // Pretty URL for DISC Personality Test: domain + project name (slug)
-  if (project && project.id === 'disc40') {
-    try {
-      const slug = project.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-      const baseDir = location.pathname.replace(/[^\/]+$/, '');
-      const prettyPath = baseDir + slug;
-      if (location.pathname !== prettyPath) {
-        history.replaceState(null, '', prettyPath);
-      }
-    } catch (_) {}
-  }
+  // Disable pretty URL rewriting for static server to avoid 404 on relative assets under nested paths
 
   const testedKey = `tested_${project.id}`;
   const likesKey = `likes_${project.id}`;
@@ -227,19 +223,19 @@
   const tested = project.testedCount || loadLocal(testedKey, '1.1W+');
   let likes = project.likes || loadLocal(likesKey, getRandomLikes());
   
-  testedCount.textContent = tested;
-  likeCount.textContent = likes;
+  testedCount.textContent = formatNumber(tested);
+  likeCount.textContent = formatNumber(likes);
 
   likeBtn.addEventListener('click', async () => {
     try {
       // 尝试通过API更新点赞数
       const result = await window.ApiService.likeTestProject(project.id);
       likes = result.likes;
-      likeCount.textContent = likes;
+      likeCount.textContent = formatNumber(likes);
     } catch (error) {
       // API失败时使用本地存储
       likes += 1;
-      likeCount.textContent = likes;
+      likeCount.textContent = formatNumber(likes);
       saveLocal(likesKey, likes);
     }
     
@@ -386,9 +382,7 @@
       (function(){
         var map = {
           mbti: 'assets/images/mbti-career-personality-test.png',
-          disc: 'assets/images/discceshi.png',
-          disc40: 'assets/images/disc-personality-test.png',
-          mgmt: 'assets/images/guanli.png'
+          disc40: 'assets/images/disc-personality-test.png'
         };
         var preferred = (project && project.id && map[project.id]) ? map[project.id] : '';
         resultImage.src = preferred || project.image || 'assets/images/logo.png';
@@ -409,14 +403,22 @@
       }
       const rawAnalysis = finalResult.analysis || '';
       if (project.type === 'disc' || project.type === 'disc40') {
-        // Split paragraphs by double newlines for better readability
-        const parts = rawAnalysis.split(/\n\n+/).map(s => s.trim()).filter(Boolean);
-        const html = parts.map(p => {
-          const h = p.replace(/^(Dominance|Influence|Steadiness|Compliance)/, '<span class="analysis-key">$1</span>');
-          return `<p>${h}</p>`;
-        }).join('');
+        // 确保应用专用样式容器，与MBTI保持一致
+        try { resultAnalysis.classList.add('mbti-analysis'); } catch(_) {}
         try { resultAnalysis.classList.add('analysis-rich'); } catch(_) {}
-        resultAnalysis.innerHTML = html;
+        // 使用与MBTI相同的Markdown处理方式
+        try {
+          if (window.marked && window.DOMPurify) {
+            const enhanced = toMarkdownWithHeadings(rawAnalysis || '');
+            const mdHtml = window.marked.parse(enhanced);
+            resultAnalysis.innerHTML = window.DOMPurify.sanitize(mdHtml);
+          } else {
+            // 回退到格式化函数
+            resultAnalysis.innerHTML = formatMbtiAnalysis(rawAnalysis, finalResult.summary);
+          }
+        } catch(_) {
+          resultAnalysis.innerHTML = formatMbtiAnalysis(rawAnalysis, finalResult.summary);
+        }
       } else if (project.type === 'mbti') {
         // 确保应用专用样式容器
         try { resultAnalysis.classList.add('mbti-analysis'); } catch(_) {}
@@ -434,10 +436,20 @@
           resultAnalysis.innerHTML = formatMbtiAnalysis(rawAnalysis, finalResult.summary);
         }
       } else {
-        // Default: paragraphize by double newlines
-        const parts = rawAnalysis.split(/\n\n+/).map(s => s.trim()).filter(Boolean);
+        // 其他测试项目也使用统一的Markdown格式处理
+        try { resultAnalysis.classList.add('mbti-analysis'); } catch(_) {}
         try { resultAnalysis.classList.add('analysis-rich'); } catch(_) {}
-        resultAnalysis.innerHTML = parts.map(p => `<p>${p.replace(/\n/g,'<br>')}</p>`).join('');
+        try {
+          if (window.marked && window.DOMPurify) {
+            const enhanced = toMarkdownWithHeadings(rawAnalysis || '');
+            const mdHtml = window.marked.parse(enhanced);
+            resultAnalysis.innerHTML = window.DOMPurify.sanitize(mdHtml);
+          } else {
+            resultAnalysis.innerHTML = formatMbtiAnalysis(rawAnalysis, finalResult.summary);
+          }
+        } catch(_) {
+          resultAnalysis.innerHTML = formatMbtiAnalysis(rawAnalysis, finalResult.summary);
+        }
       }
       show('result');
       return;

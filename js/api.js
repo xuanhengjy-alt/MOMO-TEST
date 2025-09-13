@@ -1,5 +1,8 @@
 // API 服务模块
-const API_BASE_URL = 'http://localhost:3000/api';
+// 根据环境自动选择API基础URL
+const API_BASE_URL = window.location.hostname === 'localhost' 
+  ? 'http://localhost:3000/api' 
+  : '/api';
 
 class ApiService {
   constructor() {
@@ -120,26 +123,8 @@ class ApiService {
         image: 'assets/images/mbti-career-personality-test.png',
         intro: 'The MBTI personality theory is based on the classification of psychological types by Carl Jung, later developed by Katharine Cook Briggs and Isabel Briggs Myers. It helps explain why people have different interests, excel at different jobs, and sometimes misunderstand each other. For decades, MBTI has been used worldwide by couples, teachers and students, young people choosing careers, and organizations to improve relationships, team communication, organizational building and diagnostics. In the Fortune 500, 80% of companies have experience applying MBTI.',
         type: 'mbti',
-        testedCount: '1.1W+',
-        likes: 156
-      },
-      {
-        id: 'disc',
-        name: 'DISC性格测试',
-        image: 'assets/images/discceshi.png',
-        intro: 'DISC 理论起源于马斯顿博士提出的"正常人的情绪"，用于衡量人格特质的四个典型因子：D/I/S/C。',
-        type: 'disc',
-        testedCount: '2.3W+',
-        likes: 234
-      },
-      {
-        id: 'mgmt',
-        name: '管理能力测试',
-        image: 'assets/images/guanli.png',
-        intro: '评估管理能力强弱与改进方向。',
-        type: 'mgmt',
-        testedCount: '890+',
-        likes: 67
+        testedCount: '120K+',
+        likes: 13000
       },
       {
         id: 'disc40',
@@ -147,8 +132,8 @@ class ApiService {
         image: 'assets/images/disc-personality-test.png',
         intro: 'In the 1920s, American psychologist William Moulton Marston developed a theory to explain human emotional responses. Prior to this, such research had been largely confined to studies of psychiatric patients or individuals with mental disorders. Dr. Marston sought to broaden the scope of this research to apply it to the general population with normal mental health. Consequently, he structured his theory into a systematic framework titled The Emotions of Normal People.',
         type: 'disc40',
-        testedCount: '1.8W+',
-        likes: 189
+        testedCount: '50K+',
+        likes: 4500
       }
     ];
   }

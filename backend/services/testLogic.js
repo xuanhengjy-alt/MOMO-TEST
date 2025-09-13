@@ -14,10 +14,10 @@ class TestLogicService {
     ];
 
     this.discNames = { 
-      D: 'Dominance－支配型/控制者', 
-      I: 'Influence－活泼型/社交者', 
-      S: 'Steadiness－稳定型/支持者', 
-      C: 'Compliance－完美型/服从者' 
+      D: 'Dominance', 
+      I: 'Influence', 
+      S: 'Steadiness', 
+      C: 'Compliance' 
     };
 
     this.discAnalysis = {
@@ -47,7 +47,7 @@ class TestLogicService {
     }
   }
 
-  // DISC 5题测试计算（优先使用数据库英文分析）
+  // DISC 5题测试计算（仅使用数据库英文分析；无数据则返回空分析）
   async scoreDisc(answers, projectKey = 'disc') {
     const counts = { D: 0, I: 0, S: 0, C: 0 };
     answers.forEach((optIndex, qi) => {
@@ -63,15 +63,11 @@ class TestLogicService {
     if (dbMap) {
       const names = tops.map(k => (dbMap[k] && dbMap[k].type_name_en) ? dbMap[k].type_name_en : k);
       const analysis = tops.map(k => (dbMap[k] && dbMap[k].analysis_en) ? dbMap[k].analysis_en : '').filter(Boolean).join('\n\n');
-      if (analysis) {
-        return { counts, tops, summary: names.join(', '), analysis };
-      }
+      return { counts, tops, summary: names.join(', '), analysis };
     }
 
-    // 兜底：使用内置中文
-    const summary = tops.map(k => this.discNames[k]).join('、');
-    const analysis = tops.map(k => `${this.discNames[k]}：${this.discAnalysis[k]}`).join('\n\n');
-    return { counts, tops, summary, analysis };
+    // 无数据库内容时，不再使用本地中文兜底，保持空分析，名称用英文字母占位
+    return { counts, tops, summary: tops.join(', '), analysis: '' };
   }
 
   // 管理能力测试计算
@@ -103,7 +99,7 @@ class TestLogicService {
     }
   }
 
-  // DISC 40题测试计算（当前沿用5题映射，取前5题；优先DB英文分析）
+  // DISC 40题测试计算（当前沿用5题映射，取前5题；仅DB英文分析）
   async scoreDisc40(answers) {
     return await this.scoreDisc(answers.slice(0, 5), 'disc40');
   }

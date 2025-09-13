@@ -52,6 +52,30 @@ async function initTestProjects() {
       console.error(`❌ Error initializing project ${project.id}:`, error.message);
     }
   }
+  
+  // 禁用已删除的测试项目
+  await disableRemovedProjects();
+}
+
+// 禁用已删除的测试项目
+async function disableRemovedProjects() {
+  console.log('🔄 Disabling removed test projects...');
+  
+  const removedProjects = ['disc', 'mgmt'];
+  
+  for (const projectId of removedProjects) {
+    try {
+      await query(`
+        UPDATE test_projects 
+        SET is_active = false, updated_at = CURRENT_TIMESTAMP
+        WHERE project_id = $1
+      `, [projectId]);
+      
+      console.log(`✅ Project ${projectId} disabled`);
+    } catch (error) {
+      console.error(`❌ Error disabling project ${projectId}:`, error.message);
+    }
+  }
 }
 
 // 根据测试类型获取预计时间
@@ -91,10 +115,10 @@ async function initResultTypes() {
   
   // DISC 结果类型
   const discTypes = [
-    { code: 'D', name: 'Dominance－支配型/控制者', nameEn: 'Dominance' },
-    { code: 'I', name: 'Influence－活泼型/社交者', nameEn: 'Influence' },
-    { code: 'S', name: 'Steadiness－稳定型/支持者', nameEn: 'Steadiness' },
-    { code: 'C', name: 'Compliance－完美型/服从者', nameEn: 'Compliance' }
+    { code: 'D', name: 'Dominance', nameEn: 'Dominance' },
+    { code: 'I', name: 'Influence', nameEn: 'Influence' },
+    { code: 'S', name: 'Steadiness', nameEn: 'Steadiness' },
+    { code: 'C', name: 'Compliance', nameEn: 'Compliance' }
   ];
   
   // 获取DISC项目ID
@@ -114,6 +138,38 @@ async function initResultTypes() {
   console.log('✅ Result types initialized');
 }
 
+// 初始化测试统计数据
+async function initTestStatistics() {
+  console.log('🔄 Initializing test statistics...');
+  
+  // 设置初始统计数据
+  const initialStats = [
+    { projectId: 'mbti', totalTests: 120000, totalLikes: 13000 },
+    { projectId: 'disc40', totalTests: 50000, totalLikes: 4500 }
+  ];
+  
+  for (const stat of initialStats) {
+    try {
+      await query(`
+        INSERT INTO test_statistics (project_id, total_tests, total_likes, last_updated)
+        SELECT id, $2, $3, CURRENT_TIMESTAMP
+        FROM test_projects 
+        WHERE project_id = $1
+        ON CONFLICT (project_id) DO UPDATE SET
+          total_tests = EXCLUDED.total_tests,
+          total_likes = EXCLUDED.total_likes,
+          last_updated = CURRENT_TIMESTAMP
+      `, [stat.projectId, stat.totalTests, stat.totalLikes]);
+      
+      console.log(`✅ Statistics initialized for ${stat.projectId}: ${stat.totalTests} tests, ${stat.totalLikes} likes`);
+    } catch (error) {
+      console.error(`❌ Error initializing statistics for ${stat.projectId}:`, error.message);
+    }
+  }
+  
+  console.log('✅ Test statistics initialized');
+}
+
 // 主初始化函数
 async function initializeDatabase() {
   try {
@@ -127,6 +183,7 @@ async function initializeDatabase() {
     await initTestProjects();
     await initQuestions();
     await initResultTypes();
+    await initTestStatistics();
     
     console.log('🎉 Database initialization completed successfully!');
     

@@ -25,9 +25,7 @@
     // 统一从 assets/images 取图，并针对常见文件名提供回退
     const imageFallbacks = {
       mbti: 'assets/images/mbti-career-personality-test.png',
-      disc: 'assets/images/discceshi.png',
-      disc40: 'assets/images/disc-personality-test.png',
-      mgmt: 'assets/images/guanli.png'
+      disc40: 'assets/images/disc-personality-test.png'
     };
     const byId = imageFallbacks[p.id] || null;
     img.src = byId || p.image;
@@ -54,7 +52,7 @@
     
     // 显示测试人数
     if (p.testedCount) {
-      people.textContent = p.testedCount;
+      people.textContent = Utils.formatNumber(p.testedCount);
     } else {
       let tested = Utils.loadLocal(testedKey, null);
       if (!tested) {

@@ -39,7 +39,8 @@ const TestLogic = (function() {
     ['I','C','D','S']
   ];
 
-  const discNames = { D: 'Dominance－支配型/控制者', I: 'Influence－活泼型/社交者', S: 'Steadiness－稳定型/支持者', C: 'Compliance－完美型/服从者' };
+  const discNames = { D: 'Dominance', I: 'Influence', S: 'Steadiness', C: 'Compliance' };
+  /* Removed inline DISC analysis, rely on backend */
   const discAnalysis = {
     D: '高D型特质的人可以称为是“天生的领袖”。\n\n在情感方面，D型人一个坚定果敢的人，酷好变化，喜欢控制，干劲十足，独立自主，超级自信。可是，由于比较不会顾及别人的感受，所以显得粗鲁、霸道、没有耐心、穷追不舍、不会放松。D型人不习惯与别人进行感情上的交流，不会恭维人，不喜欢眼泪，匮乏同情心。\n\n在工作方面，D型人是一个务实和讲究效率的人，目标明确，眼光全面，组织力强，行动迅速，解决问题不过夜，果敢坚持到底，在反对声中成长。但是，因为过于强调结果，D型人往往容易忽视细节，处理问题不够细致。爱管人、喜欢支使他人的特点使得D型人能够带动团队进步，但也容易激起同事的反感。\n\n在人际关系方面，D型人喜欢为别人做主，虽然这样能够帮助别人做出选择，但也容易让人有强迫感。由于关注自己的目标，D型人在乎的是别人的可利用价值。喜欢控制别人，不会说对不起。\n\n描述性词语：积级进取、争强好胜、强势、爱追根究底、直截了当、主动的开拓者、坚持意见、自信、直率',
     I: '高I型特质的人可以称为是“天生的社交家”。\n\n在情感方面，I型人是一个热情洋溢的人，乐观向上，善于表达，富有感染力，喜欢与人交往，充满活力。但是，由于过于乐观，I型人往往缺乏耐心，容易冲动，不够专注，有时显得不够稳重。\n\n在工作方面，I型人是一个富有创意和想象力的人，善于激励他人，具有良好的沟通能力，能够营造积极的工作氛围。但是，由于缺乏条理性，I型人往往容易分心，难以专注于细节工作，有时显得不够务实。\n\n在人际关系方面，I型人是一个受欢迎的人，善于建立人际关系，能够快速融入新环境，具有良好的团队合作精神。但是，由于过于关注他人的认可，I型人有时会显得不够独立，容易受到他人影响。\n\n描述性词语：热情洋溢、乐观向上、善于表达、富有感染力、充满活力、富有创意、善于激励、沟通能力强',
@@ -128,48 +129,7 @@ const TestLogic = (function() {
     [2,3,1,4],[2,4,3,1],[3,4,1,2],[4,2,3,1],[3,4,1,2]
   ];
 
-  const discAnalysisEn = {
-    D: `Individuals with high D traits can be described as “natural-born leaders.”
-
-Emotionally, D types are resolute and decisive, crave change, enjoy control, possess tremendous drive, are highly independent, and exhibit extreme self-confidence. However, their tendency to overlook others' feelings can make them appear rude, domineering, impatient, relentless, and unable to relax. They are uncomfortable with emotional exchanges, offer little flattery, dislike displays of tears, and lack empathy.
-
-In work, D-types are pragmatic and efficiency-driven. They possess clear goals, broad vision, strong organizational skills, and swift action. They resolve issues promptly, persevere decisively, and thrive amid opposition. Yet, their intense focus on outcomes often leads to overlooking details and insufficient meticulousness in problem-solving. Their tendency to micromanage and direct others enables them to drive team progress, yet may provoke resentment among colleagues.
-
-In interpersonal relationships, Type D individuals prefer making decisions for others—a practice that aids choice-making but can feel coercive. Focused on their own objectives, they value others primarily for their utility. They enjoy exerting control and rarely apologize.
-
-Descriptive Terms:
-Proactive, competitive, assertive, inquisitive, direct, pioneering, opinionated, confident, candid`,
-    I: `High-I individuals are typically lively organizers of group activities.
-
-Type I personalities are emotionally expressive and outgoing. Their animated nature, love of conversation, storytelling, humor, and vivid memories captivate audiences, often making them the life of the party. They are natural performers—innocent, warm-hearted, and enthusiastic about giving and receiving gifts, valuing connections above all. Your emotional nature makes you easily excited, prone to boasting and exaggeration, innocent, perpetually youthful, and comically endearing. However, you also seem quick to anger, prone to complaining, loud-voiced, and immature.
-
-At work, Type I individuals are enthusiastic drivers of progress, constantly generating fresh, colorful ideas. You jump right into action, capable of inspiring and leading others to engage actively in tasks. Yet, Type I individuals often let emotions dictate everything, speaking impulsively without planning. They tend to talk more than they act, lose confidence easily when facing challenges, and approach tasks in a disorganized, incomplete manner—often zoning out or making excuses. They thrive in relaxed, friendly environments and deeply fear rejection.
-
-In interpersonal relationships, Type I individuals easily make friends and have many. They care for friends and are praised by them. They enjoy being the center of attention, thrive on popularity, and like to steer conversations. Yet, their tendency toward improvisation often prevents them from fully understanding others, and they can be forgetful and inconsistent.
-
-Descriptive words:
-Influential, persuasive, friendly, articulate, talkative, optimistic and positive, sociable`,
-    S: `High-S types are typically calm, content with what they have, and reluctant to take initiative.
-
-Emotionally, S types are moderates—leisurely, peaceful, patient, and reserved in their affections. They are amiable, good listeners, and remain composed in crises, adapting easily to circumstances. S types often use the catchphrase, “It's no big deal.” This trait makes them seem lacking in enthusiasm and resistant to change.
-
-Professionally, S-types manage tasks methodically, perform competently, and demonstrate perseverance. They embrace moderation, maintaining an approachable demeanor—avoiding conflict while remaining unflappable in crises. However, S-types often appear sluggish, resistant to motivation, lazy, careless, and content to coast by. Fearful of risk and responsibility, they frequently opt to stand aside as observers. Often, S-types remain indecisive, withholding opinions, or opting for compromise.
-
-In interpersonal relationships, S-types are easygoing, enjoying observing and understanding others, listening attentively, and offering support. Yet, due to their detached nature, they may also appear indifferent or even sarcastic.
-
-Descriptive traits:
-Reliable, thoughtful, warm and friendly, persistent, tenacious, good listener, thorough and considerate, strong self-control`,
-    C: `High C types are typically perfectionist professionals.
-
-Emotionally, C types are deep-thinking individuals—serious, purpose-driven, analytical, contemplative about life and work, appreciative of beauty, sensitive to others, and idealistic. However, they habitually dwell on negativity, prone to low moods, excessive self-reflection, self-deprecation, isolation, and depressive tendencies.
-
-Professionally, Type C individuals are perfectionists with high standards, strong planning skills, attention to detail, and a preference for order and organization. They excel at identifying problems and devising solutions, favor charts and checklists, hold firm to their convictions, and see tasks through to completion. Yet they may also be indecisive, prone to gathering information and analyzing it while struggling to engage in practical implementation. Susceptible to self-doubt, they seek validation from others. Simultaneously, they habitually critique others and cannot tolerate subpar work.
-
-In interpersonal relationships, Type C individuals seek ideal partners while remaining cautious in forming friendships. They demonstrate deep empathy, excel at listening to grievances, and assist others in overcoming challenges. Yet, Type C individuals often carry an underlying sense of insecurity, leading to emotional withdrawal, suspicion of others, a tendency to criticize, and an aversion to being contradicted.
-
-Descriptive Terms:
-Compliant, Meticulous, Methodical, Rigorous, Precise, Perfectionist, Logical`
-  };
+  // removed inline DISC English analysis source (now from backend)
 
   function scoreDisc(answers) { // answers: 0-based index per question
     const counts = { D:0, I:0, S:0, C:0 };
@@ -180,7 +140,8 @@ Compliant, Meticulous, Methodical, Rigorous, Precise, Perfectionist, Logical`
     const max = Math.max(counts.D, counts.I, counts.S, counts.C);
     const tops = Object.entries(counts).filter(([k,v]) => v === max).map(([k]) => k);
     const summary = tops.map(k => discNames[k]).join('、');
-    const analysis = tops.map(k => `${discNames[k]}：${discAnalysis[k]}`).join('\n\n');
+    // Frontend no longer provides DISC analysis; use backend response
+    const analysis = '';
     return { counts, tops, summary, analysis };
   }
 
@@ -560,7 +521,8 @@ Compliant, Meticulous, Methodical, Rigorous, Precise, Perfectionist, Logical`
         const tops = Object.entries(counts).filter(([k,v]) => v > 10).map(([k]) => k);
         const names = { D: 'Dominance', I: 'Influence', S: 'Steadiness', C: 'Compliance' };
         const summary = tops.length ? tops.map(k => names[k]).join(', ') : 'No dominant traits';
-        const analysis = tops.map(k => `${names[k]}:\n\n${discAnalysisEn[k]}`).join('\n\n');
+        // Frontend no longer returns DISC40 analysis text; backend provides it
+        const analysis = '';
         return { counts, tops, summary, analysis };
       }
       if (type === 'mbti') {
