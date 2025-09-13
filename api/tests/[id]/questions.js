@@ -36,15 +36,15 @@ module.exports = async function handler(req, res) {
       SELECT 
         q.id,
         q.question_text,
-        q.question_order,
+        q.question_number,
         qo.id as option_id,
         qo.option_text,
-        qo.option_value,
-        qo.option_order
+        qo.score_value,
+        qo.option_number
       FROM questions q
       LEFT JOIN question_options qo ON q.id = qo.question_id
-      WHERE q.project_id = $1
-      ORDER BY q.question_order, qo.option_order
+      WHERE q.project_id = (SELECT id FROM test_projects WHERE project_id = $1)
+      ORDER BY q.question_number, qo.option_number
     `, [projectId]);
 
     // 组织题目数据
@@ -55,7 +55,7 @@ module.exports = async function handler(req, res) {
         questionsMap.set(row.id, {
           id: row.id,
           text: row.question_text,
-          order: row.question_order,
+          order: row.question_number,
           options: []
         });
       }
@@ -64,8 +64,8 @@ module.exports = async function handler(req, res) {
         questionsMap.get(row.id).options.push({
           id: row.option_id,
           text: row.option_text,
-          value: row.option_value,
-          order: row.option_order
+          value: row.score_value,
+          order: row.option_number
         });
       }
     });

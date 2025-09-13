@@ -40,6 +40,18 @@ module.exports = async function handler(req, res) {
     await pool.query('BEGIN');
 
     try {
+      // 获取项目的内部ID
+      const projectQuery = await pool.query(
+        'SELECT id FROM test_projects WHERE project_id = $1',
+        [projectId]
+      );
+      
+      if (projectQuery.rows.length === 0) {
+        throw new Error('Project not found');
+      }
+      
+      const projectInternalId = projectQuery.rows[0].id;
+
       // 插入测试结果
       const resultQuery = `
         INSERT INTO test_results (project_id, session_id, answers, ip_address, user_agent)
@@ -48,7 +60,7 @@ module.exports = async function handler(req, res) {
       `;
       
       const result = await pool.query(resultQuery, [
-        projectId,
+        projectInternalId,
         sessionId,
         JSON.stringify(answers),
         ipAddress,

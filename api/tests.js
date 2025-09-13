@@ -39,11 +39,16 @@ module.exports = async function handler(req, res) {
     // 查询数据库获取测试项目
     const result = await pool.query(`
       SELECT 
-        tp.*,
+        tp.project_id,
+        tp.name,
+        tp.name_en,
+        tp.image_url,
+        tp.intro,
+        tp.test_type,
         ts.total_tests,
         ts.total_likes
       FROM test_projects tp
-      LEFT JOIN test_statistics ts ON tp.id = ts.project_id
+      LEFT JOIN test_statistics ts ON tp.project_id = ts.project_id
       WHERE tp.is_active = true
       ORDER BY tp.created_at ASC
     `);
@@ -52,9 +57,9 @@ module.exports = async function handler(req, res) {
       id: row.project_id,
       name: row.name,
       nameEn: row.name_en,
-      image: row.image,
+      image: row.image_url,
       intro: row.intro,
-      type: row.type,
+      type: row.test_type,
       testedCount: row.total_tests ? formatNumber(row.total_tests) : '0',
       likes: row.total_likes || 0
     }));
