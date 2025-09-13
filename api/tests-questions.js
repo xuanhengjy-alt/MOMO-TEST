@@ -21,9 +21,12 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const { projectId } = req.query;
+  // 从URL路径中提取projectId
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  const pathParts = url.pathname.split('/');
+  const projectId = pathParts[pathParts.length - 2]; // 倒数第二个是projectId
 
-  if (!projectId) {
+  if (!projectId || projectId === 'tests-questions') {
     res.status(400).json({ error: 'Project ID is required' });
     return;
   }
