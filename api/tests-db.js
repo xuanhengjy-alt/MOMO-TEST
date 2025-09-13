@@ -1,5 +1,5 @@
 // 连接到Neon数据库的API端点
-import { Pool } from 'pg';
+const { Pool } = require('pg');
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -8,7 +8,7 @@ const pool = new Pool({
   }
 });
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // 设置CORS头
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -41,7 +41,7 @@ export default async function handler(req, res) {
       image: row.image,
       intro: row.intro,
       type: row.type,
-      testedCount: row.total_tests ? Utils.formatNumber(row.total_tests) : '0',
+      testedCount: row.total_tests ? formatNumber(row.total_tests) : '0',
       likes: row.total_likes || 0
     }));
 

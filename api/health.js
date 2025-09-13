@@ -1,5 +1,5 @@
-// 健康检查API端点 - Vercel格式
-export default function handler(req, res) {
+// 健康检查API端点 - CommonJS格式
+module.exports = function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');

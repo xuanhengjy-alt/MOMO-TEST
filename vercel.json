@@ -1,26 +1,7 @@
 {
   "version": 2,
   "outputDirectory": ".",
-  "functions": {
-    "api/tests.js": {
-      "runtime": "@vercel/node@3.0.7"
-    },
-    "api/tests-db.js": {
-      "runtime": "@vercel/node@3.0.7"
-    },
-    "api/health.js": {
-      "runtime": "@vercel/node@3.0.7"
-    }
-  },
   "routes": [
-    {
-      "src": "/api/tests",
-      "dest": "/api/tests-db.js"
-    },
-    {
-      "src": "/api/health", 
-      "dest": "/api/health.js"
-    },
     {
       "src": "/(.*)",
       "dest": "/index.html"
