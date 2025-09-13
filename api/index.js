@@ -1,4 +1,4 @@
-// Vercel API入口文件
+// Vercel API入口文件 - 使用正确的Vercel API函数格式
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -54,5 +54,7 @@ app.use('*', (req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-// 导出给Vercel使用
-module.exports = app;
+// Vercel API函数格式
+module.exports = (req, res) => {
+  app(req, res);
+};

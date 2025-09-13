@@ -1,16 +1,21 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "api/index.js",
-      "use": "@vercel/node"
+  "functions": {
+    "api/hello.js": {
+      "runtime": "nodejs18.x"
     },
-    {
-      "src": "api/test.js",
-      "use": "@vercel/node"
+    "api/test.js": {
+      "runtime": "nodejs18.x"
+    },
+    "api/index.js": {
+      "runtime": "nodejs18.x"
     }
-  ],
+  },
   "routes": [
+    {
+      "src": "/api/hello",
+      "dest": "/api/hello.js"
+    },
     {
       "src": "/api/test",
       "dest": "/api/test.js"
