@@ -1,26 +1,4 @@
 {
   "version": 2,
-  "outputDirectory": ".",
-  "routes": [
-    {
-      "src": "/api/tests/([^/]+)$",
-      "dest": "/api/tests-project.js"
-    },
-    {
-      "src": "/api/tests/([^/]+)/questions",
-      "dest": "/api/tests-questions.js"
-    },
-    {
-      "src": "/api/tests/([^/]+)/like",
-      "dest": "/api/tests-like.js"
-    },
-    {
-      "src": "/api/results/stats/([^/]+)$",
-      "dest": "/api/results-stats.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
-  ]
+  "outputDirectory": "."
 }

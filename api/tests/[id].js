@@ -21,12 +21,9 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  // 从URL路径中提取projectId
-  const url = new URL(req.url, `http://${req.headers.host}`);
-  const pathParts = url.pathname.split('/');
-  const projectId = pathParts[pathParts.length - 1];
+  const { id: projectId } = req.query;
 
-  if (!projectId || projectId === 'tests-project') {
+  if (!projectId) {
     res.status(400).json({ error: 'Project ID is required' });
     return;
   }
