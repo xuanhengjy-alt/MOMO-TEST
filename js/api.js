@@ -65,10 +65,8 @@ class ApiService {
         throw new Error('Invalid response format from API');
       }
     } catch (error) {
-      console.warn('Failed to fetch test projects from API, using fallback data', error);
-      const fallbackProjects = this.getFallbackProjects();
-      console.log('Using fallback projects:', fallbackProjects);
-      return fallbackProjects;
+      console.error('Failed to fetch test projects from API', error);
+      throw error;
     }
   }
 
@@ -77,10 +75,8 @@ class ApiService {
     try {
       return await this.request(`/tests/${projectId}`);
     } catch (error) {
-      console.warn(`Failed to fetch test project ${projectId} from API`);
-      // 从fallback数据中查找
-      const fallbackProjects = this.getFallbackProjects();
-      return fallbackProjects.find(p => p.id === projectId) || null;
+      console.error(`Failed to fetch test project ${projectId} from API`, error);
+      throw error;
     }
   }
 
@@ -90,8 +86,8 @@ class ApiService {
       const data = await this.request(`/tests/${projectId}/questions`);
       return data.questions;
     } catch (error) {
-      console.warn(`Failed to fetch questions for ${projectId} from API`);
-      return [];
+      console.error(`Failed to fetch questions for ${projectId} from API`, error);
+      throw error;
     }
   }
 
@@ -111,8 +107,7 @@ class ApiService {
       return result;
     } catch (error) {
       console.error('Failed to submit test result:', error);
-      // 模拟成功提交作为fallback
-      return { success: true, message: 'Test completed (offline mode)' };
+      throw error;
     }
   }
 
@@ -125,8 +120,7 @@ class ApiService {
       return result;
     } catch (error) {
       console.error('Failed to like test project:', error);
-      // 模拟成功点赞作为fallback
-      return { success: true, likes: 0 };
+      throw error;
     }
   }
 
@@ -135,8 +129,8 @@ class ApiService {
     try {
       return await this.request(`/results/stats/${projectId}`);
     } catch (error) {
-      console.warn(`Failed to fetch stats for ${projectId}`);
-      return { totalTests: 0, totalLikes: 0 };
+      console.error(`Failed to fetch stats for ${projectId}`, error);
+      throw error;
     }
   }
 

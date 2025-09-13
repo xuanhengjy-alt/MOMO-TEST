@@ -1,4 +1,4 @@
-// Vercel API端点 - 使用默认路由
+// 获取特定测试项目的API端点
 const { Pool } = require('pg');
 
 const pool = new Pool({
@@ -7,18 +7,6 @@ const pool = new Pool({
     rejectUnauthorized: false
   }
 });
-
-// 格式化数字的工具函数
-function formatNumber(num) {
-  if (typeof num === 'string') return num;
-  if (num >= 1000000) {
-    return (num / 1000000).toFixed(1) + 'M+';
-  } else if (num >= 1000) {
-    return (num / 1000).toFixed(0) + 'K+';
-  } else {
-    return num.toString();
-  }
-}
 
 module.exports = async function handler(req, res) {
   // 设置CORS头
@@ -32,11 +20,18 @@ module.exports = async function handler(req, res) {
     res.status(200).end();
     return;
   }
-  
+
+  const { projectId } = req.query;
+
+  if (!projectId) {
+    res.status(400).json({ error: 'Project ID is required' });
+    return;
+  }
+
   try {
-    console.log('Attempting to connect to database...');
+    console.log(`Fetching test project: ${projectId}`);
     
-    // 查询数据库获取测试项目
+    // 查询数据库获取特定测试项目
     const result = await pool.query(`
       SELECT 
         tp.*,
@@ -44,32 +39,31 @@ module.exports = async function handler(req, res) {
         ts.total_likes
       FROM test_projects tp
       LEFT JOIN test_statistics ts ON tp.id = ts.project_id
-      WHERE tp.is_active = true
-      ORDER BY tp.created_at ASC
-    `);
+      WHERE tp.project_id = $1 AND tp.is_active = true
+    `, [projectId]);
 
-    const projects = result.rows.map(row => ({
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: 'Test project not found' });
+      return;
+    }
+
+    const row = result.rows[0];
+    const project = {
       id: row.project_id,
       name: row.name,
       nameEn: row.name_en,
       image: row.image,
       intro: row.intro,
       type: row.type,
-      testedCount: row.total_tests ? formatNumber(row.total_tests) : '0',
+      testedCount: row.total_tests || 0,
       likes: row.total_likes || 0
-    }));
+    };
 
-    console.log('Successfully fetched projects from database:', projects.length);
+    console.log('Successfully fetched project:', project);
     
-    res.status(200).json({ 
-      success: true,
-      projects: projects 
-    });
+    res.status(200).json(project);
   } catch (error) {
     console.error('Database error:', error);
-    res.status(500).json({ 
-      error: 'Database connection failed', 
-      details: error.message 
-    });
+    res.status(500).json({ error: 'Database connection failed', details: error.message });
   }
 };
