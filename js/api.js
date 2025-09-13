@@ -55,8 +55,15 @@ class ApiService {
     try {
       console.log('Attempting to fetch test projects from API...');
       const data = await this.request('/tests');
-      console.log('Successfully fetched projects from API:', data.projects);
-      return data.projects;
+      console.log('API response:', data);
+      
+      // 检查响应格式
+      if (data && data.projects && Array.isArray(data.projects)) {
+        console.log('Successfully fetched projects from API:', data.projects.length);
+        return data.projects;
+      } else {
+        throw new Error('Invalid response format from API');
+      }
     } catch (error) {
       console.warn('Failed to fetch test projects from API, using fallback data', error);
       const fallbackProjects = this.getFallbackProjects();

@@ -1,4 +1,4 @@
-// 连接到Neon数据库的API端点
+// Vercel API端点 - 使用默认路由
 const { Pool } = require('pg');
 
 const pool = new Pool({
@@ -7,6 +7,18 @@ const pool = new Pool({
     rejectUnauthorized: false
   }
 });
+
+// 格式化数字的工具函数
+function formatNumber(num) {
+  if (typeof num === 'string') return num;
+  if (num >= 1000000) {
+    return (num / 1000000).toFixed(1) + 'M+';
+  } else if (num >= 1000) {
+    return (num / 1000).toFixed(0) + 'K+';
+  } else {
+    return num.toString();
+  }
+}
 
 module.exports = async function handler(req, res) {
   // 设置CORS头
@@ -22,6 +34,8 @@ module.exports = async function handler(req, res) {
   }
   
   try {
+    console.log('Attempting to connect to database...');
+    
     // 查询数据库获取测试项目
     const result = await pool.query(`
       SELECT 
@@ -45,9 +59,12 @@ module.exports = async function handler(req, res) {
       likes: row.total_likes || 0
     }));
 
-    console.log('Fetched projects from database:', projects.length);
+    console.log('Successfully fetched projects from database:', projects.length);
     
-    res.status(200).json({ projects });
+    res.status(200).json({ 
+      success: true,
+      projects: projects 
+    });
   } catch (error) {
     console.error('Database error:', error);
     
@@ -75,18 +92,11 @@ module.exports = async function handler(req, res) {
       }
     ];
     
-    res.status(200).json({ projects: fallbackProjects });
+    console.log('Using fallback data due to database error');
+    res.status(200).json({ 
+      success: false,
+      message: 'Using fallback data',
+      projects: fallbackProjects 
+    });
   }
-}
-
-// 格式化数字的工具函数
-function formatNumber(num) {
-  if (typeof num === 'string') return num;
-  if (num >= 1000000) {
-    return (num / 1000000).toFixed(1) + 'M+';
-  } else if (num >= 1000) {
-    return (num / 1000).toFixed(0) + 'K+';
-  } else {
-    return num.toString();
-  }
-}
+};
