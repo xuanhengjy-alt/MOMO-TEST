@@ -31,6 +31,19 @@ module.exports = async function handler(req, res) {
   try {
     console.log(`Fetching stats for project: ${projectId}`);
     
+    // 获取项目的内部ID
+    const projectQuery = await pool.query(
+      'SELECT id FROM test_projects WHERE project_id = $1',
+      [projectId]
+    );
+    
+    if (projectQuery.rows.length === 0) {
+      res.status(404).json({ error: 'Project not found' });
+      return;
+    }
+    
+    const projectInternalId = projectQuery.rows[0].id;
+    
     // 查询数据库获取统计信息
     const result = await pool.query(`
       SELECT 
@@ -38,7 +51,7 @@ module.exports = async function handler(req, res) {
         COALESCE(ts.total_likes, 0) as total_likes
       FROM test_statistics ts
       WHERE ts.project_id = $1
-    `, [projectId]);
+    `, [projectInternalId]);
 
     if (result.rows.length === 0) {
       res.status(200).json({

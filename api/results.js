@@ -54,9 +54,9 @@ module.exports = async function handler(req, res) {
 
       // 插入测试结果
       const resultQuery = `
-        INSERT INTO test_results (project_id, session_id, answers, ip_address, user_agent)
+        INSERT INTO test_results (project_id, session_id, user_answers, ip_address, user_agent)
         VALUES ($1, $2, $3, $4, $5)
-        RETURNING id, created_at
+        RETURNING id, completed_at
       `;
       
       const result = await pool.query(resultQuery, [
@@ -76,8 +76,8 @@ module.exports = async function handler(req, res) {
         ON CONFLICT (project_id)
         DO UPDATE SET 
           total_tests = test_statistics.total_tests + 1,
-          updated_at = NOW()
-      `, [projectId]);
+          last_updated = NOW()
+      `, [projectInternalId]);
 
       // 提交事务
       await pool.query('COMMIT');

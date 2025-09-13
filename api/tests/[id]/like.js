@@ -36,6 +36,19 @@ module.exports = async function handler(req, res) {
   try {
     console.log(`Liking test project: ${projectId}`);
     
+    // 获取项目的内部ID
+    const projectQuery = await pool.query(
+      'SELECT id FROM test_projects WHERE project_id = $1',
+      [projectId]
+    );
+    
+    if (projectQuery.rows.length === 0) {
+      res.status(404).json({ error: 'Project not found' });
+      return;
+    }
+    
+    const projectInternalId = projectQuery.rows[0].id;
+    
     // 更新点赞统计
     const result = await pool.query(`
       INSERT INTO test_statistics (project_id, total_likes)
@@ -43,9 +56,9 @@ module.exports = async function handler(req, res) {
       ON CONFLICT (project_id)
       DO UPDATE SET 
         total_likes = test_statistics.total_likes + 1,
-        updated_at = NOW()
+        last_updated = NOW()
       RETURNING total_likes
-    `, [projectId]);
+    `, [projectInternalId]);
 
     const newLikeCount = result.rows[0].total_likes;
 

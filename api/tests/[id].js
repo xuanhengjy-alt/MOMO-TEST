@@ -43,7 +43,7 @@ module.exports = async function handler(req, res) {
         ts.total_tests,
         ts.total_likes
       FROM test_projects tp
-      LEFT JOIN test_statistics ts ON tp.project_id = ts.project_id
+      LEFT JOIN test_statistics ts ON tp.id = ts.project_id
       WHERE tp.project_id = $1 AND tp.is_active = true
     `, [projectId]);
 
