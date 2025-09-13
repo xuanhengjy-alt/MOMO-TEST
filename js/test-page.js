@@ -14,6 +14,12 @@
     project = fallbackProjects.find(p => p.id === id);
   }
   if (!project) { location.replace('index.html'); return; }
+  
+  // 检查是否为隐藏的测试项目
+  if (Utils.isProjectHidden(project.id)) {
+    location.replace('index.html');
+    return;
+  }
 
   const { $, $all, loadLocal, saveLocal, getRandomLikes } = window.Utils;
 

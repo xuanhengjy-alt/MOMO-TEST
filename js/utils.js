@@ -36,6 +36,30 @@ function loadLocal(key, defaultValue) {
 function $(selector, root=document) { return root.querySelector(selector); }
 function $all(selector, root=document) { return Array.from(root.querySelectorAll(selector)); }
 
-window.Utils = { getRandomTestedW, getRandomLikes, formatNumber, saveLocal, loadLocal, $, $all };
+// 隐藏的测试项目配置
+const HIDDEN_PROJECTS = ['disc', 'mgmt'];
+
+// 检查项目是否应该隐藏
+function isProjectHidden(projectId) {
+  return HIDDEN_PROJECTS.includes(projectId);
+}
+
+// 过滤隐藏的项目
+function filterVisibleProjects(projects) {
+  return projects.filter(p => !isProjectHidden(p.id));
+}
+
+window.Utils = { 
+  getRandomTestedW, 
+  getRandomLikes, 
+  formatNumber, 
+  saveLocal, 
+  loadLocal, 
+  $, 
+  $all,
+  isProjectHidden,
+  filterVisibleProjects,
+  HIDDEN_PROJECTS
+};
 
 

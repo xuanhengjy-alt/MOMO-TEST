@@ -14,7 +14,10 @@
   
   const tpl = document.getElementById('test-card-template');
 
-  projects.forEach(p => {
+  // 过滤掉需要隐藏的测试项目
+  const filteredProjects = Utils.filterVisibleProjects(projects);
+
+  filteredProjects.forEach(p => {
     const node = tpl.content.cloneNode(true);
     const img = node.querySelector('img');
     const title = node.querySelector('h3');
