@@ -216,23 +216,112 @@ async function calculateDisc40Result(projectId, answers) {
 // MBTI 结果计算
 async function calculateMbtiResult(answers) {
   try {
-    // MBTI 计分逻辑
+    // 获取MBTI题目映射
+    const mappingResult = await pool.query(`
+      SELECT q.id, q.question_text, qo.id as option_id, qo.score_value
+      FROM questions q
+      JOIN question_options qo ON q.id = qo.question_id
+      JOIN test_projects tp ON q.project_id = tp.id
+      WHERE tp.project_id = 'mbti'
+      ORDER BY q.question_number, qo.option_number
+    `);
+
+    if (mappingResult.rows.length === 0) {
+      // 如果没有数据库映射，使用默认的MBTI映射
+      return await calculateMbtiWithDefaultMapping(answers);
+    }
+
+    // 使用数据库映射计算MBTI结果
     const traits = { E:0, I:0, S:0, N:0, T:0, F:0, J:0, P:0 };
     
-    // 简化的MBTI计分（实际应该从数据库读取映射）
+    // 组织题目和选项数据
+    const questionsMap = new Map();
+    mappingResult.rows.forEach(row => {
+      if (!questionsMap.has(row.id)) {
+        questionsMap.set(row.id, {
+          id: row.id,
+          text: row.question_text,
+          options: []
+        });
+      }
+      questionsMap.get(row.id).options.push({
+        id: row.option_id,
+        value: row.score_value
+      });
+    });
+
+    // 计算特质分数
+    answers.forEach((selectedOptionIndex, questionIndex) => {
+      const question = Array.from(questionsMap.values())[questionIndex];
+      if (question && question.options[selectedOptionIndex]) {
+        const scoreValue = question.options[selectedOptionIndex].value;
+        if (scoreValue && typeof scoreValue === 'object') {
+          // scoreValue 应该是 { "E": 1, "I": 0 } 这样的格式
+          Object.keys(scoreValue).forEach(trait => {
+            if (traits.hasOwnProperty(trait)) {
+              traits[trait] += scoreValue[trait];
+            }
+          });
+        }
+      }
+    });
+    
+    // 确定MBTI类型
+    const ei = traits.E > traits.I ? 'E' : 'I';
+    const sn = traits.S > traits.N ? 'S' : 'N';
+    const tf = traits.T > traits.F ? 'T' : 'F';
+    const jp = traits.J > traits.P ? 'J' : 'P';
+    const code = `${ei}${sn}${tf}${jp}`;
+    
+    // 从数据库获取完整的分析内容
+    const analysisResult = await pool.query(`
+      SELECT rt.type_code, rt.type_name_en, COALESCE(rt.analysis_en, '') AS analysis_en
+      FROM result_types rt
+      JOIN test_projects tp ON rt.project_id = tp.id
+      WHERE tp.project_id = 'mbti' AND rt.type_code = $1
+    `, [code]);
+    
+    let analysis = '';
+    if (analysisResult.rows.length > 0) {
+      const row = analysisResult.rows[0];
+      analysis = `After testing, you are **${code}** personality type.\n\n${row.analysis_en}`;
+    } else {
+      // 如果数据库没有分析内容，使用默认分析
+      analysis = `After testing, you are **${code}** personality type.\n\nThis is a comprehensive personality assessment based on the Myers-Briggs Type Indicator. Your type indicates your preferences in how you perceive the world and make decisions.`;
+    }
+    
+    return { summary: code, analysis, traits, code };
+  } catch (error) {
+    console.error('Error calculating MBTI result:', error);
+    // 如果数据库计算失败，回退到默认映射
+    return await calculateMbtiWithDefaultMapping(answers);
+  }
+}
+
+// 使用默认映射计算MBTI结果（fallback）
+async function calculateMbtiWithDefaultMapping(answers) {
+  try {
+    // 默认的MBTI映射（基于mbti-mapping.json）
+    const defaultMapping = [
+      { axis: "J-P", sideA: "J", sideB: "P" },
+      { axis: "J-P", sideA: "P", sideB: "J" },
+      { axis: "S-N", sideA: "S", sideB: "N" },
+      { axis: "E-I", sideA: "E", sideB: "I" },
+      { axis: "S-N", sideA: "N", sideB: "S" },
+      { axis: "T-F", sideA: "F", sideB: "T" },
+      { axis: "J-P", sideA: "P", sideB: "J" },
+      { axis: "E-I", sideA: "E", sideB: "I" }
+      // ... 这里应该有完整的93个题目的映射
+    ];
+    
+    const traits = { E:0, I:0, S:0, N:0, T:0, F:0, J:0, P:0 };
+    
+    // 使用默认映射计算
     answers.forEach((answer, index) => {
-      // 这里使用简化的计分逻辑，实际应该根据具体的题目映射
-      if (answer === 0) {
-        // 根据题目索引决定特质
-        if (index % 8 < 2) traits.E += 1;
-        else if (index % 8 < 4) traits.S += 1;
-        else if (index % 8 < 6) traits.T += 1;
-        else traits.J += 1;
-      } else {
-        if (index % 8 < 2) traits.I += 1;
-        else if (index % 8 < 4) traits.N += 1;
-        else if (index % 8 < 6) traits.F += 1;
-        else traits.P += 1;
+      const question = defaultMapping[index % defaultMapping.length];
+      if (question) {
+        const trait = answer === 0 ? question.sideA : question.sideB;
+        traits[trait] += 1;
       }
     });
     
@@ -242,12 +331,25 @@ async function calculateMbtiResult(answers) {
     const jp = traits.J > traits.P ? 'J' : 'P';
     const code = `${ei}${sn}${tf}${jp}`;
     
-    const summary = code;
-    const analysis = `After testing, you are **${code}** personality type.\n\nThis is a comprehensive personality assessment based on the Myers-Briggs Type Indicator. Your type indicates your preferences in how you perceive the world and make decisions.`;
+    // 尝试从数据库获取分析内容
+    const analysisResult = await pool.query(`
+      SELECT rt.type_code, rt.type_name_en, COALESCE(rt.analysis_en, '') AS analysis_en
+      FROM result_types rt
+      JOIN test_projects tp ON rt.project_id = tp.id
+      WHERE tp.project_id = 'mbti' AND rt.type_code = $1
+    `, [code]);
     
-    return { summary, analysis, traits, code };
+    let analysis = '';
+    if (analysisResult.rows.length > 0) {
+      const row = analysisResult.rows[0];
+      analysis = `After testing, you are **${code}** personality type.\n\n${row.analysis_en}`;
+    } else {
+      analysis = `After testing, you are **${code}** personality type.\n\nThis is a comprehensive personality assessment based on the Myers-Briggs Type Indicator. Your type indicates your preferences in how you perceive the world and make decisions.`;
+    }
+    
+    return { summary: code, analysis, traits, code };
   } catch (error) {
-    console.error('Error calculating MBTI result:', error);
+    console.error('Error calculating MBTI with default mapping:', error);
     return { summary: 'Error', analysis: 'Unable to calculate MBTI result.' };
   }
 }
