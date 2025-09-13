@@ -1,5 +1,5 @@
 // 健康检查API端点
-module.exports = (req, res) => {
+export default function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -14,4 +14,4 @@ module.exports = (req, res) => {
     timestamp: new Date().toISOString(),
     message: 'API is working!'
   });
-};
+}
