@@ -66,11 +66,20 @@ app.use('*', (req, res) => {
 });
 
 // 启动服务器
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/health`);
-  console.log(`🔗 API base URL: http://localhost:${PORT}/api`);
-});
+if (process.env.NODE_ENV !== 'production') {
+  // 开发环境
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`📊 Health check: http://localhost:${PORT}/health`);
+    console.log(`🔗 API base URL: http://localhost:${PORT}/api`);
+  });
+} else {
+  // 生产环境 (Vercel)
+  console.log('🚀 Server ready for Vercel deployment');
+}
+
+// 导出app供Vercel使用
+module.exports = app;
 
 // 优雅关闭
 process.on('SIGTERM', () => {
