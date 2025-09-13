@@ -20,14 +20,19 @@ class ApiService {
     }
     const config = { ...options, method, headers };
 
+    console.log(`API Request: ${method} ${url}`, config);
+
     try {
       const response = await fetch(url, config);
+      console.log(`API Response: ${response.status} ${response.statusText}`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      return await response.json();
+      const data = await response.json();
+      console.log('API Data received:', data);
+      return data;
     } catch (error) {
       console.error('API request failed:', error);
       throw error;
@@ -37,11 +42,15 @@ class ApiService {
   // 获取所有测试项目
   async getTestProjects() {
     try {
+      console.log('Attempting to fetch test projects from API...');
       const data = await this.request('/tests');
+      console.log('Successfully fetched projects from API:', data.projects);
       return data.projects;
     } catch (error) {
-      console.warn('Failed to fetch test projects from API, using fallback data');
-      return this.getFallbackProjects();
+      console.warn('Failed to fetch test projects from API, using fallback data', error);
+      const fallbackProjects = this.getFallbackProjects();
+      console.log('Using fallback projects:', fallbackProjects);
+      return fallbackProjects;
     }
   }
 
