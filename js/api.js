@@ -30,6 +30,17 @@ class ApiService {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
+      // 检查响应内容类型
+      const contentType = response.headers.get('content-type');
+      console.log('Content-Type:', contentType);
+      
+      if (!contentType || !contentType.includes('application/json')) {
+        // 如果不是JSON，尝试获取文本内容
+        const text = await response.text();
+        console.error('Non-JSON response received:', text);
+        throw new Error(`Expected JSON but got ${contentType || 'unknown content type'}`);
+      }
+      
       const data = await response.json();
       console.log('API Data received:', data);
       return data;
