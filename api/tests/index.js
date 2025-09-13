@@ -1,4 +1,4 @@
-// 最简单的测试API端点
+// Vercel API端点 - 使用默认路由格式
 module.exports = (req, res) => {
   // 设置CORS头
   res.setHeader('Access-Control-Allow-Origin', '*');
