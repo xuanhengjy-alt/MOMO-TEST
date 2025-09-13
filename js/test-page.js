@@ -175,12 +175,14 @@
   const infoLine = $('#info-line');
 
   // 初始化项目信息
-  breadcrumbProject.textContent = project.name;
+  breadcrumbProject.textContent = project.nameEn;
   // 统一从 assets/images 取图：优先按项目 id 匹配本地图，其次使用返回图，再退回 logo
   (function(){
     var map = {
       mbti: 'assets/images/mbti-career-personality-test.png',
-      disc40: 'assets/images/disc-personality-test.png'
+      disc40: 'assets/images/disc-personality-test.png',
+      mgmt_en: 'assets/images/self-assessment-of-management-skills.png',
+      observation: 'assets/images/observation-ability-test.png'
     };
     var preferred = (project && project.id && map[project.id]) ? map[project.id] : '';
     projectImage.src = preferred || project.image || 'assets/images/logo.png';
@@ -192,8 +194,8 @@
       projectImage.src = 'assets/images/mbti-career%20personality-test.png';
     };
   } catch(_) {}
-  projectTitle.textContent = project.name;
-  projectIntro.textContent = project.intro || '';
+  projectTitle.textContent = project.nameEn;
+  projectIntro.textContent = project.introEn || '';
   // 对 MBTI 项目，尝试加载完整介绍文件（若存在）
   if (project && project.id === 'mbti') {
     try {

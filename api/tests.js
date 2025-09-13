@@ -44,6 +44,7 @@ module.exports = async function handler(req, res) {
         tp.name_en,
         tp.image_url,
         tp.intro,
+        tp.intro_en,
         tp.test_type,
         ts.total_tests,
         ts.total_likes
@@ -55,10 +56,11 @@ module.exports = async function handler(req, res) {
 
     const projects = result.rows.map(row => ({
       id: row.project_id,
-      name: row.name,
+      name: row.name_en,
       nameEn: row.name_en,
       image: row.image_url,
-      intro: row.intro,
+      intro: row.intro_en,
+      introEn: row.intro_en,
       type: row.test_type,
       testedCount: row.total_tests ? formatNumber(row.total_tests) : '0',
       likes: row.total_likes || 0

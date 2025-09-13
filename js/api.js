@@ -145,8 +145,10 @@ class ApiService {
       {
         id: 'mbti',
         name: 'MBTI Career Personality Test',
+        nameEn: 'MBTI Career Personality Test',
         image: 'assets/images/mbti-career-personality-test.png',
         intro: 'The MBTI personality theory is based on the classification of psychological types by Carl Jung, later developed by Katharine Cook Briggs and Isabel Briggs Myers. It helps explain why people have different interests, excel at different jobs, and sometimes misunderstand each other. For decades, MBTI has been used worldwide by couples, teachers and students, young people choosing careers, and organizations to improve relationships, team communication, organizational building and diagnostics. In the Fortune 500, 80% of companies have experience applying MBTI.',
+        introEn: 'The MBTI personality theory is based on the classification of psychological types by Carl Jung, later developed by Katharine Cook Briggs and Isabel Briggs Myers. It helps explain why people have different interests, excel at different jobs, and sometimes misunderstand each other. For decades, MBTI has been used worldwide by couples, teachers and students, young people choosing careers, and organizations to improve relationships, team communication, organizational building and diagnostics. In the Fortune 500, 80% of companies have experience applying MBTI.',
         type: 'mbti',
         testedCount: '120K+',
         likes: 13000
@@ -154,11 +156,35 @@ class ApiService {
       {
         id: 'disc40',
         name: 'DISC Personality Test',
+        nameEn: 'DISC Personality Test',
         image: 'assets/images/disc-personality-test.png',
         intro: 'In the 1920s, American psychologist William Moulton Marston developed a theory to explain human emotional responses. Prior to this, such research had been largely confined to studies of psychiatric patients or individuals with mental disorders. Dr. Marston sought to broaden the scope of this research to apply it to the general population with normal mental health. Consequently, he structured his theory into a systematic framework titled The Emotions of Normal People.',
+        introEn: 'In the 1920s, American psychologist William Moulton Marston developed a theory to explain human emotional responses. Prior to this, such research had been largely confined to studies of psychiatric patients or individuals with mental disorders. Dr. Marston sought to broaden the scope of this research to apply it to the general population with normal mental health. Consequently, he structured his theory into a systematic framework titled The Emotions of Normal People.',
         type: 'disc40',
         testedCount: '50K+',
         likes: 4500
+      },
+      {
+        id: 'mgmt_en',
+        name: 'Self-assessment of Management Skills',
+        nameEn: 'Self-assessment of Management Skills',
+        image: 'assets/images/self-assessment-of-management-skills.png',
+        intro: 'Do you have a clear sense of purpose and efficient execution ability? This classic test quickly assesses your core management abilities such as planning, decision-making, and self-discipline through 15 questions. After completing the self-test, you will receive targeted ability analysis and improvement directions. Whether it\'s enhancing team efficiency or personal career development, you can find a breakthrough path. Spend a few minutes on the self-test and unlock your management potential!',
+        introEn: 'Do you have a clear sense of purpose and efficient execution ability? This classic test quickly assesses your core management abilities such as planning, decision-making, and self-discipline through 15 questions. After completing the self-test, you will receive targeted ability analysis and improvement directions. Whether it\'s enhancing team efficiency or personal career development, you can find a breakthrough path. Spend a few minutes on the self-test and unlock your management potential!',
+        type: 'mgmt_en',
+        testedCount: '0',
+        likes: 0
+      },
+      {
+        id: 'observation',
+        name: 'Observation ability test',
+        nameEn: 'Observation ability test',
+        image: 'assets/images/observation-ability-test.png',
+        intro: 'Have you truly "seen" rather than just "looked" around you? This test, through 15 situational questions, helps you assess your unconscious observing habits - from detail capture to interpersonal perception, from environmental awareness to inner awareness. Observation is not only the ability to notice details, but also the key to understanding others and connecting with the world. After completing the test, you will receive a precise analysis of your cognitive style, clearly identifying your strengths and blind spots, and learn how to enhance your observation skills to improve communication, decision-making, and even creativity. Don\'t overthink, answer immediately, and unlock your observation potential in just a few minutes!',
+        introEn: 'Have you truly "seen" rather than just "looked" around you? This test, through 15 situational questions, helps you assess your unconscious observing habits - from detail capture to interpersonal perception, from environmental awareness to inner awareness. Observation is not only the ability to notice details, but also the key to understanding others and connecting with the world. After completing the test, you will receive a precise analysis of your cognitive style, clearly identifying your strengths and blind spots, and learn how to enhance your observation skills to improve communication, decision-making, and even creativity. Don\'t overthink, answer immediately, and unlock your observation potential in just a few minutes!',
+        type: 'observation',
+        testedCount: '0',
+        likes: 0
       }
     ];
   }

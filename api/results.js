@@ -138,7 +138,11 @@ async function calculateTestResult(projectId, answers) {
       return await calculateDisc40Result(projectId, answers);
     } else if (testType === 'mbti') {
       return await calculateMbtiResult(answers);
-    } else {
+      } else if (testType === 'mgmt_en') {
+        return await calculateMgmtEnResult(projectId, answers);
+      } else if (testType === 'observation') {
+        return await calculateObservationResult(projectId, answers);
+      } else {
       return { summary: 'Test completed', analysis: 'Analysis not available for this test type.' };
     }
   } catch (error) {
@@ -298,6 +302,68 @@ async function calculateMbtiResult(answers) {
   }
 }
 
+// 管理能力测试结果计算
+async function calculateMgmtEnResult(projectId, answers) {
+  try {
+    // 计算总分：Yes=1分，No=0分（答案索引0为Yes）
+    const total = answers.reduce((sum, answer) => sum + (answer === 0 ? 1 : 0), 0);
+    
+    // 根据分数确定结果类型
+    let typeCode = '';
+    let summary = '';
+    
+    if (total <= 5) {
+      typeCode = 'POOR';
+      summary = 'Poor management ability';
+    } else if (total <= 9) {
+      typeCode = 'BELOW_AVERAGE';
+      summary = 'Below-average management ability';
+    } else if (total <= 12) {
+      typeCode = 'AVERAGE';
+      summary = 'Average management ability';
+    } else if (total <= 14) {
+      typeCode = 'STRONG';
+      summary = 'Strong management ability';
+    } else {
+      typeCode = 'VERY_STRONG';
+      summary = 'Very strong management ability';
+    }
+    
+    // 从数据库获取分析内容
+    const analysisResult = await pool.query(`
+      SELECT rt.type_code, rt.type_name_en, COALESCE(rt.analysis_en, '') AS analysis_en
+      FROM result_types rt
+      JOIN test_projects tp ON rt.project_id = tp.id
+      WHERE tp.project_id = $1 AND rt.type_code = $2
+    `, [projectId, typeCode]);
+    
+    let analysis = '';
+    if (analysisResult.rows.length > 0) {
+      const row = analysisResult.rows[0];
+      analysis = `Your management ability assessment: **${summary}**\n\n${row.analysis_en}`;
+    } else {
+      // 如果数据库没有分析内容，使用默认分析
+      analysis = `Your management ability assessment: **${summary}**\n\nBased on your responses, you scored ${total} out of 15 points. This indicates your current level of management skills across various dimensions including planning, execution, and self-discipline.`;
+    }
+    
+    return { 
+      summary, 
+      analysis, 
+      total, 
+      type: typeCode,
+      score: total
+    };
+  } catch (error) {
+    console.error('Error calculating Management Skills result:', error);
+    return { 
+      summary: 'Assessment completed', 
+      analysis: 'Unable to generate detailed analysis at this time.',
+      total: 0,
+      type: 'UNKNOWN'
+    };
+  }
+}
+
 // 使用默认映射计算MBTI结果（fallback）
 async function calculateMbtiWithDefaultMapping(answers) {
   try {
@@ -351,5 +417,73 @@ async function calculateMbtiWithDefaultMapping(answers) {
   } catch (error) {
     console.error('Error calculating MBTI with default mapping:', error);
     return { summary: 'Error', analysis: 'Unable to calculate MBTI result.' };
+  }
+}
+
+// 观察能力测试计分函数
+async function calculateObservationResult(projectId, answers) {
+  try {
+    // 根据文档中的评分表计算总分
+    const scoreMap = [
+      [3, 10, 5],   // 题目1: A=3, B=10, C=5
+      [5, 10, 3],   // 题目2: A=5, B=10, C=3
+      [10, 5, 3],   // 题目3: A=10, B=5, C=3
+      [10, 3, 5],   // 题目4: A=10, B=3, C=5
+      [3, 5, 10],   // 题目5: A=3, B=5, C=10
+      [5, 3, 10],   // 题目6: A=5, B=3, C=10
+      [3, 5, 10],   // 题目7: A=3, B=5, C=10
+      [10, 5, 3],   // 题目8: A=10, B=5, C=3
+      [5, 3, 10],   // 题目9: A=5, B=3, C=10
+      [10, 5, 3],   // 题目10: A=10, B=5, C=3
+      [10, 5, 3],   // 题目11: A=10, B=5, C=3
+      [10, 5, 3],   // 题目12: A=10, B=5, C=3
+      [10, 5, 3],   // 题目13: A=10, B=5, C=3
+      [10, 3, 5],   // 题目14: A=10, B=3, C=5
+      [3, 10, 5]    // 题目15: A=3, B=10, C=5
+    ];
+    
+    let total = 0;
+    answers.forEach((answerIndex, questionIndex) => {
+      if (scoreMap[questionIndex] && scoreMap[questionIndex][answerIndex] !== undefined) {
+        total += scoreMap[questionIndex][answerIndex];
+      }
+    });
+    
+    let typeCode = '';
+    let summary = '';
+    if (total >= 100) {
+      summary = 'Outstanding observation skills';
+      typeCode = 'EXCELLENT';
+    } else if (total >= 75) {
+      summary = 'Quite acute observation abilities';
+      typeCode = 'GOOD';
+    } else if (total >= 45) {
+      summary = 'You Live on the Surface';
+      typeCode = 'AVERAGE';
+    } else {
+      summary = 'Immersers in Their Own Worlds';
+      typeCode = 'POOR';
+    }
+    
+    // 从数据库获取分析内容
+    const analysisResult = await pool.query(`
+      SELECT rt.type_code, rt.type_name_en, COALESCE(rt.analysis_en, '') AS analysis_en
+      FROM result_types rt
+      JOIN test_projects tp ON rt.project_id = tp.id
+      WHERE tp.project_id = $1 AND rt.type_code = $2
+    `, [projectId, typeCode]);
+    
+    let analysis = '';
+    if (analysisResult.rows.length > 0) {
+      const row = analysisResult.rows[0];
+      analysis = `Your observation ability assessment: **${summary}**\n\n${row.analysis_en}`;
+    } else {
+      analysis = `Your observation ability assessment: **${summary}**\n\nBased on your responses, you scored ${total} out of 150 points. This indicates your current level of observation skills across various dimensions including detail capture, interpersonal perception, and environmental awareness.`;
+    }
+    
+    return { summary, analysis, total, type: typeCode, score: total };
+  } catch (error) {
+    console.error('Error calculating Observation test result:', error);
+    return { summary: 'Assessment completed', analysis: 'Unable to generate detailed analysis at this time.', total: 0, type: 'UNKNOWN' };
   }
 }

@@ -36,9 +36,11 @@ module.exports = async function handler(req, res) {
       SELECT 
         q.id,
         q.question_text,
+        q.question_text_en,
         q.question_number,
         qo.id as option_id,
         qo.option_text,
+        qo.option_text_en,
         qo.score_value,
         qo.option_number
       FROM questions q
@@ -54,7 +56,7 @@ module.exports = async function handler(req, res) {
       if (!questionsMap.has(row.id)) {
         questionsMap.set(row.id, {
           id: row.id,
-          text: row.question_text,
+          text: row.question_text_en,
           order: row.question_number,
           options: []
         });
@@ -63,7 +65,7 @@ module.exports = async function handler(req, res) {
       if (row.option_id) {
         questionsMap.get(row.id).options.push({
           id: row.option_id,
-          text: row.option_text,
+          text: row.option_text_en,
           value: row.score_value,
           order: row.option_number
         });

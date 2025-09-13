@@ -28,7 +28,9 @@
     // 统一从 assets/images 取图，并针对常见文件名提供回退
     const imageFallbacks = {
       mbti: 'assets/images/mbti-career-personality-test.png',
-      disc40: 'assets/images/disc-personality-test.png'
+      disc40: 'assets/images/disc-personality-test.png',
+      mgmt_en: 'assets/images/self-assessment-of-management-skills.png',
+      observation: 'assets/images/observation-ability-test.png'
     };
     const byId = imageFallbacks[p.id] || null;
     img.src = byId || p.image;
@@ -47,7 +49,7 @@
       skeleton.classList.add('hidden');
       img.classList.remove('hidden');
     });
-    title.textContent = p.name;
+    title.textContent = p.nameEn;
 
     // 使用API数据或本地存储
     const testedKey = `tested_${p.id}`;
