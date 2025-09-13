@@ -1,5 +1,5 @@
-// 最简单的API端点
-export default function handler(req, res) {
+// 最简单的API端点 - CommonJS格式
+module.exports = (req, res) => {
   // 设置CORS头
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -36,4 +36,4 @@ export default function handler(req, res) {
       }
     ]
   });
-}
+};
