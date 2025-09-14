@@ -695,6 +695,227 @@ const TestLogic = (function() {
     };
   }
 
+  function scoreHollandTest(answers) { // answers: 0/1 (对应Yes/No选项)
+    // 根据文档的答案统计表，计算六种类型的分数
+    let realisticScore = 0;    // 现实型：第1,7,13,19,25,31,37,43,49,55,61,67,73,79,85题
+    let investigativeScore = 0; // 研究型：第2,8,14,20,26,32,38,44,50,56,62,68,74,80,86题
+    let artisticScore = 0;     // 艺术型：第3,9,15,21,27,33,39,45,51,57,63,69,75,81,87题
+    let socialScore = 0;       // 社会型：第4,10,16,22,28,34,40,46,52,58,64,70,76,82,88题
+    let enterprisingScore = 0; // 企业型：第5,11,17,23,29,35,41,47,53,59,65,71,77,83,89题
+    let conventionalScore = 0; // 常规型：第6,12,18,24,30,36,42,48,54,60,66,72,78,84,90题
+    
+    // 题目索引映射（从0开始）
+    const realisticQuestions = [0, 6, 12, 18, 24, 30, 36, 42, 48, 54, 60, 66, 72, 78, 84];      // 第1,7,13,19,25,31,37,43,49,55,61,67,73,79,85题
+    const investigativeQuestions = [1, 7, 13, 19, 25, 31, 37, 43, 49, 55, 61, 67, 73, 79, 85];  // 第2,8,14,20,26,32,38,44,50,56,62,68,74,80,86题
+    const artisticQuestions = [2, 8, 14, 20, 26, 32, 38, 44, 50, 56, 62, 68, 74, 80, 86];       // 第3,9,15,21,27,33,39,45,51,57,63,69,75,81,87题
+    const socialQuestions = [3, 9, 15, 21, 27, 33, 39, 45, 51, 57, 63, 69, 75, 81, 87];         // 第4,10,16,22,28,34,40,46,52,58,64,70,76,82,88题
+    const enterprisingQuestions = [4, 10, 16, 22, 28, 34, 40, 46, 52, 58, 64, 70, 76, 82, 88];  // 第5,11,17,23,29,35,41,47,53,59,65,71,77,83,89题
+    const conventionalQuestions = [5, 11, 17, 23, 29, 35, 41, 47, 53, 59, 65, 71, 77, 83, 89];  // 第6,12,18,24,30,36,42,48,54,60,66,72,78,84,90题
+    
+    // 计算每种类型的分数（选Yes得1分，选No得0分）
+    realisticQuestions.forEach(qIndex => {
+      if (qIndex < answers.length) {
+        realisticScore += answers[qIndex]; // 0=No, 1=Yes
+      }
+    });
+    
+    investigativeQuestions.forEach(qIndex => {
+      if (qIndex < answers.length) {
+        investigativeScore += answers[qIndex];
+      }
+    });
+    
+    artisticQuestions.forEach(qIndex => {
+      if (qIndex < answers.length) {
+        artisticScore += answers[qIndex];
+      }
+    });
+    
+    socialQuestions.forEach(qIndex => {
+      if (qIndex < answers.length) {
+        socialScore += answers[qIndex];
+      }
+    });
+    
+    enterprisingQuestions.forEach(qIndex => {
+      if (qIndex < answers.length) {
+        enterprisingScore += answers[qIndex];
+      }
+    });
+    
+    conventionalQuestions.forEach(qIndex => {
+      if (qIndex < answers.length) {
+        conventionalScore += answers[qIndex];
+      }
+    });
+    
+    // 找出最高分数
+    const scores = [
+      { type: 'REALISTIC', score: realisticScore },
+      { type: 'INVESTIGATIVE', score: investigativeScore },
+      { type: 'ARTISTIC', score: artisticScore },
+      { type: 'SOCIAL', score: socialScore },
+      { type: 'ENTERPRISING', score: enterprisingScore },
+      { type: 'CONVENTIONAL', score: conventionalScore }
+    ];
+    
+    const maxScore = Math.max(...scores.map(s => s.score));
+    const dominantTypes = scores.filter(s => s.score === maxScore);
+    
+    let summary = '';
+    let type = '';
+    
+    if (dominantTypes.length === 1) {
+      const dominant = dominantTypes[0];
+      if (dominant.type === 'REALISTIC') {
+        summary = 'Realistic';
+        type = 'REALISTIC';
+      } else if (dominant.type === 'INVESTIGATIVE') {
+        summary = 'Investigative';
+        type = 'INVESTIGATIVE';
+      } else if (dominant.type === 'ARTISTIC') {
+        summary = 'Artistic';
+        type = 'ARTISTIC';
+      } else if (dominant.type === 'SOCIAL') {
+        summary = 'Social';
+        type = 'SOCIAL';
+      } else if (dominant.type === 'ENTERPRISING') {
+        summary = 'Enterprising';
+        type = 'ENTERPRISING';
+      } else if (dominant.type === 'CONVENTIONAL') {
+        summary = 'Conventional';
+        type = 'CONVENTIONAL';
+      }
+    } else {
+      // 多个类型并列最高
+      const typeNames = dominantTypes.map(t => {
+        if (t.type === 'REALISTIC') return 'Realistic';
+        else if (t.type === 'INVESTIGATIVE') return 'Investigative';
+        else if (t.type === 'ARTISTIC') return 'Artistic';
+        else if (t.type === 'SOCIAL') return 'Social';
+        else if (t.type === 'ENTERPRISING') return 'Enterprising';
+        else if (t.type === 'CONVENTIONAL') return 'Conventional';
+      });
+      summary = `${typeNames.join(', ')}`;
+      type = dominantTypes[0].type;
+    }
+    
+    return { 
+      total: maxScore, 
+      summary, 
+      analysis: summary, 
+      type,
+      scores: {
+        realistic: realisticScore,
+        investigative: investigativeScore,
+        artistic: artisticScore,
+        social: socialScore,
+        enterprising: enterprisingScore,
+        conventional: conventionalScore
+      }
+    };
+  }
+
+  function scoreKelseyTest(answers) { // answers: 0/1 (对应A/B选项)
+    // 根据正确的评分规则，计算E/I、S/N、T/F、J/P分数
+    let eScore = 0, iScore = 0;
+    let sScore = 0, nScore = 0;
+    let tScore = 0, fScore = 0;
+    let jScore = 0, pScore = 0;
+    
+    // 正确的题目类型映射（从0开始）
+    // 1、8、15、22、29、36、43、50、57、64题，选A则E+1分，选B则I+1分
+    const eQuestions = [0, 7, 14, 21, 28, 35, 42, 49, 56, 63];
+    
+    // 2、9、16、23、30、37、44、51、58、65、3、10、17、24、31、38、45、52、59、66题，选A则S+1分，选B则N+1分
+    const sQuestions = [1, 8, 15, 22, 29, 36, 43, 50, 57, 64, 2, 9, 16, 23, 30, 37, 44, 51, 58, 65];
+    
+    // 4、11、18、25、32、39、46、53、60、67、5、12、19、26、33、40、47、54、61、68题，选A则T+1分，选B则F+1分
+    const tQuestions = [3, 10, 17, 24, 31, 38, 45, 52, 59, 66, 4, 11, 18, 25, 32, 39, 46, 53, 60, 67];
+    
+    // 6、13、20、27、34、41、48、55、62、69、7、14、21、28、35、42、49、56、63、70题，选A则J+1分，选B则P+1分
+    const jQuestions = [5, 12, 19, 26, 33, 40, 47, 54, 61, 68, 6, 13, 20, 27, 34, 41, 48, 55, 62, 69];
+    
+    // 计算E/I分数
+    eQuestions.forEach(qIndex => {
+      if (qIndex < answers.length) {
+        if (answers[qIndex] === 0) eScore++; // A选项得1分
+        else iScore++; // B选项得1分
+      }
+    });
+    
+    // 计算S/N分数
+    sQuestions.forEach(qIndex => {
+      if (qIndex < answers.length) {
+        if (answers[qIndex] === 0) sScore++; // A选项得1分
+        else nScore++; // B选项得1分
+      }
+    });
+    
+    // 计算T/F分数
+    tQuestions.forEach(qIndex => {
+      if (qIndex < answers.length) {
+        if (answers[qIndex] === 0) tScore++; // A选项得1分
+        else fScore++; // B选项得1分
+      }
+    });
+    
+    // 计算J/P分数
+    jQuestions.forEach(qIndex => {
+      if (qIndex < answers.length) {
+        if (answers[qIndex] === 0) jScore++; // A选项得1分
+        else pScore++; // B选项得1分
+      }
+    });
+    
+    // 根据文档的判定规则确定最终类型
+    const eOrI = eScore >= iScore ? 'E' : 'I';
+    const sOrN = sScore >= nScore ? 'S' : 'N';
+    const tOrF = tScore >= fScore ? 'T' : 'F';
+    const jOrP = jScore >= pScore ? 'J' : 'P';
+    
+    const typeCode = eOrI + sOrN + tOrF + jOrP;
+    
+    // 根据类型代码确定名称
+    const typeNames = {
+      'ESTP': 'Entrepreneur',
+      'ISTP': 'Artisan',
+      'ESFP': 'Performer',
+      'ISFP': 'Creator',
+      'ESTJ': 'Supervisor',
+      'ISTJ': 'Inspector',
+      'ESFJ': 'Provider',
+      'ISFJ': 'Protector',
+      'ENFJ': 'Leader',
+      'INFJ': 'Adviser',
+      'ENFP': 'Striver',
+      'INFP': 'Conciliator',
+      'ENTJ': 'Field Marshal',
+      'INTJ': 'Strategist',
+      'ENTP': 'Inventor',
+      'INTP': 'Architect'
+    };
+    
+    const typeName = typeNames[typeCode] || typeCode;
+    
+    return { 
+      total: Math.max(eScore, iScore) + Math.max(sScore, nScore) + Math.max(tScore, fScore) + Math.max(jScore, pScore), 
+      summary: typeName, 
+      analysis: typeName, 
+      type: typeCode,
+      scores: {
+        e: eScore,
+        i: iScore,
+        s: sScore,
+        n: nScore,
+        t: tScore,
+        f: fScore,
+        j: jScore,
+        p: pScore
+      }
+    };
+  }
+
   // MBTI mapping loader with fallback
   let mbtiMapping = null;
   let mbtiDescriptions = null;
@@ -1079,6 +1300,8 @@ const TestLogic = (function() {
       if (type === 'four_colors') return scoreFourColors(answers);
       if (type === 'pdp_test') return scorePDPTest(answers);
       if (type === 'mental_age_test') return scoreMentalAgeTest(answers);
+      if (type === 'holland_test') return scoreHollandTest(answers);
+      if (type === 'kelsey_test') return scoreKelseyTest(answers);
       return { summary: 'Test type not supported', analysis: '' };
     }
   };

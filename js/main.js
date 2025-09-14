@@ -37,7 +37,9 @@
       phil_test_en: 'assets/images/phil-personality-test.png',
       four_colors_en: 'assets/images/four-colors-personality-analysis.png',
       pdp_test_en: 'assets/images/professional-dyna-metric-program.png',
-      mental_age_test_en: 'assets/images/test-your-mental-age.png'
+      mental_age_test_en: 'assets/images/test-your-mental-age.png',
+      holland_test_en: 'assets/images/holland-occupational-interest-test.png',
+      kelsey_test_en: 'assets/images/kelsey-temperament-type-test.png'
     };
     const byId = imageFallbacks[p.id] || null;
     img.src = byId || p.image;

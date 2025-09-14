@@ -429,6 +429,14 @@
       } else if (project.type === 'mental_age_test') {
         // Show Mental Age test result prominently
         resultSummary.innerHTML = `Your mental age: <span class="font-semibold text-blue-700">${finalResult.summary}</span> (Score: ${finalResult.total}/100).`;
+      } else if (project.type === 'holland_test') {
+        // Show Holland test result prominently
+        const scores = finalResult.scores || {};
+        resultSummary.innerHTML = `Your Holland occupational interest type: <span class="font-semibold text-blue-700">${finalResult.summary}</span> (Realistic: ${scores.realistic || 0}, Investigative: ${scores.investigative || 0}, Artistic: ${scores.artistic || 0}, Social: ${scores.social || 0}, Enterprising: ${scores.enterprising || 0}, Conventional: ${scores.conventional || 0}).`;
+      } else if (project.type === 'kelsey_test') {
+        // Show Kelsey test result prominently
+        const scores = finalResult.scores || {};
+        resultSummary.innerHTML = `Your Kelsey temperament type: <span class="font-semibold text-blue-700">${finalResult.summary}</span> (${finalResult.type}) - E:${scores.e || 0}, I:${scores.i || 0}, S:${scores.s || 0}, N:${scores.n || 0}, T:${scores.t || 0}, F:${scores.f || 0}, J:${scores.j || 0}, P:${scores.p || 0}.`;
       } else {
         resultSummary.textContent = `Total: ${finalResult.total} - ${finalResult.summary}`;
       }

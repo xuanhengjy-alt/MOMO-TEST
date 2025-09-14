@@ -276,6 +276,32 @@ class ApiService {
         questionCount: 20,
         testedCount: '0',
         likes: 0
+      },
+      {
+        id: 'holland_test_en',
+        name: 'Holland Occupational Interest Test',
+        nameEn: 'Holland Occupational Interest Test',
+        image: 'assets/images/holland-occupational-interest-test.png',
+        intro: 'Are you looking for a suitable career direction for yourself? Are you curious which jobs are more compatible with your personality traits? John Holland, a psychology professor at Johns Hopkins University in the United States and a renowned career guidance expert, put forward the far-reaching "Vocational Interest Theory" as early as 1959.',
+        introEn: 'Are you looking for a suitable career direction for yourself? Are you curious which jobs are more compatible with your personality traits? John Holland, a psychology professor at Johns Hopkins University in the United States and a renowned career guidance expert, put forward the far-reaching "Vocational Interest Theory" as early as 1959.',
+        type: 'holland_test',
+        estimatedTime: 15,
+        questionCount: 90,
+        testedCount: '0',
+        likes: 0
+      },
+      {
+        id: 'kelsey_test_en',
+        name: 'Kelsey Temperament Type Test',
+        nameEn: 'Kelsey Temperament Type Test',
+        image: 'assets/images/kelsey-temperament-type-test.png',
+        intro: 'The Kiersey Temperament Sorter is a widely utilized psychological assessment tool designed to help individuals understand their inherent temperament traits and behavioral tendencies. Grounded in the Kiersey Temperament Theory, this assessment categorizes human temperaments into four distinct types: Choleric, Sanguine, Melancholic, and Phlegmatic.',
+        introEn: 'The Kiersey Temperament Sorter is a widely utilized psychological assessment tool designed to help individuals understand their inherent temperament traits and behavioral tendencies. Grounded in the Kiersey Temperament Theory, this assessment categorizes human temperaments into four distinct types: Choleric, Sanguine, Melancholic, and Phlegmatic.',
+        type: 'kelsey_test',
+        estimatedTime: 12,
+        questionCount: 70,
+        testedCount: '0',
+        likes: 0
       }
     ];
   }
