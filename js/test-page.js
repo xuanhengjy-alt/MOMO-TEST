@@ -406,6 +406,9 @@
       } else if (project.type === 'mbti') {
         // Show MBTI code prominently
         resultSummary.innerHTML = `After testing, you are <span class="font-semibold text-blue-700">${finalResult.summary}</span> personality type.`;
+      } else if (project.type === 'introversion_extraversion') {
+        // Show introversion/extraversion result prominently
+        resultSummary.innerHTML = `After testing, you are <span class="font-semibold text-blue-700">${finalResult.summary}</span> personality type.`;
       } else {
         resultSummary.textContent = `Total: ${finalResult.total} - ${finalResult.summary}`;
       }

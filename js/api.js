@@ -185,6 +185,19 @@ class ApiService {
         type: 'observation',
         testedCount: '0',
         likes: 0
+      },
+      {
+        id: 'introversion_en',
+        name: 'Professional Test for Introversion-Extraversion Degree',
+        nameEn: 'Professional Test for Introversion-Extraversion Degree',
+        image: 'assets/images/professional-test-for-introversion-extraversion-degree.png',
+        intro: 'Do you truly understand your social tendencies and energy sources? This professional test, through 70 carefully designed questions, helps you scientifically assess the extroverted and introverted traits in your personality. Extroverts often gain energy from interpersonal interactions, while introverts tend to restore their energy in solitude - and this is not simply a matter of being "lively" or "quiet", but rather about how you think, make decisions and perceive the world.',
+        introEn: 'Do you truly understand your social tendencies and energy sources? This professional test, through 70 carefully designed questions, helps you scientifically assess the extroverted and introverted traits in your personality. Extroverts often gain energy from interpersonal interactions, while introverts tend to restore their energy in solitude - and this is not simply a matter of being "lively" or "quiet", but rather about how you think, make decisions and perceive the world.',
+        type: 'introversion_extraversion',
+        estimatedTime: 15,
+        questionCount: 70,
+        testedCount: '0',
+        likes: 0
       }
     ];
   }

@@ -83,6 +83,85 @@ class TestLogicService {
     return { total, summary, analysis: summary };
   }
 
+  // 内向外向测试计算
+  async scoreIntroversionExtraversion(answers) {
+    // 基础分数70分，根据答案加减分数
+    let total = 70;
+    
+    // 评分规则：根据文档中的答案统计表
+    const scores = [
+      1, 1, -1, -1, 1, 1, 1, -1, -1, -1,  // 题目1-10
+      1, 1, 1, 1, 1, 1, -1, 1, -1, 1,      // 题目11-20
+      1, 1, -1, -1, -1, 1, -1, 1, 1, -1,   // 题目21-30
+      -1, 1, 1, -1, -1, -1, -1, 1, 1, 1,   // 题目31-40
+      1, -1, 1, 1, -1, 1, -1, -1, -1, 1,   // 题目41-50
+      1, -1, -1, 1, 1, -1, -1, -1, 1, 1,   // 题目51-60
+      1, -1, 1, -1, -1, -1, -1, 1, -1, 1   // 题目61-70
+    ];
+    
+    answers.forEach((answerIndex, questionIndex) => {
+      if (scores[questionIndex] !== undefined) {
+        // answerIndex 0 = Option A (+1), answerIndex 1 = Option B (-1)
+        const score = answerIndex === 0 ? scores[questionIndex] : -scores[questionIndex];
+        total += score;
+      }
+    });
+    
+    let summary = '';
+    let type = '';
+    if (total >= 105) {
+      summary = 'Very extroverted';
+      type = 'VERY_EXTROVERTED';
+    } else if (total >= 70) {
+      summary = 'Extroverted';
+      type = 'EXTROVERTED';
+    } else if (total >= 36) {
+      summary = 'Introverted';
+      type = 'INTROVERTED';
+    } else {
+      summary = 'Very introverted';
+      type = 'VERY_INTROVERTED';
+    }
+    
+    // 从数据库获取完整的分析
+    try {
+      const result = await query(`
+        SELECT rt.analysis, rt.analysis_en, rt.type_name, rt.type_name_en
+        FROM result_types rt
+        JOIN test_projects tp ON rt.project_id = tp.id
+        WHERE tp.project_id = 'introversion_en' AND rt.type_code = $1
+      `, [type]);
+      
+      if (result.rows.length > 0) {
+        const introData = result.rows[0];
+        return {
+          summary: summary,
+          summaryEn: summary,
+          analysis: introData.analysis || summary,
+          analysisEn: introData.analysis_en || introData.analysis || summary,
+          typeName: introData.type_name,
+          typeNameEn: introData.type_name_en,
+          total: total,
+          type: type
+        };
+      }
+    } catch (error) {
+      console.error('Error fetching introversion description from database:', error);
+    }
+    
+    // 如果数据库查询失败，返回默认结果
+    return {
+      summary: summary,
+      summaryEn: summary,
+      analysis: `After testing, you are **${summary}** personality type.`,
+      analysisEn: `After testing, you are **${summary}** personality type.`,
+      typeName: summary,
+      typeNameEn: summary,
+      total: total,
+      type: type
+    };
+  }
+
   // 主要计算入口
   async calculateResult(testType, answers) {
     switch (testType) {
@@ -94,6 +173,8 @@ class TestLogicService {
         return await this.scoreDisc40(answers);
       case 'mbti':
         return await this.scoreMbti(answers);
+      case 'introversion_extraversion':
+        return await this.scoreIntroversionExtraversion(answers);
       default:
         return { summary: '暂不支持的测试类型', analysis: '' };
     }

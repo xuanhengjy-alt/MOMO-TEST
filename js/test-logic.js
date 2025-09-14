@@ -211,6 +211,48 @@ const TestLogic = (function() {
     return { total, summary, analysis: summary, type };
   }
 
+  function scoreIntroversionExtraversion(answers) { // answers: 0/1 (对应A/B选项)
+    // 基础分数70分，根据答案加减分数
+    let total = 70;
+    
+    // 评分规则：根据文档中的答案统计表
+    const scores = [
+      1, 1, -1, -1, 1, 1, 1, -1, -1, -1,  // 题目1-10
+      1, 1, 1, 1, 1, 1, -1, 1, -1, 1,      // 题目11-20
+      1, 1, -1, -1, -1, 1, -1, 1, 1, -1,   // 题目21-30
+      -1, 1, 1, -1, -1, -1, -1, 1, 1, 1,   // 题目31-40
+      1, -1, 1, 1, -1, 1, -1, -1, -1, 1,   // 题目41-50
+      1, -1, -1, 1, 1, -1, -1, -1, 1, 1,   // 题目51-60
+      1, -1, 1, -1, -1, -1, -1, 1, -1, 1   // 题目61-70
+    ];
+    
+    answers.forEach((answerIndex, questionIndex) => {
+      if (scores[questionIndex] !== undefined) {
+        // answerIndex 0 = Option A (+1), answerIndex 1 = Option B (-1)
+        const score = answerIndex === 0 ? scores[questionIndex] : -scores[questionIndex];
+        total += score;
+      }
+    });
+    
+    let summary = '';
+    let type = '';
+    if (total >= 105) {
+      summary = 'Very extroverted';
+      type = 'VERY_EXTROVERTED';
+    } else if (total >= 70) {
+      summary = 'Extroverted';
+      type = 'EXTROVERTED';
+    } else if (total >= 36) {
+      summary = 'Introverted';
+      type = 'INTROVERTED';
+    } else {
+      summary = 'Very introverted';
+      type = 'VERY_INTROVERTED';
+    }
+    
+    return { total, summary, analysis: summary, type };
+  }
+
   // MBTI mapping loader with fallback
   let mbtiMapping = null;
   let mbtiDescriptions = null;
@@ -588,6 +630,7 @@ const TestLogic = (function() {
       }
       if (type === 'mgmt_en') return scoreMgmtEn(answers);
       if (type === 'observation') return scoreObservation(answers);
+      if (type === 'introversion_extraversion') return scoreIntroversionExtraversion(answers);
       return { summary: 'Test type not supported', analysis: '' };
     }
   };

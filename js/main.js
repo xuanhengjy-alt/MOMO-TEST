@@ -30,7 +30,8 @@
       mbti: 'assets/images/mbti-career-personality-test.png',
       disc40: 'assets/images/disc-personality-test.png',
       mgmt_en: 'assets/images/self-assessment-of-management-skills.png',
-      observation: 'assets/images/observation-ability-test.png'
+      observation: 'assets/images/observation-ability-test.png',
+      introversion_en: 'assets/images/professional-test-for-introversion-extraversion-degree.png'
     };
     const byId = imageFallbacks[p.id] || null;
     img.src = byId || p.image;
