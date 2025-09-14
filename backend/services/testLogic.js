@@ -357,6 +357,434 @@ class TestLogicService {
     };
   }
 
+  // 菲尔人格测试计算
+  async scorePhilTest(answers) {
+    let total = 0;
+    
+    // 根据文档的评分规则，每道题的得分对应关系
+    const scores = [
+      [2, 4, 6], // 第1题: a=2, b=4, c=6
+      [6, 4, 7, 2, 1], // 第2题: a=6, b=4, c=7, d=2, e=1
+      [4, 2, 5, 7, 6], // 第3题: a=4, b=2, c=5, d=7, e=6
+      [4, 6, 2, 1], // 第4题: a=4, b=6, c=2, d=1
+      [6, 4, 3, 5], // 第5题: a=6, b=4, c=3, d=5
+      [6, 4, 2], // 第6题: a=6, b=4, c=2
+      [6, 2, 4], // 第7题: a=6, b=2, c=4
+      [6, 7, 5, 4, 3, 2, 1], // 第8题: a=6, b=7, c=5, d=4, e=3, f=2, g=1
+      [7, 6, 4, 2, 1], // 第9题: a=7, b=6, c=4, d=2, e=1
+      [4, 2, 3, 5, 6, 1] // 第10题: a=4, b=2, c=3, d=5, e=6, f=1
+    ];
+    
+    // 计算总分
+    for (let i = 0; i < answers.length && i < scores.length; i++) {
+      const answerIndex = answers[i];
+      if (answerIndex >= 0 && answerIndex < scores[i].length) {
+        total += scores[i][answerIndex];
+      }
+    }
+    
+    let summary = '';
+    let type = '';
+    if (total < 21) {
+      summary = 'Introverted Pessimist';
+      type = 'PHIL_PESSIMIST';
+    } else if (total >= 21 && total <= 30) {
+      summary = 'Confidence-Lacking Critic';
+      type = 'PHIL_CRITIC';
+    } else if (total >= 31 && total <= 40) {
+      summary = 'Retaliatory Self-Protector';
+      type = 'PHIL_PROTECTOR';
+    } else if (total >= 41 && total <= 50) {
+      summary = 'Balanced Moderate';
+      type = 'PHIL_MODERATE';
+    } else if (total >= 51 && total <= 60) {
+      summary = 'Attractive Adventurer';
+      type = 'PHIL_ADVENTURER';
+    } else {
+      summary = 'Arrogant Solitary';
+      type = 'PHIL_SOLITARY';
+    }
+    
+    // 从数据库获取完整的分析
+    try {
+      const result = await query(`
+        SELECT rt.analysis, rt.analysis_en, rt.type_name, rt.type_name_en
+        FROM result_types rt
+        JOIN test_projects tp ON rt.project_id = tp.id
+        WHERE tp.project_id = 'phil_test_en' AND rt.type_code = $1
+      `, [type]);
+      
+      if (result.rows.length > 0) {
+        const philData = result.rows[0];
+        return {
+          summary: summary,
+          summaryEn: summary,
+          analysis: philData.analysis || summary,
+          analysisEn: philData.analysis_en || philData.analysis || summary,
+          typeName: philData.type_name,
+          typeNameEn: philData.type_name_en,
+          total: total,
+          type: type
+        };
+      }
+    } catch (error) {
+      console.error('Error fetching Phil description from database:', error);
+    }
+    
+    // 如果数据库查询失败，返回默认结果
+    return {
+      summary: summary,
+      summaryEn: summary,
+      analysis: `Your Phil personality type: **${summary}** (${total} points).`,
+      analysisEn: `Your Phil personality type: **${summary}** (${total} points).`,
+      typeName: summary,
+      typeNameEn: summary,
+      total: total,
+      type: type
+    };
+  }
+
+  // 四色性格测试计算
+  async scoreFourColors(answers) {
+    let ahCountCorrect = 0, bgCountCorrect = 0, cfCountCorrect = 0, deCountCorrect = 0;
+    
+    // 根据文档的评分规则，计算A+H、B+G、C+F、D+E的数量
+    for (let i = 0; i < answers.length; i++) {
+      const answerIndex = answers[i];
+      
+      if (i < 15) { // 前15题：A/B/C/D
+        if (answerIndex === 0) ahCountCorrect++; // A
+        else if (answerIndex === 1) bgCountCorrect++; // B
+        else if (answerIndex === 2) cfCountCorrect++; // C
+        else if (answerIndex === 3) deCountCorrect++; // D
+      } else { // 后15题：E/F/G/H对应A/B/C/D
+        if (answerIndex === 0) deCountCorrect++; // E对应A，计入D+E
+        else if (answerIndex === 1) cfCountCorrect++; // F对应B，计入C+F
+        else if (answerIndex === 2) bgCountCorrect++; // G对应C，计入B+G
+        else if (answerIndex === 3) ahCountCorrect++; // H对应D，计入A+H
+      }
+    }
+    
+    // 找出最大值
+    const counts = [
+      { type: 'RED', count: ahCountCorrect },
+      { type: 'BLUE', count: bgCountCorrect },
+      { type: 'YELLOW', count: cfCountCorrect },
+      { type: 'GREEN', count: deCountCorrect }
+    ];
+    
+    const maxCount = Math.max(...counts.map(c => c.count));
+    const dominantTypes = counts.filter(c => c.count === maxCount);
+    
+    let summary = '';
+    let type = '';
+    
+    if (dominantTypes.length === 1) {
+      const dominant = dominantTypes[0];
+      if (dominant.type === 'RED') {
+        summary = 'Red personality';
+        type = 'RED_PERSONALITY';
+      } else if (dominant.type === 'BLUE') {
+        summary = 'Blue personality';
+        type = 'BLUE_PERSONALITY';
+      } else if (dominant.type === 'YELLOW') {
+        summary = 'Yellow personality';
+        type = 'YELLOW_PERSONALITY';
+      } else if (dominant.type === 'GREEN') {
+        summary = 'Green personality';
+        type = 'GREEN_PERSONALITY';
+      }
+    } else {
+      // 多个类型并列最多
+      const typeNames = dominantTypes.map(t => {
+        if (t.type === 'RED') return 'Red';
+        else if (t.type === 'BLUE') return 'Blue';
+        else if (t.type === 'YELLOW') return 'Yellow';
+        else if (t.type === 'GREEN') return 'Green';
+      });
+      summary = `${typeNames.join(', ')} personality`;
+      type = dominantTypes[0].type + '_PERSONALITY';
+    }
+    
+    // 从数据库获取完整的分析
+    try {
+      const result = await query(`
+        SELECT rt.analysis, rt.analysis_en, rt.type_name, rt.type_name_en
+        FROM result_types rt
+        JOIN test_projects tp ON rt.project_id = tp.id
+        WHERE tp.project_id = 'four_colors_en' AND rt.type_code = $1
+      `, [type]);
+      
+      if (result.rows.length > 0) {
+        const fourColorsData = result.rows[0];
+        return {
+          summary: summary,
+          summaryEn: summary,
+          analysis: fourColorsData.analysis || summary,
+          analysisEn: fourColorsData.analysis_en || fourColorsData.analysis || summary,
+          typeName: fourColorsData.type_name,
+          typeNameEn: fourColorsData.type_name_en,
+          total: maxCount,
+          type: type,
+          counts: {
+            red: ahCountCorrect,
+            blue: bgCountCorrect,
+            yellow: cfCountCorrect,
+            green: deCountCorrect
+          }
+        };
+      }
+    } catch (error) {
+      console.error('Error fetching Four-colors description from database:', error);
+    }
+    
+    // 如果数据库查询失败，返回默认结果
+    return {
+      summary: summary,
+      summaryEn: summary,
+      analysis: `Your Four-colors personality type: **${summary}** (A+H: ${ahCountCorrect}, B+G: ${bgCountCorrect}, C+F: ${cfCountCorrect}, D+E: ${deCountCorrect}).`,
+      analysisEn: `Your Four-colors personality type: **${summary}** (A+H: ${ahCountCorrect}, B+G: ${bgCountCorrect}, C+F: ${cfCountCorrect}, D+E: ${deCountCorrect}).`,
+      typeName: summary,
+      typeNameEn: summary,
+      total: maxCount,
+      type: type,
+      counts: {
+        red: ahCountCorrect,
+        blue: bgCountCorrect,
+        yellow: cfCountCorrect,
+        green: deCountCorrect
+      }
+    };
+  }
+
+  // PDP行为风格测试计算
+  async scorePDPTest(answers) {
+    // 根据文档的评分规则，计算每种类型的分数
+    let tigerScore = 0;    // 第5、10、14、18、24、30题
+    let peacockScore = 0;  // 第3、6、13、20、22、29题
+    let koalaScore = 0;    // 第2、8、15、17、25、28题
+    let owlScore = 0;      // 第1、7、11、16、21、26题
+    let chameleonScore = 0; // 第4、9、12、19、23、27题
+    
+    // 题目索引映射（从0开始）
+    const tigerQuestions = [4, 9, 13, 17, 23, 29];      // 第5、10、14、18、24、30题
+    const peacockQuestions = [2, 5, 12, 19, 21, 28];    // 第3、6、13、20、22、29题
+    const koalaQuestions = [1, 7, 14, 16, 24, 27];      // 第2、8、15、17、25、28题
+    const owlQuestions = [0, 6, 10, 15, 20, 25];        // 第1、7、11、16、21、26题
+    const chameleonQuestions = [3, 8, 11, 18, 22, 26];  // 第4、9、12、19、23、27题
+    
+    // 计算每种类型的分数
+    tigerQuestions.forEach(qIndex => {
+      if (qIndex < answers.length) {
+        const score = [5, 4, 3, 2, 1][answers[qIndex]] || 0;
+        tigerScore += score;
+      }
+    });
+    
+    peacockQuestions.forEach(qIndex => {
+      if (qIndex < answers.length) {
+        const score = [5, 4, 3, 2, 1][answers[qIndex]] || 0;
+        peacockScore += score;
+      }
+    });
+    
+    koalaQuestions.forEach(qIndex => {
+      if (qIndex < answers.length) {
+        const score = [5, 4, 3, 2, 1][answers[qIndex]] || 0;
+        koalaScore += score;
+      }
+    });
+    
+    owlQuestions.forEach(qIndex => {
+      if (qIndex < answers.length) {
+        const score = [5, 4, 3, 2, 1][answers[qIndex]] || 0;
+        owlScore += score;
+      }
+    });
+    
+    chameleonQuestions.forEach(qIndex => {
+      if (qIndex < answers.length) {
+        const score = [5, 4, 3, 2, 1][answers[qIndex]] || 0;
+        chameleonScore += score;
+      }
+    });
+    
+    // 找出最高分数
+    const scores = [
+      { type: 'TIGER', score: tigerScore },
+      { type: 'PEACOCK', score: peacockScore },
+      { type: 'KOALA', score: koalaScore },
+      { type: 'OWL', score: owlScore },
+      { type: 'CHAMELEON', score: chameleonScore }
+    ];
+    
+    const maxScore = Math.max(...scores.map(s => s.score));
+    const dominantTypes = scores.filter(s => s.score === maxScore);
+    
+    let summary = '';
+    let type = '';
+    
+    if (dominantTypes.length === 1) {
+      const dominant = dominantTypes[0];
+      if (dominant.type === 'TIGER') {
+        summary = 'Tiger type (Dominance)';
+        type = 'TIGER_TYPE';
+      } else if (dominant.type === 'PEACOCK') {
+        summary = 'Peacock type (Extroversion)';
+        type = 'PEACOCK_TYPE';
+      } else if (dominant.type === 'KOALA') {
+        summary = 'Koala type (Pace/Patience)';
+        type = 'KOALA_TYPE';
+      } else if (dominant.type === 'OWL') {
+        summary = 'Owl type (Conformity)';
+        type = 'OWL_TYPE';
+      } else if (dominant.type === 'CHAMELEON') {
+        summary = 'Chameleon type (1/2 Sigma)';
+        type = 'CHAMELEON_TYPE';
+      }
+    } else {
+      // 多个类型并列最高
+      const typeNames = dominantTypes.map(t => {
+        if (t.type === 'TIGER') return 'Tiger';
+        else if (t.type === 'PEACOCK') return 'Peacock';
+        else if (t.type === 'KOALA') return 'Koala';
+        else if (t.type === 'OWL') return 'Owl';
+        else if (t.type === 'CHAMELEON') return 'Chameleon';
+      });
+      summary = `${typeNames.join(', ')} type`;
+      type = dominantTypes[0].type + '_TYPE';
+    }
+    
+    // 从数据库获取完整的分析
+    try {
+      const result = await query(`
+        SELECT rt.analysis, rt.analysis_en, rt.type_name, rt.type_name_en
+        FROM result_types rt
+        JOIN test_projects tp ON rt.project_id = tp.id
+        WHERE tp.project_id = 'pdp_test_en' AND rt.type_code = $1
+      `, [type]);
+      
+      if (result.rows.length > 0) {
+        const pdpData = result.rows[0];
+        return {
+          summary: summary,
+          summaryEn: summary,
+          analysis: pdpData.analysis || summary,
+          analysisEn: pdpData.analysis_en || pdpData.analysis || summary,
+          typeName: pdpData.type_name,
+          typeNameEn: pdpData.type_name_en,
+          total: maxScore,
+          type: type,
+          scores: {
+            tiger: tigerScore,
+            peacock: peacockScore,
+            koala: koalaScore,
+            owl: owlScore,
+            chameleon: chameleonScore
+          }
+        };
+      }
+    } catch (error) {
+      console.error('Error fetching PDP description from database:', error);
+    }
+    
+    // 如果数据库查询失败，返回默认结果
+    return {
+      summary: summary,
+      summaryEn: summary,
+      analysis: `Your PDP behavioral style: **${summary}** (Tiger: ${tigerScore}, Peacock: ${peacockScore}, Koala: ${koalaScore}, Owl: ${owlScore}, Chameleon: ${chameleonScore}).`,
+      analysisEn: `Your PDP behavioral style: **${summary}** (Tiger: ${tigerScore}, Peacock: ${peacockScore}, Koala: ${koalaScore}, Owl: ${owlScore}, Chameleon: ${chameleonScore}).`,
+      typeName: summary,
+      typeNameEn: summary,
+      total: maxScore,
+      type: type,
+      scores: {
+        tiger: tigerScore,
+        peacock: peacockScore,
+        koala: koalaScore,
+        owl: owlScore,
+        chameleon: chameleonScore
+      }
+    };
+  }
+
+  // 心理年龄测试计算
+  async scoreMentalAgeTest(answers) {
+    let total = 0;
+    
+    // 根据文档的答案统计表计算总分
+    const scores = [1, 3, 5]; // a=1分, b=3分, c=5分
+    
+    for (let i = 0; i < answers.length; i++) {
+      const answerIndex = answers[i];
+      if (answerIndex >= 0 && answerIndex < scores.length) {
+        total += scores[answerIndex];
+      }
+    }
+    
+    // 根据总分判定心理年龄阶段
+    let summary = '';
+    let type = '';
+    
+    if (total >= 20 && total <= 45) {
+      summary = 'Child Stage';
+      type = 'CHILD_STAGE';
+    } else if (total >= 46 && total <= 75) {
+      summary = 'Adolescent Stage';
+      type = 'ADOLESCENT_STAGE';
+    } else if (total >= 76 && total <= 100) {
+      summary = 'Highly Mature';
+      type = 'MATURE_STAGE';
+    } else {
+      // 处理边界情况
+      if (total < 20) {
+        summary = 'Child Stage';
+        type = 'CHILD_STAGE';
+      } else if (total > 100) {
+        summary = 'Highly Mature';
+        type = 'MATURE_STAGE';
+      }
+    }
+    
+    // 从数据库获取完整的分析
+    try {
+      const result = await query(`
+        SELECT rt.analysis, rt.analysis_en, rt.type_name, rt.type_name_en
+        FROM result_types rt
+        JOIN test_projects tp ON rt.project_id = tp.id
+        WHERE tp.project_id = 'mental_age_test_en' AND rt.type_code = $1
+      `, [type]);
+      
+      if (result.rows.length > 0) {
+        const mentalAgeData = result.rows[0];
+        return {
+          summary: summary,
+          summaryEn: summary,
+          analysis: mentalAgeData.analysis || summary,
+          analysisEn: mentalAgeData.analysis_en || mentalAgeData.analysis || summary,
+          typeName: mentalAgeData.type_name,
+          typeNameEn: mentalAgeData.type_name_en,
+          total: total,
+          type: type
+        };
+      }
+    } catch (error) {
+      console.error('Error fetching Mental Age description from database:', error);
+    }
+    
+    // 如果数据库查询失败，返回默认结果
+    return {
+      summary: summary,
+      summaryEn: summary,
+      analysis: `Your mental age: **${summary}** (Score: ${total}/100).`,
+      analysisEn: `Your mental age: **${summary}** (Score: ${total}/100).`,
+      typeName: summary,
+      typeNameEn: summary,
+      total: total,
+      type: type
+    };
+  }
+
   // 主要计算入口
   async calculateResult(testType, answers) {
     switch (testType) {
@@ -374,6 +802,14 @@ class TestLogicService {
         return await this.scoreEnneagram(answers);
       case 'eq_test':
         return await this.scoreEQTest(answers);
+      case 'phil_test':
+        return await this.scorePhilTest(answers);
+      case 'four_colors':
+        return await this.scoreFourColors(answers);
+      case 'pdp_test':
+        return await this.scorePDPTest(answers);
+      case 'mental_age_test':
+        return await this.scoreMentalAgeTest(answers);
       default:
         return { summary: '暂不支持的测试类型', analysis: '' };
     }

@@ -33,7 +33,11 @@
       observation: 'assets/images/observation-ability-test.png',
       introversion_en: 'assets/images/professional-test-for-introversion-extraversion-degree.png',
       enneagram_en: 'assets/images/enneagram-personality-test.png',
-      eq_test_en: 'assets/images/international-standard-emotional-intelligence-test.png'
+      eq_test_en: 'assets/images/international-standard-emotional-intelligence-test.png',
+      phil_test_en: 'assets/images/phil-personality-test.png',
+      four_colors_en: 'assets/images/four-colors-personality-analysis.png',
+      pdp_test_en: 'assets/images/professional-dyna-metric-program.png',
+      mental_age_test_en: 'assets/images/test-your-mental-age.png'
     };
     const byId = imageFallbacks[p.id] || null;
     img.src = byId || p.image;

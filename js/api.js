@@ -224,6 +224,58 @@ class ApiService {
         questionCount: 33,
         testedCount: '0',
         likes: 0
+      },
+      {
+        id: 'phil_test_en',
+        name: 'Phil personality test',
+        nameEn: 'Phil personality test',
+        image: 'assets/images/phil-personality-test.png',
+        intro: 'The Phil Personality Test is a psychological assessment instrument developed by Dr. Phil, a prominent psychologist, during his appearance on the television program hosted by renowned media personality Oprah Winfrey. This test categorizes personality types based on the analysis of behavioral patterns and psychological inclinations.',
+        introEn: 'The Phil Personality Test is a psychological assessment instrument developed by Dr. Phil, a prominent psychologist, during his appearance on the television program hosted by renowned media personality Oprah Winfrey. This test categorizes personality types based on the analysis of behavioral patterns and psychological inclinations.',
+        type: 'phil_test',
+        estimatedTime: 5,
+        questionCount: 10,
+        testedCount: '0',
+        likes: 0
+      },
+      {
+        id: 'four_colors_en',
+        name: 'Four-colors Personality Analysis',
+        nameEn: 'Four-colors Personality Analysis',
+        image: 'assets/images/four-colors-personality-analysis.png',
+        intro: 'FPA (Four-colors Personality Analysis) provides people with a simple and practical tool that everyone can quickly master and apply in real life and work. No matter what kind of occupation you are engaged in - whether in an office, a hospital, a store, a school or a construction site, you can gain insights into the personality traits of people around you through their dressing styles, job responsibilities and ways of interpersonal communication.',
+        introEn: 'FPA (Four-colors Personality Analysis) provides people with a simple and practical tool that everyone can quickly master and apply in real life and work. No matter what kind of occupation you are engaged in - whether in an office, a hospital, a store, a school or a construction site, you can gain insights into the personality traits of people around you through their dressing styles, job responsibilities and ways of interpersonal communication.',
+        type: 'four_colors',
+        estimatedTime: 15,
+        questionCount: 30,
+        testedCount: '0',
+        likes: 0
+      },
+      {
+        id: 'pdp_test_en',
+        name: '行为风格测试 Professional Dyna-Metric Program',
+        nameEn: 'Professional Dyna-Metric Program',
+        image: 'assets/images/professional-dyna-metric-program.png',
+        intro: 'PDP, or Professional Dyna-Metric Program, is a tool for behavioral style assessment. Behavioral style refers to the most proficient way of doing things in a person\'s natural endowment. It is a system used to measure an individual\'s behavioral traits, vitality, kinetic energy, stress, energy, and energy fluctuations.',
+        introEn: 'PDP, or Professional Dyna-Metric Program, is a tool for behavioral style assessment. Behavioral style refers to the most proficient way of doing things in a person\'s natural endowment. It is a system used to measure an individual\'s behavioral traits, vitality, kinetic energy, stress, energy, and energy fluctuations.',
+        type: 'pdp_test',
+        estimatedTime: 10,
+        questionCount: 30,
+        testedCount: '0',
+        likes: 0
+      },
+      {
+        id: 'mental_age_test_en',
+        name: 'Test Your Mental Age',
+        nameEn: 'Test Your Mental Age',
+        image: 'assets/images/test-your-mental-age.png',
+        intro: 'Whether a person is mature cannot be simply defined by their age, because one\'s years of life do not fully align with their behaviors and emotions. Some people are physically mature, yet their actions are as childish as those of a kid. On the other hand, there are individuals who, though still young children, have already gained a good understanding of many truths about the world.',
+        introEn: 'Whether a person is mature cannot be simply defined by their age, because one\'s years of life do not fully align with their behaviors and emotions. Some people are physically mature, yet their actions are as childish as those of a kid. On the other hand, there are individuals who, though still young children, have already gained a good understanding of many truths about the world.',
+        type: 'mental_age_test',
+        estimatedTime: 8,
+        questionCount: 20,
+        testedCount: '0',
+        likes: 0
       }
     ];
   }

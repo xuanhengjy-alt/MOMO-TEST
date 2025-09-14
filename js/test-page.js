@@ -415,6 +415,20 @@
       } else if (project.type === 'eq_test') {
         // Show EQ test result prominently
         resultSummary.innerHTML = `Your emotional intelligence level: <span class="font-semibold text-blue-700">${finalResult.summary}</span> (${finalResult.total} points).`;
+      } else if (project.type === 'phil_test') {
+        // Show Phil test result prominently
+        resultSummary.innerHTML = `Your Phil personality type: <span class="font-semibold text-blue-700">${finalResult.summary}</span> (${finalResult.total} points).`;
+      } else if (project.type === 'four_colors') {
+        // Show Four-colors test result prominently
+        const counts = finalResult.counts || {};
+        resultSummary.innerHTML = `Your Four-colors personality type: <span class="font-semibold text-blue-700">${finalResult.summary}</span> (A+H: ${counts.red || 0}, B+G: ${counts.blue || 0}, C+F: ${counts.yellow || 0}, D+E: ${counts.green || 0}).`;
+      } else if (project.type === 'pdp_test') {
+        // Show PDP test result prominently
+        const scores = finalResult.scores || {};
+        resultSummary.innerHTML = `Your PDP behavioral style: <span class="font-semibold text-blue-700">${finalResult.summary}</span> (Tiger: ${scores.tiger || 0}, Peacock: ${scores.peacock || 0}, Koala: ${scores.koala || 0}, Owl: ${scores.owl || 0}, Chameleon: ${scores.chameleon || 0}).`;
+      } else if (project.type === 'mental_age_test') {
+        // Show Mental Age test result prominently
+        resultSummary.innerHTML = `Your mental age: <span class="font-semibold text-blue-700">${finalResult.summary}</span> (Score: ${finalResult.total}/100).`;
       } else {
         resultSummary.textContent = `Total: ${finalResult.total} - ${finalResult.summary}`;
       }
