@@ -409,6 +409,12 @@
       } else if (project.type === 'introversion_extraversion') {
         // Show introversion/extraversion result prominently
         resultSummary.innerHTML = `After testing, you are <span class="font-semibold text-blue-700">${finalResult.summary}</span> personality type.`;
+      } else if (project.type === 'enneagram') {
+        // Show enneagram result prominently
+        resultSummary.innerHTML = `After testing, you are <span class="font-semibold text-blue-700">${finalResult.summary}</span> personality type.`;
+      } else if (project.type === 'eq_test') {
+        // Show EQ test result prominently
+        resultSummary.innerHTML = `Your emotional intelligence level: <span class="font-semibold text-blue-700">${finalResult.summary}</span> (${finalResult.total} points).`;
       } else {
         resultSummary.textContent = `Total: ${finalResult.total} - ${finalResult.summary}`;
       }

@@ -31,7 +31,9 @@
       disc40: 'assets/images/disc-personality-test.png',
       mgmt_en: 'assets/images/self-assessment-of-management-skills.png',
       observation: 'assets/images/observation-ability-test.png',
-      introversion_en: 'assets/images/professional-test-for-introversion-extraversion-degree.png'
+      introversion_en: 'assets/images/professional-test-for-introversion-extraversion-degree.png',
+      enneagram_en: 'assets/images/enneagram-personality-test.png',
+      eq_test_en: 'assets/images/international-standard-emotional-intelligence-test.png'
     };
     const byId = imageFallbacks[p.id] || null;
     img.src = byId || p.image;

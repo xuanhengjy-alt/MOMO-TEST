@@ -253,6 +253,133 @@ const TestLogic = (function() {
     return { total, summary, analysis: summary, type };
   }
 
+  function scoreEnneagram(answers) { // answers: 0/1/2 (对应A/B/C选项)
+    // 九型人格评分：计算1-9号人格的分数
+    const personalityScores = [0, 0, 0, 0, 0, 0, 0, 0, 0]; // 对应1-9号人格
+    
+    // 根据文档中的答案统计表，每道题选择Option A时对应人格+1分
+    const personalityMapping = [
+      2, 1, 3, 4, 5, 6, 7, 9, 8, 1,  // 题目1-10
+      2, 3, 5, 4, 6, 7, 8, 9, 1, 3,  // 题目11-20
+      2, 4, 5, 6, 7, 8, 9, 1, 2, 3,  // 题目21-30
+      4, 5, 7, 6, 8, 9, 1, 2, 3, 6,  // 题目31-40
+      4, 5, 6, 7, 8, 9, 1, 2, 3, 4,  // 题目41-50
+      5, 6, 7, 8, 9, 1, 2, 3, 4, 5,  // 题目51-60
+      6, 7, 8, 9, 1, 2, 3, 4, 5, 6,  // 题目61-70
+      7, 8, 9, 1, 2, 3, 4, 5, 6, 7,  // 题目71-80
+      8, 9, 1, 2, 3, 4, 5, 6, 7, 8,  // 题目81-90
+      9, 1, 2, 3, 4, 5, 6, 7, 8, 9,  // 题目91-100
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 1,  // 题目101-110
+      2, 3, 4, 5, 6, 7, 8, 9, 1, 2,  // 题目111-120
+      3, 4, 5, 6, 7, 8, 9, 1, 2, 3,  // 题目121-130
+      4, 5, 6, 7, 8, 9, 1, 2, 3, 4,  // 题目131-140
+      5, 6, 7, 8, 9, 1, 2, 3, 4, 5,  // 题目141-150
+      6, 7, 8, 9, 1, 2, 3, 4, 5, 6,  // 题目151-160
+      7, 8, 9, 1, 2, 3, 4, 5, 6, 7,  // 题目161-170
+      8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9   // 题目171-180
+    ];
+    
+    answers.forEach((answerIndex, questionIndex) => {
+      if (personalityMapping[questionIndex] && answerIndex === 0) { // 选择Option A
+        const personalityType = personalityMapping[questionIndex] - 1; // 转换为数组索引
+        personalityScores[personalityType]++;
+      }
+    });
+    
+    // 找到得分最高的人格类型
+    const maxScore = Math.max(...personalityScores);
+    const dominantTypes = [];
+    
+    for (let i = 0; i < personalityScores.length; i++) {
+      if (personalityScores[i] === maxScore) {
+        dominantTypes.push(i + 1);
+      }
+    }
+    
+    const typeNames = [
+      'The Perfectionist',
+      'The Helper, The Giver', 
+      'The Achiever',
+      'The Individualist, The Romantic',
+      'The Investigator, The Thinker',
+      'The Loyalist',
+      'The Enthusiast, The Epicure',
+      'The Challenger, The Leader',
+      'The Peacemaker, The Mediator'
+    ];
+    
+    let summary = '';
+    if (dominantTypes.length === 1) {
+      summary = `Type ${dominantTypes[0]}: ${typeNames[dominantTypes[0] - 1]}`;
+    } else {
+      summary = `Types ${dominantTypes.join(', ')}: ${dominantTypes.map(t => typeNames[t-1]).join(', ')}`;
+    }
+    
+    return { 
+      total: maxScore, 
+      summary, 
+      analysis: summary, 
+      type: `TYPE_${dominantTypes[0]}`,
+      personalityScores,
+      dominantTypes
+    };
+  }
+
+  function scoreEQTest(answers) { // answers: 0/1/2/3/4 (对应A/B/C/D/E选项)
+    let total = 0;
+    
+    // 根据文档的评分规则
+    for (let i = 0; i < answers.length; i++) {
+      const answerIndex = answers[i];
+      
+      if (i < 9) { // 第1-9题
+        if (answerIndex === 0) total += 6; // A选项
+        else if (answerIndex === 1) total += 3; // B选项
+        else if (answerIndex === 2) total += 0; // C选项
+      } else if (i < 16) { // 第10-16题
+        if (answerIndex === 0) total += 5; // A选项
+        else if (answerIndex === 1) total += 2; // B选项
+        else if (answerIndex === 2) total += 0; // C选项
+      } else if (i < 25) { // 第17-25题
+        if (answerIndex === 0) total += 5; // A选项
+        else if (answerIndex === 1) total += 2; // B选项
+        else if (answerIndex === 2) total += 0; // C选项
+      } else if (i < 29) { // 第26-29题
+        if (answerIndex === 0) total += 0; // A选项
+        else if (answerIndex === 1) total += 5; // B选项
+      } else { // 第30-33题
+        if (answerIndex === 0) total += 1; // A选项
+        else if (answerIndex === 1) total += 2; // B选项
+        else if (answerIndex === 2) total += 3; // C选项
+        else if (answerIndex === 3) total += 4; // D选项
+        else if (answerIndex === 4) total += 5; // E选项
+      }
+    }
+    
+    let summary = '';
+    let type = '';
+    if (total >= 150) {
+      summary = 'EQ Expert';
+      type = 'EQ_EXPERT';
+    } else if (total >= 130) {
+      summary = 'High EQ';
+      type = 'EQ_HIGH';
+    } else if (total >= 90) {
+      summary = 'Average EQ';
+      type = 'EQ_AVERAGE';
+    } else {
+      summary = 'Low EQ';
+      type = 'EQ_LOW';
+    }
+    
+    return { 
+      total, 
+      summary, 
+      analysis: summary, 
+      type
+    };
+  }
+
   // MBTI mapping loader with fallback
   let mbtiMapping = null;
   let mbtiDescriptions = null;
@@ -631,6 +758,8 @@ const TestLogic = (function() {
       if (type === 'mgmt_en') return scoreMgmtEn(answers);
       if (type === 'observation') return scoreObservation(answers);
       if (type === 'introversion_extraversion') return scoreIntroversionExtraversion(answers);
+      if (type === 'enneagram') return scoreEnneagram(answers);
+      if (type === 'eq_test') return scoreEQTest(answers);
       return { summary: 'Test type not supported', analysis: '' };
     }
   };

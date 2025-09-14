@@ -162,6 +162,201 @@ class TestLogicService {
     };
   }
 
+  // 九型人格测试计算
+  async scoreEnneagram(answers) {
+    const personalityScores = [0, 0, 0, 0, 0, 0, 0, 0, 0]; // 对应1-9号人格
+    
+    // 根据文档中的答案统计表
+    const personalityMapping = [
+      2, 1, 3, 4, 5, 6, 7, 9, 8, 1,  // 题目1-10
+      2, 3, 5, 4, 6, 7, 8, 9, 1, 3,  // 题目11-20
+      2, 4, 5, 6, 7, 8, 9, 1, 2, 3,  // 题目21-30
+      4, 5, 7, 6, 8, 9, 1, 2, 3, 6,  // 题目31-40
+      4, 5, 6, 7, 8, 9, 1, 2, 3, 4,  // 题目41-50
+      5, 6, 7, 8, 9, 1, 2, 3, 4, 5,  // 题目51-60
+      6, 7, 8, 9, 1, 2, 3, 4, 5, 6,  // 题目61-70
+      7, 8, 9, 1, 2, 3, 4, 5, 6, 7,  // 题目71-80
+      8, 9, 1, 2, 3, 4, 5, 6, 7, 8,  // 题目81-90
+      9, 1, 2, 3, 4, 5, 6, 7, 8, 9,  // 题目91-100
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 1,  // 题目101-110
+      2, 3, 4, 5, 6, 7, 8, 9, 1, 2,  // 题目111-120
+      3, 4, 5, 6, 7, 8, 9, 1, 2, 3,  // 题目121-130
+      4, 5, 6, 7, 8, 9, 1, 2, 3, 4,  // 题目131-140
+      5, 6, 7, 8, 9, 1, 2, 3, 4, 5,  // 题目141-150
+      6, 7, 8, 9, 1, 2, 3, 4, 5, 6,  // 题目151-160
+      7, 8, 9, 1, 2, 3, 4, 5, 6, 7,  // 题目161-170
+      8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9   // 题目171-180
+    ];
+    
+    answers.forEach((answerIndex, questionIndex) => {
+      if (personalityMapping[questionIndex] && answerIndex === 0) { // 选择Option A
+        const personalityType = personalityMapping[questionIndex] - 1; // 转换为数组索引
+        personalityScores[personalityType]++;
+      }
+    });
+    
+    // 找到得分最高的人格类型
+    const maxScore = Math.max(...personalityScores);
+    const dominantTypes = [];
+    
+    for (let i = 0; i < personalityScores.length; i++) {
+      if (personalityScores[i] === maxScore) {
+        dominantTypes.push(i + 1);
+      }
+    }
+    
+    const typeNames = [
+      'The Perfectionist',
+      'The Helper, The Giver', 
+      'The Achiever',
+      'The Individualist, The Romantic',
+      'The Investigator, The Thinker',
+      'The Loyalist',
+      'The Enthusiast, The Epicure',
+      'The Challenger, The Leader',
+      'The Peacemaker, The Mediator'
+    ];
+    
+    let summary = '';
+    let type = '';
+    if (dominantTypes.length === 1) {
+      summary = `Type ${dominantTypes[0]}: ${typeNames[dominantTypes[0] - 1]}`;
+      type = `TYPE_${dominantTypes[0]}`;
+    } else {
+      summary = `Types ${dominantTypes.join(', ')}: ${dominantTypes.map(t => typeNames[t-1]).join(', ')}`;
+      type = `TYPE_${dominantTypes[0]}`;
+    }
+    
+    // 从数据库获取完整的分析
+    try {
+      const result = await query(`
+        SELECT rt.analysis, rt.analysis_en, rt.type_name, rt.type_name_en
+        FROM result_types rt
+        JOIN test_projects tp ON rt.project_id = tp.id
+        WHERE tp.project_id = 'enneagram_en' AND rt.type_code = $1
+      `, [type]);
+      
+      if (result.rows.length > 0) {
+        const enneagramData = result.rows[0];
+        return {
+          summary: summary,
+          summaryEn: summary,
+          analysis: enneagramData.analysis || summary,
+          analysisEn: enneagramData.analysis_en || enneagramData.analysis || summary,
+          typeName: enneagramData.type_name,
+          typeNameEn: enneagramData.type_name_en,
+          total: maxScore,
+          type: type,
+          personalityScores: personalityScores,
+          dominantTypes: dominantTypes
+        };
+      }
+    } catch (error) {
+      console.error('Error fetching enneagram description from database:', error);
+    }
+    
+    // 如果数据库查询失败，返回默认结果
+    return {
+      summary: summary,
+      summaryEn: summary,
+      analysis: `After testing, you are **${summary}** personality type.`,
+      analysisEn: `After testing, you are **${summary}** personality type.`,
+      typeName: summary,
+      typeNameEn: summary,
+      total: maxScore,
+      type: type,
+      personalityScores: personalityScores,
+      dominantTypes: dominantTypes
+    };
+  }
+
+  // 国际标准情商测试计算
+  async scoreEQTest(answers) {
+    let total = 0;
+    
+    // 根据文档的评分规则
+    for (let i = 0; i < answers.length; i++) {
+      const answerIndex = answers[i];
+      
+      if (i < 9) { // 第1-9题
+        if (answerIndex === 0) total += 6; // A选项
+        else if (answerIndex === 1) total += 3; // B选项
+        else if (answerIndex === 2) total += 0; // C选项
+      } else if (i < 16) { // 第10-16题
+        if (answerIndex === 0) total += 5; // A选项
+        else if (answerIndex === 1) total += 2; // B选项
+        else if (answerIndex === 2) total += 0; // C选项
+      } else if (i < 25) { // 第17-25题
+        if (answerIndex === 0) total += 5; // A选项
+        else if (answerIndex === 1) total += 2; // B选项
+        else if (answerIndex === 2) total += 0; // C选项
+      } else if (i < 29) { // 第26-29题
+        if (answerIndex === 0) total += 0; // A选项
+        else if (answerIndex === 1) total += 5; // B选项
+      } else { // 第30-33题
+        if (answerIndex === 0) total += 1; // A选项
+        else if (answerIndex === 1) total += 2; // B选项
+        else if (answerIndex === 2) total += 3; // C选项
+        else if (answerIndex === 3) total += 4; // D选项
+        else if (answerIndex === 4) total += 5; // E选项
+      }
+    }
+    
+    let summary = '';
+    let type = '';
+    if (total >= 150) {
+      summary = 'EQ Expert';
+      type = 'EQ_EXPERT';
+    } else if (total >= 130) {
+      summary = 'High EQ';
+      type = 'EQ_HIGH';
+    } else if (total >= 90) {
+      summary = 'Average EQ';
+      type = 'EQ_AVERAGE';
+    } else {
+      summary = 'Low EQ';
+      type = 'EQ_LOW';
+    }
+    
+    // 从数据库获取完整的分析
+    try {
+      const result = await query(`
+        SELECT rt.analysis, rt.analysis_en, rt.type_name, rt.type_name_en
+        FROM result_types rt
+        JOIN test_projects tp ON rt.project_id = tp.id
+        WHERE tp.project_id = 'eq_test_en' AND rt.type_code = $1
+      `, [type]);
+      
+      if (result.rows.length > 0) {
+        const eqData = result.rows[0];
+        return {
+          summary: summary,
+          summaryEn: summary,
+          analysis: eqData.analysis || summary,
+          analysisEn: eqData.analysis_en || eqData.analysis || summary,
+          typeName: eqData.type_name,
+          typeNameEn: eqData.type_name_en,
+          total: total,
+          type: type
+        };
+      }
+    } catch (error) {
+      console.error('Error fetching EQ description from database:', error);
+    }
+    
+    // 如果数据库查询失败，返回默认结果
+    return {
+      summary: summary,
+      summaryEn: summary,
+      analysis: `Your emotional intelligence level: **${summary}** (${total} points).`,
+      analysisEn: `Your emotional intelligence level: **${summary}** (${total} points).`,
+      typeName: summary,
+      typeNameEn: summary,
+      total: total,
+      type: type
+    };
+  }
+
   // 主要计算入口
   async calculateResult(testType, answers) {
     switch (testType) {
@@ -175,6 +370,10 @@ class TestLogicService {
         return await this.scoreMbti(answers);
       case 'introversion_extraversion':
         return await this.scoreIntroversionExtraversion(answers);
+      case 'enneagram':
+        return await this.scoreEnneagram(answers);
+      case 'eq_test':
+        return await this.scoreEQTest(answers);
       default:
         return { summary: '暂不支持的测试类型', analysis: '' };
     }

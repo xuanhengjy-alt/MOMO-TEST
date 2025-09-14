@@ -198,6 +198,32 @@ class ApiService {
         questionCount: 70,
         testedCount: '0',
         likes: 0
+      },
+      {
+        id: 'enneagram_en',
+        name: 'Enneagram personality test',
+        nameEn: 'Enneagram personality test',
+        image: 'assets/images/enneagram-personality-test.png',
+        intro: 'The Enneagram, also known as the Enneatypes or the Nine Personality Types, is a system that has been highly favored by MBA students at renowned international universities such as Stanford in recent years and has become one of the most popular courses. Over the past decade or so, it has gained widespread popularity in academic and business circles in Europe and America.',
+        introEn: 'The Enneagram, also known as the Enneatypes or the Nine Personality Types, is a system that has been highly favored by MBA students at renowned international universities such as Stanford in recent years and has become one of the most popular courses. Over the past decade or so, it has gained widespread popularity in academic and business circles in Europe and America.',
+        type: 'enneagram',
+        estimatedTime: 30,
+        questionCount: 180,
+        testedCount: '0',
+        likes: 0
+      },
+      {
+        id: 'eq_test_en',
+        name: 'International Standard Emotional Intelligence Test',
+        nameEn: 'International Standard Emotional Intelligence Test',
+        image: 'assets/images/international-standard-emotional-intelligence-test.png',
+        intro: 'Psychologists suggest that among the various subjective factors influencing personal success, intelligence quotient (IQ) contributes approximately 20%, while emotional quotient (EQ) accounts for roughly 80%. The International Standard EQ Assessment is a widely recognized evaluation tool that originated in Europe.',
+        introEn: 'Psychologists suggest that among the various subjective factors influencing personal success, intelligence quotient (IQ) contributes approximately 20%, while emotional quotient (EQ) accounts for roughly 80%. The International Standard EQ Assessment is a widely recognized evaluation tool that originated in Europe.',
+        type: 'eq_test',
+        estimatedTime: 15,
+        questionCount: 33,
+        testedCount: '0',
+        likes: 0
       }
     ];
   }
