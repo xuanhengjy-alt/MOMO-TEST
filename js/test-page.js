@@ -182,11 +182,25 @@
       mbti: 'assets/images/mbti-career-personality-test.png',
       disc40: 'assets/images/disc-personality-test.png',
       mgmt_en: 'assets/images/self-assessment-of-management-skills.png',
-      observation: 'assets/images/observation-ability-test.png'
+      observation: 'assets/images/observation-ability-test.png',
+      personality_charm_1min: 'assets/images/find-out-your-personality-charm-level-in-just-1-minute.png'
     };
     var preferred = (project && project.id && map[project.id]) ? map[project.id] : '';
     projectImage.src = preferred || project.image || 'assets/images/logo.png';
   })();
+  // 加载项目结果类型与分析（用于跳转型结果展示）
+  async function loadAnalyses(projectId) {
+    try {
+      const data = await window.ApiService.request(`/tests/${projectId}/analyses`);
+      if (data && Array.isArray(data.items)) {
+        const byCode = {};
+        data.items.forEach(it => { byCode[it.code] = it; });
+        return byCode;
+      }
+    } catch(_) {}
+    return {};
+  }
+
   projectImage.alt = project.name;
   try {
     projectImage.onerror = function(){
@@ -351,6 +365,19 @@
   }
 
   async function renderProgress() {
+    // 跳转型测试不显示进度条
+    if (project && project.isJumpType) {
+      try {
+        progressBar.parentElement.classList.add('hidden');
+        progressText.classList.add('hidden');
+      } catch(_) {}
+      return;
+    } else {
+      try {
+        progressBar.parentElement.classList.remove('hidden');
+        progressText.classList.remove('hidden');
+      } catch(_) {}
+    }
     const total = (await getQList()).length;
     const done = Math.min(qIndex, total);
     const pct = total ? Math.round(done / total * 100) : 0;
@@ -500,13 +527,55 @@
       const btn = document.createElement('button');
       btn.className = 'w-full text-left px-4 py-3 rounded border hover:bg-gray-50';
       btn.textContent = text;
-      btn.addEventListener('click', () => {
-        // 保存答案
-        var answerIndex = (opt && typeof opt.n === 'number') ? (opt.n - 1) : idx;
-        answers.push(answerIndex);
-        qIndex += 1;
-        renderProgress();
-        renderQuestion();
+      btn.addEventListener('click', async () => {
+        // 跳转型支持：若存在 next/resultCode 则走分支
+        if (opt && (opt.next != null || opt.resultCode)) {
+          // 保存选择（保留为索引，兼容现有评分）
+          var ans = (opt && typeof opt.n === 'number') ? (opt.n - 1) : idx;
+          answers.push(ans);
+          if (opt.resultCode) {
+            // 直接出结果：优先从后端查询分析
+            let displaySummary = opt.resultCode;
+            let displayAnalysis = opt.resultCode;
+            try {
+              const analysesMap = await loadAnalyses(project.id);
+              const item = analysesMap[opt.resultCode];
+              if (item) {
+                displaySummary = item.nameEn || item.name || opt.resultCode;
+                // 优先 analysisEn，其次 descriptionEn，再次 analysis/description
+                displayAnalysis = item.analysisEn || item.descriptionEn || item.analysis || item.description || displaySummary;
+              }
+            } catch(_) {}
+
+            resultTitle.textContent = project.name;
+            (function(){
+              var map = {
+                mbti: 'assets/images/mbti-career-personality-test.png',
+                disc40: 'assets/images/disc-personality-test.png',
+                personality_charm_1min: 'assets/images/find-out-your-personality-charm-level-in-just-1-minute.png'
+              };
+              var preferred = (project && project.id && map[project.id]) ? map[project.id] : '';
+              resultImage.src = preferred || project.image || 'assets/images/logo.png';
+            })();
+            resultSummary.innerHTML = `<span class="font-semibold text-blue-700">${displaySummary}</span>`;
+            resultAnalysis.textContent = displayAnalysis;
+            show('result');
+            return;
+          }
+          if (opt.next != null) {
+            qIndex = Math.max(0, Math.min((opt.next - 1), qlist.length));
+            renderProgress();
+            renderQuestion();
+            return;
+          }
+        } else {
+          // 普通线性题目
+          var answerIndex = (opt && typeof opt.n === 'number') ? (opt.n - 1) : idx;
+          answers.push(answerIndex);
+          qIndex += 1;
+          renderProgress();
+          renderQuestion();
+        }
       });
       options.appendChild(btn);
     });

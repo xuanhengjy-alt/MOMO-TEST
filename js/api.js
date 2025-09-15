@@ -161,6 +161,7 @@ class ApiService {
         intro: 'In the 1920s, American psychologist William Moulton Marston developed a theory to explain human emotional responses. Prior to this, such research had been largely confined to studies of psychiatric patients or individuals with mental disorders. Dr. Marston sought to broaden the scope of this research to apply it to the general population with normal mental health. Consequently, he structured his theory into a systematic framework titled The Emotions of Normal People.',
         introEn: 'In the 1920s, American psychologist William Moulton Marston developed a theory to explain human emotional responses. Prior to this, such research had been largely confined to studies of psychiatric patients or individuals with mental disorders. Dr. Marston sought to broaden the scope of this research to apply it to the general population with normal mental health. Consequently, he structured his theory into a systematic framework titled The Emotions of Normal People.',
         type: 'disc40',
+        isJumpType: false,
         testedCount: '50K+',
         likes: 4500
       },
@@ -300,6 +301,34 @@ class ApiService {
         type: 'kelsey_test',
         estimatedTime: 12,
         questionCount: 70,
+        testedCount: '0',
+        likes: 0
+      },
+      {
+        id: 'temperament_type_test',
+        name: 'Temperament Type Test',
+        nameEn: 'Temperament Type Test',
+        image: 'assets/images/temperament-type-test.png',
+        intro: 'Temperament refers to the dynamic characteristics of psychological activities, and it is similar to the concepts of "temper" or "natural disposition" commonly used in daily life. As the natural expression of personality traits, temperament is mainly shaped by the neural activity patterns of the brain and acquired habits. There is no distinction between good and bad, or superiority and inferiority, in terms of social value evaluation for different temperament types.',
+        introEn: 'Temperament refers to the dynamic characteristics of psychological activities, and it is similar to the concepts of "temper" or "natural disposition" commonly used in daily life. As the natural expression of personality traits, temperament is mainly shaped by the neural activity patterns of the brain and acquired habits. There is no distinction between good and bad, or superiority and inferiority, in terms of social value evaluation for different temperament types.',
+        type: 'temperament_type_test',
+        estimatedTime: 15,
+        questionCount: 60,
+        isJumpType: false,
+        testedCount: '0',
+        likes: 0
+      },
+      {
+        id: 'personality_charm_1min',
+        name: 'Find Out Your Personality Charm Level in Just 1 Minute',
+        nameEn: 'Find Out Your Personality Charm Level in Just 1 Minute',
+        image: 'assets/images/find-out-your-personality-charm-level-in-just-1-minute.png',
+        intro: 'This ultra-convenient personality charm test can give you the answer in just 1 minute! Branching questions lead to 5 possible results.',
+        introEn: 'This ultra-convenient personality charm test can give you the answer in just 1 minute! Branching questions lead to 5 possible results.',
+        type: 'personality_charm',
+        estimatedTime: 1,
+        questionCount: 10,
+        isJumpType: true,
         testedCount: '0',
         likes: 0
       }

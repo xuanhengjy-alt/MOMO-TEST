@@ -28,7 +28,8 @@ router.get('/', async (req, res) => {
       estimatedTime: row.estimated_time,
       questionCount: row.question_count,
       testedCount: row.total_tests || 0,
-      likes: row.total_likes || 0
+      likes: row.total_likes || 0,
+      isJumpType: !!row.is_jump_type
     }));
 
     res.json({ projects });
@@ -69,7 +70,8 @@ router.get('/:projectId', async (req, res) => {
       estimatedTime: project.estimated_time,
       questionCount: project.question_count,
       testedCount: project.total_tests || 0,
-      likes: project.total_likes || 0
+      likes: project.total_likes || 0,
+      isJumpType: !!project.is_jump_type
     });
   } catch (error) {
     console.error('Error fetching test project:', error);
@@ -121,7 +123,15 @@ router.get('/:projectId/questions', async (req, res) => {
       t: row.question_text,
       opts: row.options
         .sort((a,b) => a.option_number - b.option_number)
-        .map(opt => ({ n: opt.option_number, text: opt.option_text }))
+        .map(opt => {
+          const extra = opt.score_value || {};
+          const mapped = { n: opt.option_number, text: opt.option_text };
+          if (extra && typeof extra === 'object') {
+            if (extra.next != null) mapped.next = extra.next;
+            if (extra.resultCode) mapped.resultCode = extra.resultCode;
+          }
+          return mapped;
+        })
     }));
 
     res.json({ questions });

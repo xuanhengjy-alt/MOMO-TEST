@@ -916,6 +916,101 @@ const TestLogic = (function() {
     };
   }
 
+  function scoreTemperamentTypeTest(answers) { // answers: 0/1/2/3/4 (对应A/B/C/D/E选项)
+    // 根据文档的评分规则，计算四种气质类型的分数
+    let cholericScore = 0;    // 胆汁质：第2,6,9,14,17,21,27,31,36,38,42,48,50,54,58题
+    let sanguineScore = 0;    // 多血质：第4,8,11,16,19,23,25,29,34,40,44,46,52,56,60题
+    let phlegmaticScore = 0;  // 黏液质：第1,7,10,13,18,22,26,30,33,39,43,45,49,55,57题
+    let melancholicScore = 0; // 抑郁质：第3,5,12,15,20,24,28,32,35,37,41,47,51,53,59题
+    
+    // 题目索引映射（从0开始）
+    const cholericQuestions = [1, 5, 8, 13, 16, 20, 26, 30, 35, 37, 41, 47, 49, 53, 57];      // 第2,6,9,14,17,21,27,31,36,38,42,48,50,54,58题
+    const sanguineQuestions = [3, 7, 10, 15, 18, 22, 24, 28, 33, 39, 43, 45, 51, 55, 59];     // 第4,8,11,16,19,23,25,29,34,40,44,46,52,56,60题
+    const phlegmaticQuestions = [0, 6, 9, 12, 17, 21, 25, 29, 32, 38, 42, 44, 48, 54, 56];    // 第1,7,10,13,18,22,26,30,33,39,43,45,49,55,57题
+    const melancholicQuestions = [2, 4, 11, 14, 19, 23, 27, 31, 34, 36, 40, 46, 50, 52, 58]; // 第3,5,12,15,20,24,28,32,35,37,41,47,51,53,59题
+    
+    // 评分规则：A=+2, B=+1, C=0, D=-1, E=-2
+    const scoreMap = [2, 1, 0, -1, -2];
+    
+    // 计算胆汁质分数
+    cholericQuestions.forEach(qIndex => {
+      if (qIndex < answers.length) {
+        const answerIndex = answers[qIndex];
+        if (answerIndex >= 0 && answerIndex < scoreMap.length) {
+          cholericScore += scoreMap[answerIndex];
+        }
+      }
+    });
+    
+    // 计算多血质分数
+    sanguineQuestions.forEach(qIndex => {
+      if (qIndex < answers.length) {
+        const answerIndex = answers[qIndex];
+        if (answerIndex >= 0 && answerIndex < scoreMap.length) {
+          sanguineScore += scoreMap[answerIndex];
+        }
+      }
+    });
+    
+    // 计算黏液质分数
+    phlegmaticQuestions.forEach(qIndex => {
+      if (qIndex < answers.length) {
+        const answerIndex = answers[qIndex];
+        if (answerIndex >= 0 && answerIndex < scoreMap.length) {
+          phlegmaticScore += scoreMap[answerIndex];
+        }
+      }
+    });
+    
+    // 计算抑郁质分数
+    melancholicQuestions.forEach(qIndex => {
+      if (qIndex < answers.length) {
+        const answerIndex = answers[qIndex];
+        if (answerIndex >= 0 && answerIndex < scoreMap.length) {
+          melancholicScore += scoreMap[answerIndex];
+        }
+      }
+    });
+    
+    // 找出最高分数
+    const scores = [
+      { type: 'CHOLERIC', score: cholericScore, name: 'Choleric Temperament' },
+      { type: 'SANGUINE', score: sanguineScore, name: 'Sanguine Temperament' },
+      { type: 'PHLEGMATIC', score: phlegmaticScore, name: 'Phlegmatic Temperament' },
+      { type: 'MELANCHOLIC', score: melancholicScore, name: 'Melancholic Temperament' }
+    ];
+    
+    const maxScore = Math.max(...scores.map(s => s.score));
+    const dominantTypes = scores.filter(s => s.score === maxScore);
+    
+    let summary = '';
+    let type = '';
+    
+    if (dominantTypes.length === 1) {
+      const dominant = dominantTypes[0];
+      summary = dominant.name;
+      type = dominant.type;
+    } else {
+      // 多个类型并列最高
+      const typeNames = dominantTypes.map(t => t.name);
+      summary = typeNames.join(', ');
+      type = dominantTypes[0].type;
+    }
+    
+    return { 
+      total: maxScore, 
+      summary, 
+      analysis: summary, 
+      type,
+      scores: {
+        choleric: cholericScore,
+        sanguine: sanguineScore,
+        phlegmatic: phlegmaticScore,
+        melancholic: melancholicScore
+      }
+    };
+  }
+
   // MBTI mapping loader with fallback
   let mbtiMapping = null;
   let mbtiDescriptions = null;
@@ -1302,6 +1397,7 @@ const TestLogic = (function() {
       if (type === 'mental_age_test') return scoreMentalAgeTest(answers);
       if (type === 'holland_test') return scoreHollandTest(answers);
       if (type === 'kelsey_test') return scoreKelseyTest(answers);
+      if (type === 'temperament_type_test') return scoreTemperamentTypeTest(answers);
       return { summary: 'Test type not supported', analysis: '' };
     }
   };
