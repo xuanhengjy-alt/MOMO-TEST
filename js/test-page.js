@@ -210,31 +210,7 @@
   } catch(_) {}
   projectTitle.textContent = project.nameEn;
   projectIntro.textContent = project.introEn || '';
-  // 对 MBTI 项目，尝试加载完整介绍文件（若存在）
-  if (project && project.id === 'mbti') {
-    try {
-      let res = await fetch('/assets/data/mbti-intro.txt', { cache: 'no-store' });
-      if (!res.ok) res = await fetch('assets/data/mbti-intro.txt', { cache: 'no-store' });
-      if (res.ok) {
-        const txt = await res.text();
-        if (txt && txt.trim()) {
-          projectIntro.textContent = txt;
-        }
-      }
-    } catch (_) {
-      // 本地 file:// 打开可能导致 fetch 失败：提供内置兜底全文
-      var fullIntro = [
-        "The MBTI personality theory is based on the classification of psychological types by the renowned psychologist Carl Jung, which was later studied and developed by a mother and daughter, Katharine Cook Briggs and Isabel Briggs Myers. This theory can help explain why different people are interested in different things, excel at different jobs, and sometimes don't understand each other. This tool has been in use around the world for nearly 30 years. Couples use it to enhance harmony, teachers and students use it to improve learning and teaching efficiency, young people use it to choose careers, organizations use it to improve interpersonal relationships, team communication, organizational building, organizational diagnosis and many other aspects. In the Fortune 500, 80 percent of companies have experience in applying MBTI.",
-        "",
-        "People tend to develop their personalities during adolescence, after which they have a relatively stable personality type, which then develops and improves dynamically over the years. We usually think that as a person grows older, his character changes. According to Jung's theory, once a person's character is formed, it is very difficult to change. The reason for showing different manifestations is that the character is developing dynamically due to changes in factors such as environment and experience, and functions that were not used before are also being exerted accordingly. If we use the left hand and the right hand as a metaphor, a person's MBTI tendencies are the hand he is most familiar with using, and as he gains more experience, he begins to practice using the other hand.",
-        "",
-        "The personality type description provided by MBTI is only for the test-taker to determine their own personality type. There are no good or bad personality types, only differences. Each personality trait has its own value and merits, as well as weaknesses and points to note. A clear understanding of one's strengths and weaknesses helps to better utilize one's strengths, and to avoid weaknesses in one's personality as much as possible in dealing with people and matters, to get along better with others, and to make better important decisions.",
-        "",
-        "Those who take part in the test must answer the questions honestly and independently. Only in this way can effective results be obtained."
-      ].join('\n');
-      projectIntro.textContent = fullIntro;
-    }
-  }
+  // 介绍统一使用数据库返回的 intro_en，不再从本地文件加载
 
   // Disable pretty URL rewriting for static server to avoid 404 on relative assets under nested paths
 
@@ -428,45 +404,8 @@
           resultImage.src = 'assets/images/mbti-career%20personality-test.png';
         };
       } catch(_) {}
-      if (project.type === 'disc' || project.type === 'disc40') {
-        resultSummary.textContent = finalResult.summary; // e.g., "Dominance, Influence" for ties
-      } else if (project.type === 'mbti') {
-        // Show MBTI code prominently
-        resultSummary.innerHTML = `After testing, you are <span class="font-semibold text-blue-700">${finalResult.summary}</span> personality type.`;
-      } else if (project.type === 'introversion_extraversion') {
-        // Show introversion/extraversion result prominently
-        resultSummary.innerHTML = `After testing, you are <span class="font-semibold text-blue-700">${finalResult.summary}</span> personality type.`;
-      } else if (project.type === 'enneagram') {
-        // Show enneagram result prominently
-        resultSummary.innerHTML = `After testing, you are <span class="font-semibold text-blue-700">${finalResult.summary}</span> personality type.`;
-      } else if (project.type === 'eq_test') {
-        // Show EQ test result prominently
-        resultSummary.innerHTML = `Your emotional intelligence level: <span class="font-semibold text-blue-700">${finalResult.summary}</span> (${finalResult.total} points).`;
-      } else if (project.type === 'phil_test') {
-        // Show Phil test result prominently
-        resultSummary.innerHTML = `Your Phil personality type: <span class="font-semibold text-blue-700">${finalResult.summary}</span> (${finalResult.total} points).`;
-      } else if (project.type === 'four_colors') {
-        // Show Four-colors test result prominently
-        const counts = finalResult.counts || {};
-        resultSummary.innerHTML = `Your Four-colors personality type: <span class="font-semibold text-blue-700">${finalResult.summary}</span> (A+H: ${counts.red || 0}, B+G: ${counts.blue || 0}, C+F: ${counts.yellow || 0}, D+E: ${counts.green || 0}).`;
-      } else if (project.type === 'pdp_test') {
-        // Show PDP test result prominently
-        const scores = finalResult.scores || {};
-        resultSummary.innerHTML = `Your PDP behavioral style: <span class="font-semibold text-blue-700">${finalResult.summary}</span> (Tiger: ${scores.tiger || 0}, Peacock: ${scores.peacock || 0}, Koala: ${scores.koala || 0}, Owl: ${scores.owl || 0}, Chameleon: ${scores.chameleon || 0}).`;
-      } else if (project.type === 'mental_age_test') {
-        // Show Mental Age test result prominently
-        resultSummary.innerHTML = `Your mental age: <span class="font-semibold text-blue-700">${finalResult.summary}</span> (Score: ${finalResult.total}/100).`;
-      } else if (project.type === 'holland_test') {
-        // Show Holland test result prominently
-        const scores = finalResult.scores || {};
-        resultSummary.innerHTML = `Your Holland occupational interest type: <span class="font-semibold text-blue-700">${finalResult.summary}</span> (Realistic: ${scores.realistic || 0}, Investigative: ${scores.investigative || 0}, Artistic: ${scores.artistic || 0}, Social: ${scores.social || 0}, Enterprising: ${scores.enterprising || 0}, Conventional: ${scores.conventional || 0}).`;
-      } else if (project.type === 'kelsey_test') {
-        // Show Kelsey test result prominently
-        const scores = finalResult.scores || {};
-        resultSummary.innerHTML = `Your Kelsey temperament type: <span class="font-semibold text-blue-700">${finalResult.summary}</span> (${finalResult.type}) - E:${scores.e || 0}, I:${scores.i || 0}, S:${scores.s || 0}, N:${scores.n || 0}, T:${scores.t || 0}, F:${scores.f || 0}, J:${scores.j || 0}, P:${scores.p || 0}.`;
-      } else {
-        resultSummary.textContent = `Total: ${finalResult.total} - ${finalResult.summary}`;
-      }
+      // 统一用后端（或本地评分）返回的 summary/analysis 展示，保持从数据库获取
+      resultSummary.innerHTML = `<span class="font-semibold text-blue-700">${finalResult.summary || ''}</span>`;
       const rawAnalysis = finalResult.analysis || '';
       if (project.type === 'disc' || project.type === 'disc40') {
         // 确保应用专用样式容器，与MBTI保持一致
