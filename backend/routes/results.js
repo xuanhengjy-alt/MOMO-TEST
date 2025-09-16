@@ -25,7 +25,11 @@ router.post('/', async (req, res) => {
     const project = projectResult.rows[0];
 
     // 计算测试结果
-    const testResult = await TestLogic.calculateResult(project.test_type, answers);
+    let testResult = await TestLogic.calculateResult(project.test_type, answers);
+    // 回填：若 analysis 为空而 analysisEn 有值，回填到 analysis，保证前端正常显示
+    if (testResult && !testResult.analysis && testResult.analysisEn) {
+      testResult = { ...testResult, analysis: testResult.analysisEn };
+    }
     
     // 使用事务保存结果
     const result = await transaction(async (client) => {

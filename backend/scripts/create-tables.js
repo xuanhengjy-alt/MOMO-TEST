@@ -10,22 +10,16 @@ async function createTables() {
     const sqlPath = path.join(__dirname, '../../database/init.sql');
     const sql = fs.readFileSync(sqlPath, 'utf8');
     
-    // 分割SQL语句（以分号分割）
-    const statements = sql.split(';').filter(stmt => stmt.trim().length > 0);
-    
-    for (const statement of statements) {
-      if (statement.trim()) {
-        try {
-          await query(statement);
-          console.log('✅ Executed SQL statement');
-        } catch (error) {
-          // 忽略一些错误（如表已存在等）
-          if (error.code === '42P07') { // relation already exists
-            console.log('⚠️  Table already exists, skipping');
-          } else {
-            console.error('❌ SQL execution error:', error.message);
-          }
-        }
+    // 直接整体执行 SQL 文件，避免函数/触发器内的分号被错误切分
+    try {
+      await query(sql);
+      console.log('✅ Executed full SQL file');
+    } catch (error) {
+      // 已存在时不视为致命错误
+      if (error.code === '42P07' || error.code === '42710' || error.code === '42883') {
+        console.log('⚠️  Objects may already exist, continuing:', error.message);
+      } else {
+        console.error('❌ SQL execution error:', error.message);
       }
     }
     

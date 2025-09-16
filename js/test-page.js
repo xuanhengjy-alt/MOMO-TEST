@@ -104,6 +104,14 @@
     return html;
   }
 
+  // 规范化 Markdown 粗体语法，修复类似 "**Label: **" 中粗体内尾随空格导致不生效的问题
+  function normalizeStrong(md) {
+    if (!md) return '';
+    return String(md).replace(/\*\*\s*([^*][^*]*?)\s*\*\*/g, function(_, inner){
+      return '**' + inner.replace(/^\s+|\s+$/g, '') + '**';
+    });
+  }
+
   // 将原始 MBTI 文本粗加工为 Markdown：按常见关键词插入多级标题与列表符号
   function toMarkdownWithHeadings(raw) {
     if (!raw) return '';
@@ -194,7 +202,13 @@
       const data = await window.ApiService.request(`/tests/${projectId}/analyses`);
       if (data && Array.isArray(data.items)) {
         const byCode = {};
-        data.items.forEach(it => { byCode[it.code] = it; });
+        const byName = {};
+        data.items.forEach(it => {
+          if (it && it.code) byCode[it.code] = it;
+          if (it && (it.nameEn || it.name)) byName[it.nameEn || it.name] = it;
+        });
+        // 兼容旧用法：直接可用 map[key]；并提供名称查找表
+        byCode.__byName = byName;
         return byCode;
       }
     } catch(_) {}
@@ -209,7 +223,22 @@
     };
   } catch(_) {}
   projectTitle.textContent = project.nameEn;
-  projectIntro.textContent = project.introEn || '';
+  // 介绍分段显示：按空行分段，单行内的换行转为 <br>
+  (function renderIntro(text){
+    const el = projectIntro;
+    const raw = (text || '').toString();
+    if (!raw) { el.textContent = ''; return; }
+    // 转义基础HTML，防止意外标签渲染
+    const esc = raw
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    const html = esc
+      .split(/\n\s*\n/) // 段落：空行分隔
+      .map(p => `<p class="leading-relaxed mb-3">${p.replace(/\n/g, '<br>')}</p>`) // 段内换行
+      .join('');
+    el.innerHTML = html;
+  })(project.introEn || '');
   // 介绍统一使用数据库返回的 intro_en，不再从本地文件加载
 
   // Disable pretty URL rewriting for static server to avoid 404 on relative assets under nested paths
@@ -411,7 +440,7 @@
       } catch(_) {}
       // 统一用后端（或本地评分）返回的 summary/analysis 展示，保持从数据库获取
       resultSummary.innerHTML = `<span class="font-semibold text-blue-700">${finalResult.summary || ''}</span>`;
-      const rawAnalysis = finalResult.analysis || '';
+      const rawAnalysis = finalResult.analysis || finalResult.analysisEn || '';
       if (project.type === 'disc' || project.type === 'disc40') {
         // 确保应用专用样式容器，与MBTI保持一致
         try { resultAnalysis.classList.add('mbti-analysis'); } catch(_) {}
@@ -419,7 +448,7 @@
         // 使用与MBTI相同的Markdown处理方式
         try {
           if (window.marked && window.DOMPurify) {
-            const enhanced = toMarkdownWithHeadings(rawAnalysis || '');
+            const enhanced = toMarkdownWithHeadings(normalizeStrong(rawAnalysis || ''));
             const mdHtml = window.marked.parse(enhanced);
             resultAnalysis.innerHTML = window.DOMPurify.sanitize(mdHtml);
           } else {
@@ -436,7 +465,7 @@
         // 始终优先用 Markdown（若库已加载），在渲染前先进行“加标题”的粗加工
         try {
           if (window.marked && window.DOMPurify) {
-            const enhanced = toMarkdownWithHeadings(rawAnalysis || '');
+            const enhanced = toMarkdownWithHeadings(normalizeStrong(rawAnalysis || ''));
             const mdHtml = window.marked.parse(enhanced);
             resultAnalysis.innerHTML = window.DOMPurify.sanitize(mdHtml);
           } else {
@@ -451,7 +480,8 @@
         try { resultAnalysis.classList.add('analysis-rich'); } catch(_) {}
         try {
           if (window.marked && window.DOMPurify) {
-            const enhanced = toMarkdownWithHeadings(rawAnalysis || '');
+            // 非 MBTI/DISC：不做标题粗加工，保留原有 **...** 粗体
+            const enhanced = normalizeStrong(rawAnalysis || '');
             const mdHtml = window.marked.parse(enhanced);
             resultAnalysis.innerHTML = window.DOMPurify.sanitize(mdHtml);
           } else {
@@ -478,33 +508,37 @@
           var ans = (opt && typeof opt.n === 'number') ? (opt.n - 1) : idx;
           answers.push(ans);
           if (opt.resultCode) {
-            // 直接出结果：优先从后端查询分析
-            let displaySummary = opt.resultCode;
-            let displayAnalysis = opt.resultCode;
+            // 直接出结果：调用后端，前端只显示后端返回的 summary/analysis（对应 description_en/analysis_en）
             try {
-              const analysesMap = await loadAnalyses(project.id);
-              const item = analysesMap[opt.resultCode];
-              if (item) {
-                displaySummary = item.nameEn || item.name || opt.resultCode;
-                // 优先 analysisEn，其次 descriptionEn，再次 analysis/description
-                displayAnalysis = item.analysisEn || item.descriptionEn || item.analysis || item.description || displaySummary;
-              }
-            } catch(_) {}
-
-            resultTitle.textContent = project.name;
-            (function(){
-              var map = {
-                mbti: 'assets/images/mbti-career-personality-test.png',
-                disc40: 'assets/images/disc-personality-test.png',
-                personality_charm_1min: 'assets/images/find-out-your-personality-charm-level-in-just-1-minute.png'
-              };
-              var preferred = (project && project.id && map[project.id]) ? map[project.id] : '';
-              resultImage.src = preferred || project.image || 'assets/images/logo.png';
-            })();
-            resultSummary.innerHTML = `<span class="font-semibold text-blue-700">${displaySummary}</span>`;
-            resultAnalysis.textContent = displayAnalysis;
-            show('result');
-            return;
+              const sessionId = window.ApiService.generateSessionId();
+              const apiRes = await window.ApiService.submitTestResult(project.id, answers, sessionId);
+              const r = (apiRes && apiRes.result) ? apiRes.result : {};
+              resultTitle.textContent = project.name;
+              (function(){
+                var map = {
+                  mbti: 'assets/images/mbti-career-personality-test.png',
+                  disc40: 'assets/images/disc-personality-test.png',
+                  personality_charm_1min: 'assets/images/find-out-your-personality-charm-level-in-just-1-minute.png'
+                };
+                var preferred = (project && project.id && map[project.id]) ? map[project.id] : '';
+                resultImage.src = preferred || project.image || 'assets/images/logo.png';
+              })();
+              resultSummary.innerHTML = `<span class=\"font-semibold text-blue-700\">${r.summary || r.summaryEn || ''}</span>`;
+              try { resultAnalysis.classList.add('mbti-analysis'); resultAnalysis.classList.add('analysis-rich'); } catch(_) {}
+              const text = r.analysis || r.analysisEn || '';
+              try {
+                if (window.marked && window.DOMPurify) {
+                  const mdHtml = window.marked.parse(normalizeStrong(text));
+                  resultAnalysis.innerHTML = window.DOMPurify.sanitize(mdHtml);
+                } else {
+                  resultAnalysis.textContent = text;
+                }
+              } catch(_) { resultAnalysis.textContent = text; }
+              show('result');
+              return;
+            } catch (e) {
+              // 后端失败则回退为本地渲染（极端容错）
+            }
           }
           if (opt.next != null) {
             qIndex = Math.max(0, Math.min((opt.next - 1), qlist.length));

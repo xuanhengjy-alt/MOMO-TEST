@@ -65,21 +65,14 @@ app.use('*', (req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-// 启动服务器
-if (process.env.NODE_ENV !== 'production') {
-  // 开发环境
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`📊 Health check: http://localhost:${PORT}/health`);
-    console.log(`🔗 API base URL: http://localhost:${PORT}/api`);
-  });
-} else {
-  // 生产环境 (Vercel)
+// 启动服务器（仅当作为主模块运行时）
+if (process.env.NODE_ENV === 'production') {
   console.log('🚀 Server ready for Vercel deployment');
 }
 
 // 启动服务器
 if (require.main === module) {
+  console.log(`Starting backend server bootstrap. NODE_ENV=${process.env.NODE_ENV || 'undefined'} PORT=${PORT}`);
   const startServer = (port) => {
     const server = app.listen(port, () => {
       console.log(`🚀 Backend server running at http://localhost:${port}`);

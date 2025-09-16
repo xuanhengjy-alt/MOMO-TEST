@@ -1090,7 +1090,8 @@ class TestLogicService {
 
   // 主要计算入口
   async calculateResult(testType, answers) {
-    switch (testType) {
+    const key = (testType || '').toString().trim().toLowerCase();
+    switch (key) {
       case 'disc':
         return await this.scoreDisc(answers, 'disc');
       case 'mgmt':
@@ -1117,25 +1118,35 @@ class TestLogicService {
         return await this.scoreHollandTest(answers);
       case 'kelsey_test':
         return await this.scoreKelseyTest(answers);
+      case 'creativity_test':
+        return await this.scoreCreativityTest(answers);
+      case 'anxiety_depression_test':
+      case 'anxiety_depression':
+      case 'anxiety_and_depression':
+      case 'anxiety_and_depression_test':
+        return await this.scoreAnxietyDepressionTest(answers);
       case 'social_anxiety_test':
         return await this.scoreSocialAnxietyTest(answers);
+      case 'violence_index':
+        return await this.scoreViolenceIndex(answers);
       case 'personality_charm_1min':
       case 'phil_test_en':
       case 'temperament_type_test':
       case 'violence_index':
         return await this.scoreGenericTest(testType, answers);
       default:
-        return { summary: '暂不支持的测试类型', analysis: '' };
+        // 对未显式列出的测试类型，统一走通用评分逻辑（按 result_types 兜底）
+        return await this.scoreGenericTest(key, answers);
     }
   }
 
   // 通用测试评分方法
   async scoreGenericTest(testType, answers) {
     try {
-      // 计算总分（简单累加）
-      const totalScore = answers.reduce((sum, answer) => sum + (answer || 0), 0);
-      
-      // 从数据库获取结果类型信息
+      // 计算总分（简单累加：答案索引按 0,1,2... 计分）
+      const totalScore = (Array.isArray(answers) ? answers : []).reduce((sum, answer) => sum + (Number.isFinite(answer) ? Number(answer) : 0), 0);
+
+      // 读取该项目的所有结果区间
       const resultQuery = await query(`
         SELECT 
           rt.type_code, 
@@ -1145,20 +1156,43 @@ class TestLogicService {
         FROM result_types rt
         JOIN test_projects tp ON rt.project_id = tp.id
         WHERE tp.project_id = $1
-        ORDER BY rt.type_code
-        LIMIT 1
+        ORDER BY rt.type_name_en ASC
       `, [testType]);
-      
+
       if (resultQuery.rows.length > 0) {
-        const result = resultQuery.rows[0];
+        // 解析区间，如 "7-12"、"13–17"、"24 - 29"、"11-42"
+        const ranges = resultQuery.rows.map(r => {
+          const label = (r.type_name_en || '').toString();
+          const nums = label.match(/\d+/g) || [];
+          let min = null, max = null;
+          if (nums.length >= 2) { min = parseInt(nums[0], 10); max = parseInt(nums[1], 10); }
+          else if (nums.length === 1) { min = parseInt(nums[0], 10); max = min; }
+          return { row: r, min, max, label };
+        }).filter(x => x.min !== null);
+
+        // 选中匹配 totalScore 的区间（闭区间 [min,max]）；若无匹配，取最接近的
+        let chosen = null;
+        for (const item of ranges) {
+          if (item.max == null) { if (totalScore >= item.min) { chosen = item; break; } }
+          else if (totalScore >= item.min && totalScore <= item.max) { chosen = item; break; }
+        }
+        if (!chosen) {
+          // 按 min 升序，选择最后一个 min <= totalScore，否则选择最小 min 的区间
+          const sorted = ranges.slice().sort((a,b) => (a.min - b.min));
+          const le = sorted.filter(it => totalScore >= it.min);
+          chosen = le.length ? le[le.length - 1] : sorted[0];
+        }
+
+        const r = chosen.row;
         return {
-          summary: result.description_en || result.type_name_en || 'Test Result',
-          analysis: result.analysis_en || '',
-          summaryEn: result.description_en || result.type_name_en || 'Test Result',
-          analysisEn: result.analysis_en || '',
+          summary: r.description_en || r.type_name_en || 'Test Result',
+          analysis: r.analysis_en || '',
+          summaryEn: r.description_en || r.type_name_en || 'Test Result',
+          analysisEn: r.analysis_en || '',
           totalScore: totalScore,
-          resultType: result.type_code,
-          description: result.description_en || ''
+          resultType: r.type_code,
+          description: r.description_en || '',
+          details: { rangeLabel: chosen.label, rangeMin: chosen.min, rangeMax: chosen.max }
         };
       } else {
         // 如果没有数据库结果，返回基本结果
@@ -1180,6 +1214,222 @@ class TestLogicService {
         analysisEn: 'Unable to process test results.',
         totalScore: 0,
         resultType: 'ERROR'
+      };
+    }
+  }
+
+  // Test your creativity 精确计分（按数据库中每个选项的 score_value.score 求和）
+  async scoreCreativityTest(answers) {
+    try {
+      // 读取所有题目的选项评分
+      const qres = await query(`
+        SELECT q.question_number, o.option_number, o.score_value
+        FROM questions q
+        JOIN question_options o ON o.question_id = q.id
+        WHERE q.project_id = (SELECT id FROM test_projects WHERE project_id = 'creativity_test')
+        ORDER BY q.question_number ASC, o.option_number ASC
+      `);
+
+      const scoreMap = new Map();
+      for (const row of qres.rows) {
+        const qn = Number(row.question_number);
+        if (!scoreMap.has(qn)) scoreMap.set(qn, []);
+        const arr = scoreMap.get(qn);
+        const optIdx = Number(row.option_number) - 1;
+        let s = 0;
+        try {
+          const v = row.score_value || {};
+          s = typeof v === 'object' && v !== null ? (v.score ?? 0) : 0;
+        } catch(_) { s = 0; }
+        arr[optIdx] = s;
+      }
+
+      // 求总分（answers 为各题选项索引 0..n）
+      let totalScore = 0;
+      for (let i = 0; i < answers.length; i++) {
+        const qn = i + 1;
+        const optIndex = Number(answers[i]);
+        const arr = scoreMap.get(qn) || [];
+        if (optIndex >= 0 && optIndex < arr.length) totalScore += (arr[optIndex] || 0);
+      }
+
+      // 读取区间并匹配
+      const rt = await query(`
+        SELECT rt.type_code, rt.type_name_en, rt.description_en, rt.analysis_en
+        FROM result_types rt
+        JOIN test_projects tp ON rt.project_id = tp.id
+        WHERE tp.project_id = 'creativity_test'
+        ORDER BY rt.type_name_en ASC
+      `);
+      if (rt.rows.length > 0) {
+        const ranges = rt.rows.map(r => {
+          const label = (r.type_name_en || '').toString();
+          const nums = label.match(/\d+/g) || [];
+          let min = null, max = null;
+          if (nums.length >= 2) { min = parseInt(nums[0], 10); max = parseInt(nums[1], 10); }
+          else if (nums.length === 1) { min = parseInt(nums[0], 10); max = min; }
+          return { row: r, min, max, label };
+        }).filter(x => x.min !== null);
+
+        let chosen = null;
+        for (const item of ranges) {
+          if (item.max == null) { if (totalScore >= item.min) { chosen = item; break; } }
+          else if (totalScore >= item.min && totalScore <= item.max) { chosen = item; break; }
+        }
+        if (!chosen) {
+          const sorted = ranges.slice().sort((a,b) => a.min - b.min);
+          const le = sorted.filter(it => totalScore >= it.min);
+          chosen = le.length ? le[le.length - 1] : sorted[0];
+        }
+
+        const r = chosen.row;
+        return {
+          summary: r.description_en || r.type_name_en || 'Test Result',
+          analysis: r.analysis_en || '',
+          summaryEn: r.description_en || r.type_name_en || 'Test Result',
+          analysisEn: r.analysis_en || '',
+          totalScore,
+          resultType: r.type_code,
+          description: r.description_en || '',
+          details: { rangeLabel: chosen.label, rangeMin: chosen.min, rangeMax: chosen.max }
+        };
+      }
+
+      return {
+        summary: `Test completed with score: ${totalScore}`,
+        analysis: 'Result ranges not configured.',
+        summaryEn: `Test completed with score: ${totalScore}`,
+        analysisEn: 'Result ranges not configured.',
+        totalScore,
+        resultType: 'UNKNOWN'
+      };
+    } catch (e) {
+      console.error('Error scoring creativity_test:', e);
+      return {
+        summary: 'Test scoring error',
+        analysis: 'Unable to process test results.',
+        summaryEn: 'Test scoring error',
+        analysisEn: 'Unable to process test results.',
+        totalScore: 0,
+        resultType: 'ERROR'
+      };
+    }
+  }
+
+  // Violence Index: 选项直接对应结果（resultCode），不按总分
+  async scoreViolenceIndex(answers) {
+    try {
+      // 读取每题各选项附带的 resultCode（存放在 score_value JSON 中）
+      const qres = await query(`
+        SELECT q.question_number, o.option_number, o.score_value
+        FROM questions q
+        JOIN question_options o ON o.question_id = q.id
+        WHERE q.project_id = (SELECT id FROM test_projects WHERE project_id = 'violence_index')
+        ORDER BY q.question_number ASC, o.option_number ASC
+      `);
+
+      const resultCodeMap = new Map();
+      for (const row of qres.rows) {
+        const qn = Number(row.question_number);
+        if (!resultCodeMap.has(qn)) resultCodeMap.set(qn, []);
+        const arr = resultCodeMap.get(qn);
+        const optIdx = Number(row.option_number) - 1;
+        let rc = null;
+        try {
+          const v = row.score_value || {};
+          rc = (v && typeof v === 'object') ? (v.resultCode || null) : null;
+        } catch(_) { rc = null; }
+        arr[optIdx] = rc;
+      }
+
+      // 从答案中提取出现的 resultCode，优先取“最后一个非空”的作为最终结果
+      const picked = [];
+      for (let i = 0; i < answers.length; i++) {
+        const qn = i + 1;
+        const optIndex = Number(answers[i]);
+        const arr = resultCodeMap.get(qn) || [];
+        const rc = (optIndex >= 0 && optIndex < arr.length) ? (arr[optIndex] || null) : null;
+        if (rc) picked.push(rc);
+      }
+      let finalCode = picked.length ? String(picked[picked.length - 1]).trim() : null;
+
+      // 生成候选码集合，尽量覆盖所有历史/新格式：
+      // - 'RESULT1', 'RESULT 1', 'Result1', 'Result 1'
+      // - 'VI_RES_1'
+      // - 题库里可能直接存 'Result 1' 为 type_code 或 type_name_en
+      const candidates = [];
+      if (finalCode) {
+        const raw = finalCode;
+        candidates.push(raw);
+        // 将 "Result2" 归一化为 "Result 2"
+        const mResult = raw.match(/^result\s*_?(\d)$/i);
+        if (mResult) {
+          const n = mResult[1];
+          candidates.push(`Result ${n}`);
+          candidates.push(`VI_RES_${n}`);
+        }
+        // VI_RES_1 → 也加入 Result 1
+        const mVi = raw.match(/^vi_res_(\d)$/i);
+        if (mVi) {
+          const n = mVi[1];
+          candidates.push(`VI_RES_${n}`);
+          candidates.push(`Result ${n}`);
+        }
+        // 若原始是 'Result 2'，也补充 VI_RES_2
+        const mResSp = raw.match(/^result\s+(\d)$/i);
+        if (mResSp) {
+          const n = mResSp[1];
+          candidates.push(`VI_RES_${n}`);
+          candidates.push(`Result ${n}`);
+        }
+      }
+
+      // 去重，保持顺序
+      const uniqCandidates = Array.from(new Set(candidates)).filter(Boolean);
+
+      let row = null;
+      for (const key of uniqCandidates) {
+        // 先按 type_code
+        const r1 = await query(`
+          SELECT description_en, analysis_en, type_name_en
+          FROM result_types WHERE project_id = (SELECT id FROM test_projects WHERE project_id='violence_index')
+          AND type_code = $1
+          LIMIT 1
+        `, [key]);
+        if (r1.rows[0]) { row = r1.rows[0]; break; }
+        // 再按 type_name_en
+        const r2 = await query(`
+          SELECT description_en, analysis_en, type_name_en
+          FROM result_types WHERE project_id = (SELECT id FROM test_projects WHERE project_id='violence_index')
+          AND type_name_en = $1
+          LIMIT 1
+        `, [key]);
+        if (r2.rows[0]) { row = r2.rows[0]; break; }
+      }
+
+      if (!row) {
+        // 若未能解析出 resultCode，则返回兜底
+        return {
+          summary: 'Violence Index: (undetermined)',
+          analysis: '',
+          summaryEn: 'Violence Index: (undetermined)',
+          analysisEn: ''
+        };
+      }
+
+      return {
+        summary: row.description_en || row.type_name_en || 'Violence Index',
+        analysis: row.analysis_en || '',
+        summaryEn: row.description_en || row.type_name_en || 'Violence Index',
+        analysisEn: row.analysis_en || ''
+      };
+    } catch (e) {
+      console.error('Error scoring violence_index:', e);
+      return {
+        summary: 'Calculation Error',
+        analysis: 'Unable to calculate test result.',
+        summaryEn: 'Calculation Error',
+        analysisEn: 'Unable to calculate test result.'
       };
     }
   }
@@ -1419,6 +1669,90 @@ class TestLogicService {
       }
     } catch (error) {
       console.error('Error calculating social anxiety test result:', error);
+      return {
+        summary: 'Calculation Error',
+        analysis: 'Unable to calculate test result. Please try again.',
+        summaryEn: 'Calculation Error',
+        analysisEn: 'Unable to calculate test result. Please try again.'
+      };
+    }
+  }
+
+  // Anxiety and Depression Level Test 计算
+  async scoreAnxietyDepressionTest(answers) {
+    try {
+      // 读取题目与选项的实际评分（score_value.score），确保正反向题按DB计算
+      const qres = await query(`
+        SELECT q.question_number, o.option_number, o.score_value
+        FROM questions q
+        JOIN question_options o ON o.question_id = q.id
+        WHERE q.project_id = (SELECT id FROM test_projects WHERE project_id = 'anxiety_depression_test')
+        ORDER BY q.question_number ASC, o.option_number ASC
+      `);
+
+      // 构建 (question_number -> [scores per option_number]) 的映射
+      const scoreMap = new Map();
+      for (const row of qres.rows) {
+        const qn = Number(row.question_number);
+        if (!scoreMap.has(qn)) scoreMap.set(qn, []);
+        const arr = scoreMap.get(qn);
+        const optionIdx = Number(row.option_number) - 1;
+        let score = 0;
+        try {
+          const json = row.score_value || {};
+          score = typeof json === 'object' && json !== null ? (json.score ?? 0) : 0;
+        } catch (_) { score = 0; }
+        arr[optionIdx] = score;
+      }
+
+      // HADS 子量表划分：A(焦虑)=1,3,5,7,9,11,13；D(抑郁)=2,4,6,8,10,12,14
+      const anxietySet = new Set([1,3,5,7,9,11,13]);
+      const depressionSet = new Set([2,4,6,8,10,12,14]);
+
+      let anxietyScore = 0;
+      let depressionScore = 0;
+      for (let i = 0; i < answers.length && i < 14; i++) {
+        const qn = i + 1;
+        const optIndex = Number(answers[i]);
+        const optionsScores = scoreMap.get(qn) || [];
+        const s = (optIndex >= 0 && optIndex < optionsScores.length) ? (optionsScores[optIndex] || 0) : 0;
+        if (anxietySet.has(qn)) anxietyScore += s; else if (depressionSet.has(qn)) depressionScore += s;
+      }
+
+      // 分段：0-7 Normal；8-10 Borderline；11-42 Abnormal（根据更正后的量表上限）
+      const band = (v) => (v <= 7 ? 'Normal' : (v <= 10 ? 'Borderline' : 'Abnormal'));
+      const anxietyBand = band(anxietyScore);
+      const depressionBand = band(depressionScore);
+
+      // 选取更严重的等级映射到 AD_* 档位，按要求：Result 用 description_en，Analysis 用 analysis_en
+      // 严重度：Abnormal > Borderline > Normal
+      const severityRank = { Normal: 0, Borderline: 1, Abnormal: 2 };
+      const worstBand = (severityRank[anxietyBand] >= severityRank[depressionBand]) ? anxietyBand : depressionBand;
+      const typeCode = worstBand === 'Abnormal' ? 'AD_OBVIOUS' : (worstBand === 'Borderline' ? 'AD_MAYBE' : 'AD_NONE');
+
+      // 读取对应档位的 description_en / analysis_en
+      const r = await query(`
+        SELECT description_en, analysis_en
+        FROM result_types
+        WHERE project_id = (SELECT id FROM test_projects WHERE project_id = 'anxiety_depression_test')
+          AND type_code = $1
+      `, [typeCode]);
+
+      const resultRow = r.rows[0] || {};
+      const resultSummary = resultRow.description_en || `${typeCode}`;
+      const resultAnalysis = resultRow.analysis_en || '';
+
+      return {
+        summary: resultSummary,
+        analysis: resultAnalysis,
+        summaryEn: resultSummary,
+        analysisEn: resultAnalysis,
+        totalScore: anxietyScore + depressionScore,
+        resultType: typeCode,
+        details: { anxietyScore, depressionScore, anxietyBand, depressionBand }
+      };
+    } catch (error) {
+      console.error('Error calculating anxiety & depression test result:', error);
       return {
         summary: 'Calculation Error',
         analysis: 'Unable to calculate test result. Please try again.',
