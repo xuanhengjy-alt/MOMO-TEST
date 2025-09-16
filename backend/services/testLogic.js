@@ -126,7 +126,7 @@ class TestLogicService {
     // 从数据库获取完整的分析
     try {
       const result = await query(`
-        SELECT rt.analysis, rt.analysis_en, rt.type_name, rt.type_name_en
+        SELECT rt.analysis_en, rt.type_name_en
         FROM result_types rt
         JOIN test_projects tp ON rt.project_id = tp.id
         WHERE tp.project_id = 'introversion_en' AND rt.type_code = $1
@@ -135,11 +135,11 @@ class TestLogicService {
       if (result.rows.length > 0) {
         const introData = result.rows[0];
         return {
-          summary: summary,
-          summaryEn: summary,
-          analysis: introData.analysis || summary,
-          analysisEn: introData.analysis_en || introData.analysis || summary,
-          typeName: introData.type_name,
+          summary: introData.description_en || summary,
+          summaryEn: introData.description_en || summary,
+          analysis: introData.analysis_en || '',
+          analysisEn: introData.analysis_en || '',
+          typeName: introData.type_name_en,
           typeNameEn: introData.type_name_en,
           total: total,
           type: type
@@ -230,7 +230,7 @@ class TestLogicService {
     // 从数据库获取完整的分析
     try {
       const result = await query(`
-        SELECT rt.analysis, rt.analysis_en, rt.type_name, rt.type_name_en
+        SELECT rt.analysis_en, rt.type_name_en
         FROM result_types rt
         JOIN test_projects tp ON rt.project_id = tp.id
         WHERE tp.project_id = 'enneagram_en' AND rt.type_code = $1
@@ -239,11 +239,11 @@ class TestLogicService {
       if (result.rows.length > 0) {
         const enneagramData = result.rows[0];
         return {
-          summary: summary,
-          summaryEn: summary,
-          analysis: enneagramData.analysis || summary,
-          analysisEn: enneagramData.analysis_en || enneagramData.analysis || summary,
-          typeName: enneagramData.type_name,
+          summary: enneagramData.description_en || summary,
+          summaryEn: enneagramData.description_en || summary,
+          analysis: enneagramData.analysis_en || '',
+          analysisEn: enneagramData.analysis_en || '',
+          typeName: enneagramData.type_name_en,
           typeNameEn: enneagramData.type_name_en,
           total: maxScore,
           type: type,
@@ -321,7 +321,7 @@ class TestLogicService {
     // 从数据库获取完整的分析
     try {
       const result = await query(`
-        SELECT rt.analysis, rt.analysis_en, rt.type_name, rt.type_name_en
+        SELECT rt.analysis_en, rt.type_name_en
         FROM result_types rt
         JOIN test_projects tp ON rt.project_id = tp.id
         WHERE tp.project_id = 'eq_test_en' AND rt.type_code = $1
@@ -330,11 +330,11 @@ class TestLogicService {
       if (result.rows.length > 0) {
         const eqData = result.rows[0];
         return {
-          summary: summary,
-          summaryEn: summary,
-          analysis: eqData.analysis || summary,
-          analysisEn: eqData.analysis_en || eqData.analysis || summary,
-          typeName: eqData.type_name,
+          summary: eqData.description_en || summary,
+          summaryEn: eqData.description_en || summary,
+          analysis: eqData.analysis_en || '',
+          analysisEn: eqData.analysis_en || '',
+          typeName: eqData.type_name_en,
           typeNameEn: eqData.type_name_en,
           total: total,
           type: type
@@ -408,7 +408,7 @@ class TestLogicService {
     // 从数据库获取完整的分析
     try {
       const result = await query(`
-        SELECT rt.analysis, rt.analysis_en, rt.type_name, rt.type_name_en
+        SELECT rt.analysis_en, rt.type_name_en
         FROM result_types rt
         JOIN test_projects tp ON rt.project_id = tp.id
         WHERE tp.project_id = 'phil_test_en' AND rt.type_code = $1
@@ -417,11 +417,11 @@ class TestLogicService {
       if (result.rows.length > 0) {
         const philData = result.rows[0];
         return {
-          summary: summary,
-          summaryEn: summary,
-          analysis: philData.analysis || summary,
-          analysisEn: philData.analysis_en || philData.analysis || summary,
-          typeName: philData.type_name,
+          summary: philData.description_en || summary,
+          summaryEn: philData.description_en || summary,
+          analysis: philData.analysis_en || '',
+          analysisEn: philData.analysis_en || '',
+          typeName: philData.type_name_en,
           typeNameEn: philData.type_name_en,
           total: total,
           type: type
@@ -509,7 +509,7 @@ class TestLogicService {
     // 从数据库获取完整的分析
     try {
       const result = await query(`
-        SELECT rt.analysis, rt.analysis_en, rt.type_name, rt.type_name_en
+        SELECT rt.analysis_en, rt.type_name_en
         FROM result_types rt
         JOIN test_projects tp ON rt.project_id = tp.id
         WHERE tp.project_id = 'four_colors_en' AND rt.type_code = $1
@@ -518,11 +518,11 @@ class TestLogicService {
       if (result.rows.length > 0) {
         const fourColorsData = result.rows[0];
         return {
-          summary: summary,
-          summaryEn: summary,
-          analysis: fourColorsData.analysis || summary,
-          analysisEn: fourColorsData.analysis_en || fourColorsData.analysis || summary,
-          typeName: fourColorsData.type_name,
+          summary: fourColorsData.description_en || summary,
+          summaryEn: fourColorsData.description_en || summary,
+          analysis: fourColorsData.analysis_en || '',
+          analysisEn: fourColorsData.analysis_en || '',
+          typeName: fourColorsData.type_name_en,
           typeNameEn: fourColorsData.type_name_en,
           total: maxCount,
           type: type,
@@ -658,7 +658,7 @@ class TestLogicService {
     // 从数据库获取完整的分析
     try {
       const result = await query(`
-        SELECT rt.analysis, rt.analysis_en, rt.type_name, rt.type_name_en
+        SELECT rt.analysis_en, rt.type_name_en
         FROM result_types rt
         JOIN test_projects tp ON rt.project_id = tp.id
         WHERE tp.project_id = 'pdp_test_en' AND rt.type_code = $1
@@ -667,11 +667,11 @@ class TestLogicService {
       if (result.rows.length > 0) {
         const pdpData = result.rows[0];
         return {
-          summary: summary,
-          summaryEn: summary,
-          analysis: pdpData.analysis || summary,
-          analysisEn: pdpData.analysis_en || pdpData.analysis || summary,
-          typeName: pdpData.type_name,
+          summary: pdpData.description_en || summary,
+          summaryEn: pdpData.description_en || summary,
+          analysis: pdpData.analysis_en || '',
+          analysisEn: pdpData.analysis_en || '',
+          typeName: pdpData.type_name_en,
           typeNameEn: pdpData.type_name_en,
           total: maxScore,
           type: type,
@@ -749,7 +749,7 @@ class TestLogicService {
     // 从数据库获取完整的分析
     try {
       const result = await query(`
-        SELECT rt.analysis, rt.analysis_en, rt.type_name, rt.type_name_en
+        SELECT rt.analysis_en, rt.type_name_en
         FROM result_types rt
         JOIN test_projects tp ON rt.project_id = tp.id
         WHERE tp.project_id = 'mental_age_test_en' AND rt.type_code = $1
@@ -758,11 +758,11 @@ class TestLogicService {
       if (result.rows.length > 0) {
         const mentalAgeData = result.rows[0];
         return {
-          summary: summary,
-          summaryEn: summary,
-          analysis: mentalAgeData.analysis || summary,
-          analysisEn: mentalAgeData.analysis_en || mentalAgeData.analysis || summary,
-          typeName: mentalAgeData.type_name,
+          summary: mentalAgeData.description_en || summary,
+          summaryEn: mentalAgeData.description_en || summary,
+          analysis: mentalAgeData.analysis_en || '',
+          analysisEn: mentalAgeData.analysis_en || '',
+          typeName: mentalAgeData.type_name_en,
           typeNameEn: mentalAgeData.type_name_en,
           total: total,
           type: type
@@ -894,7 +894,7 @@ class TestLogicService {
     // 从数据库获取完整的分析
     try {
       const result = await query(`
-        SELECT rt.analysis, rt.analysis_en, rt.type_name, rt.type_name_en
+        SELECT rt.analysis_en, rt.type_name_en
         FROM result_types rt
         JOIN test_projects tp ON rt.project_id = tp.id
         WHERE tp.project_id = 'holland_test_en' AND rt.type_code = $1
@@ -903,11 +903,11 @@ class TestLogicService {
       if (result.rows.length > 0) {
         const hollandData = result.rows[0];
         return {
-          summary: summary,
-          summaryEn: summary,
-          analysis: hollandData.analysis || summary,
-          analysisEn: hollandData.analysis_en || hollandData.analysis || summary,
-          typeName: hollandData.type_name,
+          summary: hollandData.description_en || summary,
+          summaryEn: hollandData.description_en || summary,
+          analysis: hollandData.analysis_en || '',
+          analysisEn: hollandData.analysis_en || '',
+          typeName: hollandData.type_name_en,
           typeNameEn: hollandData.type_name_en,
           total: maxScore,
           type: type,
@@ -1032,7 +1032,7 @@ class TestLogicService {
     // 从数据库获取完整的分析
     try {
       const result = await query(`
-        SELECT rt.analysis, rt.analysis_en, rt.type_name, rt.type_name_en
+        SELECT rt.analysis_en, rt.type_name_en
         FROM result_types rt
         JOIN test_projects tp ON rt.project_id = tp.id
         WHERE tp.project_id = 'kelsey_test_en' AND rt.type_code = $1
@@ -1041,11 +1041,11 @@ class TestLogicService {
       if (result.rows.length > 0) {
         const kelseyData = result.rows[0];
         return {
-          summary: typeName,
-          summaryEn: typeName,
-          analysis: kelseyData.analysis || typeName,
-          analysisEn: kelseyData.analysis_en || kelseyData.analysis || typeName,
-          typeName: kelseyData.type_name,
+          summary: kelseyData.description_en || typeName,
+          summaryEn: kelseyData.description_en || typeName,
+          analysis: kelseyData.analysis_en || '',
+          analysisEn: kelseyData.analysis_en || '',
+          typeName: kelseyData.type_name_en,
           typeNameEn: kelseyData.type_name_en,
           total: Math.max(eScore, iScore) + Math.max(sScore, nScore) + Math.max(tScore, fScore) + Math.max(jScore, pScore),
           type: typeCode,
@@ -1117,8 +1117,70 @@ class TestLogicService {
         return await this.scoreHollandTest(answers);
       case 'kelsey_test':
         return await this.scoreKelseyTest(answers);
+      case 'social_anxiety_test':
+        return await this.scoreSocialAnxietyTest(answers);
+      case 'personality_charm_1min':
+      case 'phil_test_en':
+      case 'temperament_type_test':
+      case 'violence_index':
+        return await this.scoreGenericTest(testType, answers);
       default:
         return { summary: '暂不支持的测试类型', analysis: '' };
+    }
+  }
+
+  // 通用测试评分方法
+  async scoreGenericTest(testType, answers) {
+    try {
+      // 计算总分（简单累加）
+      const totalScore = answers.reduce((sum, answer) => sum + (answer || 0), 0);
+      
+      // 从数据库获取结果类型信息
+      const resultQuery = await query(`
+        SELECT 
+          rt.type_code, 
+          rt.type_name_en, 
+          rt.description_en, 
+          rt.analysis_en
+        FROM result_types rt
+        JOIN test_projects tp ON rt.project_id = tp.id
+        WHERE tp.project_id = $1
+        ORDER BY rt.type_code
+        LIMIT 1
+      `, [testType]);
+      
+      if (resultQuery.rows.length > 0) {
+        const result = resultQuery.rows[0];
+        return {
+          summary: result.description_en || result.type_name_en || 'Test Result',
+          analysis: result.analysis_en || '',
+          summaryEn: result.description_en || result.type_name_en || 'Test Result',
+          analysisEn: result.analysis_en || '',
+          totalScore: totalScore,
+          resultType: result.type_code,
+          description: result.description_en || ''
+        };
+      } else {
+        // 如果没有数据库结果，返回基本结果
+        return {
+          summary: `Test completed with score: ${totalScore}`,
+          analysis: 'Test analysis not available.',
+          summaryEn: `Test completed with score: ${totalScore}`,
+          analysisEn: 'Test analysis not available.',
+          totalScore: totalScore,
+          resultType: 'UNKNOWN'
+        };
+      }
+    } catch (error) {
+      console.error(`Error scoring ${testType}:`, error);
+      return {
+        summary: 'Test scoring error',
+        analysis: 'Unable to process test results.',
+        summaryEn: 'Test scoring error',
+        analysisEn: 'Unable to process test results.',
+        totalScore: 0,
+        resultType: 'ERROR'
+      };
     }
   }
 
@@ -1252,7 +1314,7 @@ class TestLogicService {
     // 从数据库获取完整的MBTI描述
     try {
       const result = await query(`
-        SELECT rt.analysis, rt.description, rt.type_name
+        SELECT rt.analysis_en, rt.description_en, rt.type_name_en
         FROM result_types rt
         JOIN test_projects tp ON rt.project_id = tp.id
         WHERE tp.project_id = 'mbti' AND rt.type_code = $1
@@ -1261,9 +1323,9 @@ class TestLogicService {
       if (result.rows.length > 0) {
         const mbtiData = result.rows[0];
         return {
-          summary: type,
-          analysis: mbtiData.analysis || mbtiData.description,
-          typeName: mbtiData.type_name,
+          summary: mbtiData.description_en || type,
+          analysis: mbtiData.analysis_en || '',
+          typeName: mbtiData.type_name_en,
           scores: scores
         };
       }
@@ -1278,6 +1340,92 @@ class TestLogicService {
       typeName: type,
       scores: scores
     };
+  }
+
+  // Social Anxiety Level Test 计算
+  async scoreSocialAnxietyTest(answers) {
+    try {
+      // 评分映射 (根据create-social-anxiety-test.js中的规则)
+      const scoreMap = {
+        1:  [1,2,3,4,5],   // 题目1: 选项1-5对应分数1-5
+        2:  [1,2,3,4,5],   // 题目2: 选项1-5对应分数1-5
+        3:  [5,4,3,2,1],   // 题目3: 选项1-5对应分数5-1 (反向)
+        4:  [1,2,3,4,5],   // 题目4: 选项1-5对应分数1-5
+        5:  [1,2,3,4,5],   // 题目5: 选项1-5对应分数1-5
+        6:  [5,4,3,2,1],   // 题目6: 选项1-5对应分数5-1 (反向)
+        7:  [1,2,3,4,5],   // 题目7: 选项1-5对应分数1-5
+        8:  [1,2,3,4,5],   // 题目8: 选项1-5对应分数1-5
+        9:  [1,2,3,4,5],   // 题目9: 选项1-5对应分数1-5
+        10: [5,4,3,2,1],   // 题目10: 选项1-5对应分数5-1 (反向)
+        11: [1,2,3,4,5],   // 题目11: 选项1-5对应分数1-5
+        12: [1,2,3,4,5],   // 题目12: 选项1-5对应分数1-5
+        13: [1,2,3,4,5],   // 题目13: 选项1-5对应分数1-5
+        14: [1,2,3,4,5],   // 题目14: 选项1-5对应分数1-5
+        15: [5,4,3,2,1]    // 题目15: 选项1-5对应分数5-1 (反向)
+      };
+      
+      // 计算总分
+      let totalScore = 0;
+      answers.forEach((answerIndex, questionIndex) => {
+        const questionNum = questionIndex + 1;
+        if (scoreMap[questionNum] && answerIndex >= 0 && answerIndex < scoreMap[questionNum].length) {
+          totalScore += scoreMap[questionNum][answerIndex];
+        }
+      });
+      
+      // 根据分数确定结果类型
+      let resultType = '';
+      if (totalScore >= 61) {
+        resultType = 'SA_SEVERE';
+      } else if (totalScore >= 41) {
+        resultType = 'SA_MILD';
+      } else {
+        resultType = 'SA_NONE';
+      }
+      
+      // 从数据库获取结果类型信息
+      const resultQuery = await query(`
+        SELECT 
+          rt.type_code, 
+          rt.type_name_en, 
+          rt.description_en, 
+          rt.analysis_en
+        FROM result_types rt
+        JOIN test_projects tp ON rt.project_id = tp.id
+        WHERE tp.project_id = 'social_anxiety_test' AND rt.type_code = $1
+      `, [resultType]);
+      
+      if (resultQuery.rows.length > 0) {
+        const result = resultQuery.rows[0];
+        return {
+          summary: result.description_en || result.type_name_en || resultType,
+          analysis: result.analysis_en || '',
+          summaryEn: result.description_en || result.type_name_en || resultType,
+          analysisEn: result.analysis_en || '',
+          totalScore: totalScore,
+          resultType: resultType,
+          description: result.description_en || ''
+        };
+      } else {
+        // 如果没有找到数据库结果，返回基本结果
+        return {
+          summary: `Score: ${totalScore}/75`,
+          analysis: `Your social anxiety level score is ${totalScore} out of 75.`,
+          summaryEn: `Score: ${totalScore}/75`,
+          analysisEn: `Your social anxiety level score is ${totalScore} out of 75.`,
+          totalScore: totalScore,
+          resultType: resultType
+        };
+      }
+    } catch (error) {
+      console.error('Error calculating social anxiety test result:', error);
+      return {
+        summary: 'Calculation Error',
+        analysis: 'Unable to calculate test result. Please try again.',
+        summaryEn: 'Calculation Error',
+        analysisEn: 'Unable to calculate test result. Please try again.'
+      };
+    }
   }
 }
 

@@ -1398,10 +1398,69 @@ const TestLogic = (function() {
       if (type === 'holland_test') return scoreHollandTest(answers);
       if (type === 'kelsey_test') return scoreKelseyTest(answers);
       if (type === 'temperament_type_test') return scoreTemperamentTypeTest(answers);
+      if (type === 'social_anxiety_test') return scoreSocialAnxietyTest(answers);
       return { summary: 'Test type not supported', analysis: '' };
     }
   };
 })();
+
+// Social Anxiety Level Test 评分函数
+function scoreSocialAnxietyTest(answers) {
+  // 评分映射 (根据create-social-anxiety-test.js中的规则)
+  const scoreMap = {
+    1:  [1,2,3,4,5],   // 题目1: 选项1-5对应分数1-5
+    2:  [1,2,3,4,5],   // 题目2: 选项1-5对应分数1-5
+    3:  [5,4,3,2,1],   // 题目3: 选项1-5对应分数5-1 (反向)
+    4:  [1,2,3,4,5],   // 题目4: 选项1-5对应分数1-5
+    5:  [1,2,3,4,5],   // 题目5: 选项1-5对应分数1-5
+    6:  [5,4,3,2,1],   // 题目6: 选项1-5对应分数5-1 (反向)
+    7:  [1,2,3,4,5],   // 题目7: 选项1-5对应分数1-5
+    8:  [1,2,3,4,5],   // 题目8: 选项1-5对应分数1-5
+    9:  [1,2,3,4,5],   // 题目9: 选项1-5对应分数1-5
+    10: [5,4,3,2,1],   // 题目10: 选项1-5对应分数5-1 (反向)
+    11: [1,2,3,4,5],   // 题目11: 选项1-5对应分数1-5
+    12: [1,2,3,4,5],   // 题目12: 选项1-5对应分数1-5
+    13: [1,2,3,4,5],   // 题目13: 选项1-5对应分数1-5
+    14: [1,2,3,4,5],   // 题目14: 选项1-5对应分数1-5
+    15: [5,4,3,2,1]    // 题目15: 选项1-5对应分数5-1 (反向)
+  };
+  
+  // 计算总分
+  let totalScore = 0;
+  answers.forEach((answerIndex, questionIndex) => {
+    const questionNum = questionIndex + 1;
+    if (scoreMap[questionNum] && answerIndex >= 0 && answerIndex < scoreMap[questionNum].length) {
+      totalScore += scoreMap[questionNum][answerIndex];
+    }
+  });
+  
+  // 根据分数确定结果类型
+  let resultType = '';
+  let summary = '';
+  let analysis = '';
+  
+  if (totalScore >= 61) {
+    resultType = 'SA_SEVERE';
+    summary = '61-75';
+    analysis = 'You currently have a rather severe tendency of social anxiety across multiple scenarios. Consider seeking professional help in time.';
+  } else if (totalScore >= 41) {
+    resultType = 'SA_MILD';
+    summary = '41-60';
+    analysis = 'Only mild social anxiety in specific cases; simple adjustments can help.';
+  } else {
+    resultType = 'SA_NONE';
+    summary = '0-40';
+    analysis = 'No social anxiety; you can remain relaxed and natural in most social contexts.';
+  }
+  
+  return {
+    summary: summary,
+    analysis: analysis,
+    totalScore: totalScore,
+    resultType: resultType,
+    description: summary
+  };
+}
 
 window.TestLogic = TestLogic;
 

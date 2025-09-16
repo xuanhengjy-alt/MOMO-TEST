@@ -389,6 +389,11 @@
       // 优先使用API返回的结果，如果没有则使用本地计算结果
       const finalResult = apiResult && apiResult.result ? apiResult.result : result;
       
+      // 调试日志
+      console.log('API Result:', apiResult);
+      console.log('Local Result:', result);
+      console.log('Final Result:', finalResult);
+      
       resultTitle.textContent = project.name;
       (function(){
         var map = {

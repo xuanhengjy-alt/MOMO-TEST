@@ -33,17 +33,15 @@ router.post('/', async (req, res) => {
       const resultQuery = await client.query(`
         INSERT INTO test_results (
           project_id, session_id, user_answers, calculated_result,
-          result_summary, result_analysis, result_summary_en, result_analysis_en,
+          result_summary_en, result_analysis_en,
           ip_address, user_agent
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING id, completed_at
       `, [
         project.id,
         sessionId || null,
         JSON.stringify(answers),
         JSON.stringify(testResult),
-        testResult.summary || '',
-        testResult.analysis || '',
         testResult.summaryEn || '',
         testResult.analysisEn || '',
         ipAddress || null,
@@ -85,7 +83,7 @@ router.get('/:resultId', async (req, res) => {
       SELECT 
         tr.*,
         tp.project_id,
-        tp.name as project_name,
+        tp.name_en as project_name,
         tp.test_type
       FROM test_results tr
       JOIN test_projects tp ON tr.project_id = tp.id
@@ -105,7 +103,7 @@ router.get('/:resultId', async (req, res) => {
       userAnswers: testResult.user_answers,
       calculatedResult: testResult.calculated_result,
       resultSummary: testResult.result_summary,
-      resultAnalysis: testResult.result_analysis,
+      resultAnalysis: testResult.result_analysis_en,
       resultSummaryEn: testResult.result_summary_en,
       resultAnalysisEn: testResult.result_analysis_en,
       completedAt: testResult.completed_at

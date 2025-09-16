@@ -19,10 +19,10 @@ router.get('/', async (req, res) => {
 
     const projects = result.rows.map(row => ({
       id: row.project_id,
-      name: row.name,
+      name: row.name_en,
       nameEn: row.name_en,
       image: row.image_url,
-      intro: row.intro,
+      intro: row.intro_en,
       introEn: row.intro_en,
       type: row.test_type,
       estimatedTime: row.estimated_time,
@@ -61,10 +61,10 @@ router.get('/:projectId', async (req, res) => {
     const project = result.rows[0];
     res.json({
       id: project.project_id,
-      name: project.name,
+      name: project.name_en,
       nameEn: project.name_en,
       image: project.image_url,
-      intro: project.intro,
+      intro: project.intro_en,
       introEn: project.intro_en,
       type: project.test_type,
       estimatedTime: project.estimated_time,
@@ -100,13 +100,12 @@ router.get('/:projectId/questions', async (req, res) => {
     const questionsResult = await query(`
       SELECT 
         q.question_number,
-        q.question_text,
         q.question_text_en,
         q.question_type,
         json_agg(
           json_build_object(
             'option_number', o.option_number,
-            'option_text', o.option_text,
+            'option_text', o.option_text_en,
             'option_text_en', o.option_text_en,
             'score_value', o.score_value
           ) ORDER BY o.option_number
@@ -114,18 +113,18 @@ router.get('/:projectId/questions', async (req, res) => {
       FROM questions q
       LEFT JOIN question_options o ON q.id = o.question_id
       WHERE q.project_id = $1
-      GROUP BY q.id, q.question_number, q.question_text, q.question_text_en, q.question_type
+      GROUP BY q.id, q.question_number, q.question_text_en, q.question_type
       ORDER BY q.question_number
     `, [project.id]);
 
     const questions = questionsResult.rows.map(row => ({
       n: row.question_number,
-      t: row.question_text,
+      t: row.question_text_en,
       opts: row.options
         .sort((a,b) => a.option_number - b.option_number)
         .map(opt => {
           const extra = opt.score_value || {};
-          const mapped = { n: opt.option_number, text: opt.option_text };
+          const mapped = { n: opt.option_number, text: opt.option_text_en };
           if (extra && typeof extra === 'object') {
             if (extra.next != null) mapped.next = extra.next;
             if (extra.resultCode) mapped.resultCode = extra.resultCode;
@@ -185,7 +184,7 @@ router.get('/:projectId/analyses', async (req, res) => {
     if (!pr.rows.length) return res.status(404).json({ error: 'Test project not found' });
 
     const rows = await query(`
-      SELECT type_code, type_name, type_name_en, description, description_en, analysis, analysis_en
+      SELECT type_code, type_name_en, description_en, analysis_en
       FROM result_types
       WHERE project_id = $1
       ORDER BY type_code ASC
@@ -194,11 +193,11 @@ router.get('/:projectId/analyses', async (req, res) => {
     res.json({
       items: rows.rows.map(r => ({
         code: r.type_code,
-        name: r.type_name,
+        name: r.type_name_en,
         nameEn: r.type_name_en,
-        description: r.description,
+        description: r.description_en,
         descriptionEn: r.description_en,
-        analysis: r.analysis,
+        analysis: r.analysis_en,
         analysisEn: r.analysis_en
       }))
     });

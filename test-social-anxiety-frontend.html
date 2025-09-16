@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Social Anxiety Test Frontend Test</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 p-8">
+  <div class="max-w-2xl mx-auto">
+    <h1 class="text-2xl font-bold mb-6">Social Anxiety Level Test - Frontend Test</h1>
+    
+    <div class="bg-white p-6 rounded-lg shadow mb-6">
+      <h2 class="text-lg font-semibold mb-4">测试前端评分逻辑</h2>
+      <button id="testScore" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+        测试评分
+      </button>
+      <div id="result" class="mt-4 p-4 bg-gray-100 rounded"></div>
+    </div>
+    
+    <div class="bg-white p-6 rounded-lg shadow">
+      <h2 class="text-lg font-semibold mb-4">测试API调用</h2>
+      <button id="testAPI" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+        测试API
+      </button>
+      <div id="apiResult" class="mt-4 p-4 bg-gray-100 rounded"></div>
+    </div>
+  </div>
+
+  <script src="js/utils.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/test-logic.js"></script>
+  
+  <script>
+    document.getElementById('testScore').addEventListener('click', function() {
+      console.log('Testing frontend scoring...');
+      
+      // 模拟答案 (全部选择第5个选项，索引为4)
+      const mockAnswers = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4];
+      
+      try {
+        const result = window.TestLogic.score('social_anxiety_test', mockAnswers);
+        console.log('Frontend result:', result);
+        
+        document.getElementById('result').innerHTML = `
+          <h3 class="font-semibold">前端评分结果:</h3>
+          <p><strong>Summary:</strong> ${result.summary || '无'}</p>
+          <p><strong>Analysis:</strong> ${result.analysis || '无'}</p>
+          <p><strong>Total Score:</strong> ${result.totalScore || '无'}</p>
+          <p><strong>Result Type:</strong> ${result.resultType || '无'}</p>
+          <pre class="mt-2 text-xs bg-white p-2 rounded">${JSON.stringify(result, null, 2)}</pre>
+        `;
+      } catch (error) {
+        console.error('Frontend scoring error:', error);
+        document.getElementById('result').innerHTML = `
+          <p class="text-red-600">错误: ${error.message}</p>
+        `;
+      }
+    });
+    
+    document.getElementById('testAPI').addEventListener('click', async function() {
+      console.log('Testing API call...');
+      
+      const mockAnswers = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4];
+      
+      try {
+        const sessionId = window.ApiService.generateSessionId();
+        const apiResult = await window.ApiService.submitTestResult('social_anxiety_test', mockAnswers, sessionId);
+        console.log('API result:', apiResult);
+        
+        document.getElementById('apiResult').innerHTML = `
+          <h3 class="font-semibold">API调用结果:</h3>
+          <p><strong>Success:</strong> ${apiResult.success || '无'}</p>
+          <p><strong>Summary:</strong> ${apiResult.result?.summary || '无'}</p>
+          <p><strong>Analysis:</strong> ${apiResult.result?.analysis || '无'}</p>
+          <p><strong>Total Score:</strong> ${apiResult.result?.totalScore || '无'}</p>
+          <p><strong>Result Type:</strong> ${apiResult.result?.resultType || '无'}</p>
+          <pre class="mt-2 text-xs bg-white p-2 rounded">${JSON.stringify(apiResult, null, 2)}</pre>
+        `;
+      } catch (error) {
+        console.error('API call error:', error);
+        document.getElementById('apiResult').innerHTML = `
+          <p class="text-red-600">错误: ${error.message}</p>
+        `;
+      }
+    });
+  </script>
+</body>
+</html>

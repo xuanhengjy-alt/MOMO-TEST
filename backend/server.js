@@ -9,7 +9,7 @@ const testRoutes = require('./routes/tests');
 const resultRoutes = require('./routes/results');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 // 安全中间件
 app.use(helmet());
@@ -76,6 +76,27 @@ if (process.env.NODE_ENV !== 'production') {
 } else {
   // 生产环境 (Vercel)
   console.log('🚀 Server ready for Vercel deployment');
+}
+
+// 启动服务器
+if (require.main === module) {
+  const startServer = (port) => {
+    const server = app.listen(port, () => {
+      console.log(`🚀 Backend server running at http://localhost:${port}`);
+      console.log(`📊 Health check: http://localhost:${port}/api/health`);
+    });
+    
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        console.log(`Port ${port} is in use, trying port ${port + 1}...`);
+        startServer(port + 1);
+      } else {
+        console.error('Server error:', err);
+      }
+    });
+  };
+  
+  startServer(PORT);
 }
 
 // 导出app供Vercel使用

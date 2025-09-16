@@ -1,7 +1,7 @@
 // API 服务模块
 // 根据环境自动选择API基础URL
 const API_BASE_URL = window.location.hostname === 'localhost' 
-  ? 'http://localhost:3000/api' 
+  ? 'http://localhost:3001/api' 
   : '/api'; // 生产环境使用相对路径
 
 class ApiService {
@@ -329,6 +329,20 @@ class ApiService {
         estimatedTime: 1,
         questionCount: 10,
         isJumpType: true,
+        testedCount: '0',
+        likes: 0
+      },
+      {
+        id: 'social_anxiety_test',
+        name: 'Social Anxiety Level Test',
+        nameEn: 'Social Anxiety Level Test',
+        image: 'assets/images/social-anxiety-level-test.png',
+        intro: 'A 15-question scale covering multiple social situations to reflect your level of social anxiety. Not a diagnosis, but a quick self-check.',
+        introEn: 'A 15-question scale covering multiple social situations to reflect your level of social anxiety. Not a diagnosis, but a quick self-check.',
+        type: 'social_anxiety_test',
+        estimatedTime: 6,
+        questionCount: 15,
+        isJumpType: false,
         testedCount: '0',
         likes: 0
       }
