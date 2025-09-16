@@ -1328,30 +1328,42 @@ class TestLogicService {
         ORDER BY q.question_number ASC, o.option_number ASC
       `);
 
-      const resultCodeMap = new Map();
+      // 构建跳转表：题号 -> 选项数组（包含 resultCode 与 next）
+      const jumpMap = new Map();
       for (const row of qres.rows) {
         const qn = Number(row.question_number);
-        if (!resultCodeMap.has(qn)) resultCodeMap.set(qn, []);
-        const arr = resultCodeMap.get(qn);
+        if (!jumpMap.has(qn)) jumpMap.set(qn, []);
+        const arr = jumpMap.get(qn);
         const optIdx = Number(row.option_number) - 1;
         let rc = null;
+        let nx = null;
         try {
           const v = row.score_value || {};
-          rc = (v && typeof v === 'object') ? (v.resultCode || null) : null;
-        } catch(_) { rc = null; }
-        arr[optIdx] = rc;
+          rc = (v && typeof v === 'object') ? (v.resultCode ?? null) : null;
+          nx = (v && typeof v === 'object') ? (v.next ?? null) : null;
+        } catch(_) { rc = null; nx = null; }
+        arr[optIdx] = { resultCode: rc, next: nx };
       }
 
-      // 从答案中提取出现的 resultCode，优先取“最后一个非空”的作为最终结果
-      const picked = [];
-      for (let i = 0; i < answers.length; i++) {
-        const qn = i + 1;
+      // 依据答案顺序，按 next 指针从第1题开始逐题跳转，取最后一个非空 resultCode
+      let currentQ = 1;
+      let finalCode = null;
+      const SAFE_MAX_STEPS = 50;
+      let step = 0;
+      for (let i = 0; i < answers.length && step < SAFE_MAX_STEPS; i++, step++) {
         const optIndex = Number(answers[i]);
-        const arr = resultCodeMap.get(qn) || [];
-        const rc = (optIndex >= 0 && optIndex < arr.length) ? (arr[optIndex] || null) : null;
-        if (rc) picked.push(rc);
+        const options = jumpMap.get(currentQ) || [];
+        const picked = (optIndex >= 0 && optIndex < options.length) ? options[optIndex] : null;
+        if (!picked) break;
+        if (picked.resultCode) finalCode = String(picked.resultCode).trim();
+        // 若有 next 继续跳，否则终止
+        if (picked.next != null && picked.next !== '') {
+          const nxt = Number(picked.next);
+          currentQ = Number.isFinite(nxt) ? nxt : currentQ + 1; // 兜底：无效 next 则顺延
+        } else {
+          break;
+        }
       }
-      let finalCode = picked.length ? String(picked[picked.length - 1]).trim() : null;
 
       // 生成候选码集合，尽量覆盖所有历史/新格式：
       // - 'RESULT1', 'RESULT 1', 'Result1', 'Result 1'
