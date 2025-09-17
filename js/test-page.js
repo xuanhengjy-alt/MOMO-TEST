@@ -258,8 +258,13 @@
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
-    const html = esc
-      .split(/\n\s*\n/) // 段落：空行分隔
+    // 统一换行符并优先按空行分段；若没有空行，则按单行分段，保证段落间有间距
+    const normalized = esc.replace(/\r\n?/g, '\n');
+    let parts = normalized.split(/\n\s*\n/);
+    if (parts.length === 1) {
+      parts = normalized.split(/\n+/); // 回退：按单行分段
+    }
+    const html = parts
       .map(p => `<p class="leading-relaxed mb-3">${p.replace(/\n/g, '<br>')}</p>`) // 段内换行
       .join('');
     el.innerHTML = html;
