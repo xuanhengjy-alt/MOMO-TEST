@@ -655,24 +655,41 @@ class TestLogicService {
       type = dominantTypes[0].type + '_TYPE';
     }
     
-    // 从数据库获取完整的分析
+    // 从数据库获取完整的分析（支持并列最高分，合并多结果）
     try {
+      const types = dominantTypes.length > 1
+        ? dominantTypes.map(t => `${t.type}_TYPE`)
+        : [type];
+
       const result = await query(`
-        SELECT rt.analysis_en, rt.type_name_en
+        SELECT rt.type_code, rt.type_name_en, rt.description_en, rt.analysis_en
         FROM result_types rt
         JOIN test_projects tp ON rt.project_id = tp.id
-        WHERE tp.project_id = 'pdp_test_en' AND rt.type_code = $1
-      `, [type]);
-      
+        WHERE tp.project_id = 'pdp_test_en' AND rt.type_code = ANY($1::text[])
+      `, [types]);
+
       if (result.rows.length > 0) {
-        const pdpData = result.rows[0];
+        const map = {}; result.rows.forEach(r => { map[r.type_code] = r; });
+        const order = ['TIGER_TYPE','PEACOCK_TYPE','KOALA_TYPE','OWL_TYPE','CHAMELEON_TYPE'];
+        const selected = (types || []).slice().sort((a,b)=>order.indexOf(a)-order.indexOf(b));
+
+        const summaries = [];
+        const analyses = [];
+        selected.forEach(code => {
+          const r = map[code] || {};
+          const s = r.description_en || r.type_name_en || code;
+          const a = r.analysis_en || '';
+          summaries.push(s);
+          if (a) analyses.push(`## ${r.type_name_en || code}\n\n${a}`); else analyses.push(`## ${r.type_name_en || code}`);
+        });
+
         return {
-          summary: pdpData.description_en || summary,
-          summaryEn: pdpData.description_en || summary,
-          analysis: pdpData.analysis_en || '',
-          analysisEn: pdpData.analysis_en || '',
-          typeName: pdpData.type_name_en,
-          typeNameEn: pdpData.type_name_en,
+          summary: summaries.join(' | '),
+          summaryEn: summaries.join(' | '),
+          analysis: analyses.join('\n\n---\n\n'),
+          analysisEn: analyses.join('\n\n---\n\n'),
+          typeName: selected.join(', '),
+          typeNameEn: selected.join(', '),
           total: maxScore,
           type: type,
           scores: {
@@ -712,13 +729,35 @@ class TestLogicService {
   async scoreMentalAgeTest(answers) {
     let total = 0;
     
-    // 根据文档的答案统计表计算总分
-    const scores = [1, 3, 5]; // a=1分, b=3分, c=5分
+    // 更正后的 20 题评分矩阵（每题 [A,B,C] 分值）
+    const scoreMatrix = [
+      [1,3,5], // 1
+      [5,1,3], // 2
+      [3,1,5], // 3
+      [1,5,3], // 4
+      [1,3,5], // 5
+      [5,1,3], // 6
+      [1,3,5], // 7
+      [3,1,5], // 8
+      [3,1,5], // 9
+      [3,1,5], // 10
+      [5,1,3], // 11
+      [5,3,1], // 12
+      [5,3,1], // 13
+      [5,1,3], // 14
+      [1,3,5], // 15
+      [1,3,5], // 16
+      [5,1,3], // 17
+      [1,5,3], // 18
+      [5,1,3], // 19
+      [1,3,5]  // 20
+    ];
     
-    for (let i = 0; i < answers.length; i++) {
+    for (let i = 0; i < answers.length && i < scoreMatrix.length; i++) {
       const answerIndex = answers[i];
-      if (answerIndex >= 0 && answerIndex < scores.length) {
-        total += scores[answerIndex];
+      const row = scoreMatrix[i];
+      if (Array.isArray(row) && answerIndex >= 0 && answerIndex < row.length) {
+        total += row[answerIndex];
       }
     }
     
