@@ -1127,6 +1127,8 @@ class TestLogicService {
         return await this.scoreAnxietyDepressionTest(answers);
       case 'social_anxiety_test':
         return await this.scoreSocialAnxietyTest(answers);
+      case 'loneliness_test':
+        return await this.scoreLonelinessTest(answers);
       case 'violence_index':
         return await this.scoreViolenceIndex(answers);
       case 'personality_charm_1min':
@@ -1681,6 +1683,108 @@ class TestLogicService {
       }
     } catch (error) {
       console.error('Error calculating social anxiety test result:', error);
+      return {
+        summary: 'Calculation Error',
+        analysis: 'Unable to calculate test result. Please try again.',
+        summaryEn: 'Calculation Error',
+        analysisEn: 'Unable to calculate test result. Please try again.'
+      };
+    }
+  }
+
+  // Loneliness Test 计算
+  async scoreLonelinessTest(answers) {
+    try {
+      // 孤独测试评分规则：Q1 A+2 B+0 C+1; Q2 A+2 B+0 C+1; Q3 A+0 B+1 C+2; Q4 A+1 B+2 C+0; Q5 A+1 B+2 C+0
+      const scoreMap = {
+        1: [2, 0, 1],  // 第1题: A=2分, B=0分, C=1分
+        2: [2, 0, 1],  // 第2题: A=2分, B=0分, C=1分
+        3: [0, 1, 2],  // 第3题: A=0分, B=1分, C=2分
+        4: [1, 2, 0],  // 第4题: A=1分, B=2分, C=0分
+        5: [1, 2, 0]   // 第5题: A=1分, B=2分, C=0分
+      };
+      
+      // 计算总分
+      let totalScore = 0;
+      for (let i = 0; i < answers.length && i < 5; i++) {
+        const questionNum = i + 1;
+        const answerIndex = answers[i];
+        if (scoreMap[questionNum] && answerIndex >= 0 && answerIndex < scoreMap[questionNum].length) {
+          totalScore += scoreMap[questionNum][answerIndex];
+        }
+      }
+      
+      // 根据总分确定结果类型
+      let resultType = '';
+      if (totalScore >= 0 && totalScore <= 2) {
+        resultType = 'LONELY_10';
+      } else if (totalScore >= 3 && totalScore <= 5) {
+        resultType = 'LONELY_30';
+      } else if (totalScore >= 6 && totalScore <= 8) {
+        resultType = 'LONELY_70';
+      } else if (totalScore >= 9 && totalScore <= 10) {
+        resultType = 'LONELY_90';
+      } else {
+        // 边界情况处理
+        resultType = totalScore <= 2 ? 'LONELY_10' : 'LONELY_90';
+      }
+      
+      // 从数据库获取结果类型信息
+      const resultQuery = await query(`
+        SELECT 
+          rt.type_code, 
+          rt.type_name_en, 
+          rt.description_en, 
+          rt.analysis_en
+        FROM result_types rt
+        JOIN test_projects tp ON rt.project_id = tp.id
+        WHERE tp.project_id = 'loneliness_1min' AND rt.type_code = $1
+      `, [resultType]);
+      
+      if (resultQuery.rows.length > 0) {
+        const result = resultQuery.rows[0];
+        return {
+          summary: result.description_en || result.type_name_en || resultType,
+          analysis: result.analysis_en || '',
+          summaryEn: result.description_en || result.type_name_en || resultType,
+          analysisEn: result.analysis_en || '',
+          totalScore: totalScore,
+          resultType: resultType,
+          description: result.description_en || ''
+        };
+      } else {
+        // 如果没有找到数据库结果，使用硬编码的分析内容
+        let description = '';
+        let analysis = '';
+        
+        if (totalScore >= 0 && totalScore <= 2) {
+          description = 'Loneliness Index: 10%';
+          analysis = '## Loneliness Index: 10%\n\nYou don\'t feel lonely at all. On the contrary, you have an optimistic personality and believe simplicity is a kind of happiness. You enjoy the time laughing and playing with friends, and you can always face difficulties calmly — there\'s no problem that a meal can\'t solve; if there is, have two meals.';
+        } else if (totalScore >= 3 && totalScore <= 5) {
+          description = 'Loneliness Index: 30%';
+          analysis = '## Loneliness Index: 30%\n\nYou take gains and losses in life lightly. Although you inevitably feel down sometimes, who hasn\'t encountered bad things? When facing setbacks, you can adjust yourself positively. When you feel depressed or lonely inside, you will also take the initiative to find someone to talk to, or distract yourself through other ways.';
+        } else if (totalScore >= 6 && totalScore <= 8) {
+          description = 'Loneliness Index: 70%';
+          analysis = '## Loneliness Index: 70%\n\nThe saying "the older you grow, the lonelier you become" seems to fit your current state of mind perfectly. The days of youth are always particularly memorable; when you look back on those times, it seems you were always very happy. Troubles back then were simple, and the teenagers back then were easily satisfied. But as you grow older, it becomes harder and harder to find a confidant. Gradually, people get used to loneliness and dare not get close to each other.';
+        } else if (totalScore >= 9 && totalScore <= 10) {
+          description = 'Loneliness Index: 90%';
+          analysis = '## Loneliness Index: 90%\n\nYou always get used to keeping your thoughts to yourself and can\'t be open and honest with others, so no one else can walk into your heart. Therefore, you are very lonely deep down and feel that there is no one around who truly understands you. Over time, you may have gotten used to loneliness — it even gives you a good protection, allowing you to ignore the disputes of the outside world.';
+        } else {
+          description = 'Loneliness Index: 30%';
+          analysis = 'Unable to determine loneliness level. Please retake the test.';
+        }
+        
+        return {
+          summary: description,
+          analysis: analysis,
+          summaryEn: description,
+          analysisEn: analysis,
+          totalScore: totalScore,
+          resultType: resultType
+        };
+      }
+    } catch (error) {
+      console.error('Error calculating loneliness test result:', error);
       return {
         summary: 'Calculation Error',
         analysis: 'Unable to calculate test result. Please try again.',
