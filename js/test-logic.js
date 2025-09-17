@@ -435,104 +435,13 @@ const TestLogic = (function() {
     };
   }
 
-  function scoreFourColors(answers) { // answers: 0/1/2/3 (对应A/B/C/D选项)
-    let aCount = 0, bCount = 0, cCount = 0, dCount = 0;
-    
-    // 根据文档的评分规则，计算A+H、B+G、C+F、D+E的数量
-    // 注意：文档中题目16-30的选项标记为E/F/G/H，但实际对应A/B/C/D
-    for (let i = 0; i < answers.length; i++) {
-      const answerIndex = answers[i];
-      
-      if (i < 15) { // 前15题：A/B/C/D
-        if (answerIndex === 0) aCount++; // A
-        else if (answerIndex === 1) bCount++; // B
-        else if (answerIndex === 2) cCount++; // C
-        else if (answerIndex === 3) dCount++; // D
-      } else { // 后15题：E/F/G/H对应A/B/C/D
-        if (answerIndex === 0) aCount++; // E对应A
-        else if (answerIndex === 1) bCount++; // F对应B
-        else if (answerIndex === 2) cCount++; // G对应C
-        else if (answerIndex === 3) dCount++; // H对应D
-      }
-    }
-    
-    // 计算A+H、B+G、C+F、D+E的数量
-    const ahCount = aCount + dCount; // A+H (前15题的A + 后15题的D)
-    const bgCount = bCount + bCount; // B+G (前15题的B + 后15题的B，但这里应该是前15题的B + 后15题的B)
-    const cfCount = cCount + cCount; // C+F (前15题的C + 后15题的C，但这里应该是前15题的C + 后15题的C)
-    const deCount = dCount + aCount; // D+E (前15题的D + 后15题的A)
-    
-    // 重新计算正确的组合
-    let ahCountCorrect = 0, bgCountCorrect = 0, cfCountCorrect = 0, deCountCorrect = 0;
-    
-    for (let i = 0; i < answers.length; i++) {
-      const answerIndex = answers[i];
-      
-      if (i < 15) { // 前15题：A/B/C/D
-        if (answerIndex === 0) ahCountCorrect++; // A
-        else if (answerIndex === 1) bgCountCorrect++; // B
-        else if (answerIndex === 2) cfCountCorrect++; // C
-        else if (answerIndex === 3) deCountCorrect++; // D
-      } else { // 后15题：E/F/G/H对应A/B/C/D
-        if (answerIndex === 0) deCountCorrect++; // E对应A，计入D+E
-        else if (answerIndex === 1) cfCountCorrect++; // F对应B，计入C+F
-        else if (answerIndex === 2) bgCountCorrect++; // G对应C，计入B+G
-        else if (answerIndex === 3) ahCountCorrect++; // H对应D，计入A+H
-      }
-    }
-    
-    // 找出最大值
-    const counts = [
-      { type: 'RED', count: ahCountCorrect },
-      { type: 'BLUE', count: bgCountCorrect },
-      { type: 'YELLOW', count: cfCountCorrect },
-      { type: 'GREEN', count: deCountCorrect }
-    ];
-    
-    const maxCount = Math.max(...counts.map(c => c.count));
-    const dominantTypes = counts.filter(c => c.count === maxCount);
-    
-    let summary = '';
-    let type = '';
-    
-    if (dominantTypes.length === 1) {
-      const dominant = dominantTypes[0];
-      if (dominant.type === 'RED') {
-        summary = 'Red personality';
-        type = 'RED_PERSONALITY';
-      } else if (dominant.type === 'BLUE') {
-        summary = 'Blue personality';
-        type = 'BLUE_PERSONALITY';
-      } else if (dominant.type === 'YELLOW') {
-        summary = 'Yellow personality';
-        type = 'YELLOW_PERSONALITY';
-      } else if (dominant.type === 'GREEN') {
-        summary = 'Green personality';
-        type = 'GREEN_PERSONALITY';
-      }
-    } else {
-      // 多个类型并列最多
-      const typeNames = dominantTypes.map(t => {
-        if (t.type === 'RED') return 'Red';
-        else if (t.type === 'BLUE') return 'Blue';
-        else if (t.type === 'YELLOW') return 'Yellow';
-        else if (t.type === 'GREEN') return 'Green';
-      });
-      summary = `${typeNames.join(', ')} personality`;
-      type = dominantTypes[0].type + '_PERSONALITY';
-    }
-    
-    return { 
-      total: maxCount, 
-      summary, 
-      analysis: summary, 
-      type,
-      counts: {
-        red: ahCountCorrect,
-        blue: bgCountCorrect,
-        yellow: cfCountCorrect,
-        green: deCountCorrect
-      }
+  function scoreFourColors(answers) { // frontend disabled for four_colors; backend authoritative
+    return {
+      total: 0,
+      summary: '',
+      analysis: '',
+      type: '',
+      counts: { red: 0, blue: 0, yellow: 0, green: 0 }
     };
   }
 

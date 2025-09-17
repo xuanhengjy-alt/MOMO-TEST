@@ -182,6 +182,31 @@
   const resultRestart = $('#result-restart');
   const infoLine = $('#info-line');
 
+  // 计算中提示（绿色、底部、居中）
+  let calcNoticeEl = null;
+  function showCalculatingNotice(show) {
+    try {
+      if (!calcNoticeEl) {
+        calcNoticeEl = document.createElement('div');
+        calcNoticeEl.id = 'calc-notice';
+        calcNoticeEl.style.textAlign = 'center';
+        calcNoticeEl.style.color = '#16a34a'; // green-600
+        calcNoticeEl.style.marginTop = '12px';
+        calcNoticeEl.style.fontWeight = '600';
+        calcNoticeEl.textContent = 'The result is being calculated. Please wait a moment......';
+      }
+      if (show) {
+        if (!calcNoticeEl.parentElement) {
+          // 插入到选项区域下方（题目框底部）
+          (options && options.parentElement ? options.parentElement : document.body).appendChild(calcNoticeEl);
+        }
+        calcNoticeEl.classList.remove('hidden');
+      } else {
+        calcNoticeEl.classList.add('hidden');
+      }
+    } catch (_) {}
+  }
+
   // 初始化项目信息
   breadcrumbProject.textContent = project.nameEn;
   // 统一从 assets/images 取图：优先按项目 id 匹配本地图，其次使用返回图，再退回 logo
@@ -361,6 +386,8 @@
   }
   let qIndex = 0;
   const answers = [];
+  let resultShown = false;
+  let isSubmitting = false;
 
   // 统计信息：题数与预计时长（按每题约12秒估算）
   const totalQ = await getQList().then(q => q.length).catch(() => 0);
@@ -391,6 +418,7 @@
   }
 
   async function renderQuestion() {
+    if (resultShown) { return; }
     await ensureTestLogicLoaded();
     const qlist = await getQList();
     // 若题库为空，给出友好提示
@@ -401,6 +429,10 @@
     }
     const q = qlist[qIndex];
     if (!q) { // 结束
+      // 非跳转型：答完题，开始计算（防重复提交）
+      if (resultShown || isSubmitting) { return; }
+      isSubmitting = true;
+      showCalculatingNotice(true);
       // 仅从后端获取结果，不再使用本地兜底
       let apiResult = null;
       try {
@@ -417,6 +449,8 @@
         resultSummary.innerHTML = `<span class="font-semibold text-red-600">Calculation Error</span>`;
         resultAnalysis.textContent = 'Unable to calculate test result. Please try again later.';
         show('result');
+        showCalculatingNotice(false);
+        isSubmitting = false;
         return;
       }
 
@@ -493,6 +527,9 @@
         }
       }
       show('result');
+      resultShown = true;
+      showCalculatingNotice(false);
+      isSubmitting = false;
       return;
     }
     questionTitle.textContent = q.t || q.text || '';
@@ -511,6 +548,10 @@
           if (opt.resultCode) {
             // 直接出结果：调用后端，前端只显示后端返回的 summary/analysis（对应 description_en/analysis_en）
             try {
+              // 跳转型：命中结果码，开始计算（防重复提交）
+              if (resultShown || isSubmitting) { return; }
+              isSubmitting = true;
+              showCalculatingNotice(true);
               const sessionId = window.ApiService.generateSessionId();
               const apiRes = await window.ApiService.submitTestResult(project.id, answers, sessionId);
               const r = (apiRes && apiRes.result) ? apiRes.result : {};
@@ -536,6 +577,9 @@
                 }
               } catch(_) { resultAnalysis.textContent = text; }
               show('result');
+              resultShown = true;
+              showCalculatingNotice(false);
+              isSubmitting = false;
               return;
             } catch (e) {
               // 后端失败则回退为本地渲染（极端容错）
@@ -564,6 +608,7 @@
     e.preventDefault();
     qIndex = 0;
     answers.length = 0;
+    resultShown = false;
     show('start');
     // 进入开始页时再次刷新题量与预估
     await ensureTestLogicLoaded();
@@ -581,6 +626,7 @@
     e.preventDefault();
     qIndex = 0;
     answers.length = 0;
+    resultShown = false;
     renderProgress();
     renderQuestion();
   });
@@ -589,6 +635,7 @@
     e.preventDefault();
     qIndex = 0;
     answers.length = 0;
+    resultShown = false;
     show('start');
     renderProgress();
     renderQuestion();

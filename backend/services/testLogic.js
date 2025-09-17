@@ -506,24 +506,48 @@ class TestLogicService {
       type = dominantTypes[0].type + '_PERSONALITY';
     }
     
-    // 从数据库获取完整的分析
+    // 从数据库获取完整的分析（支持并列最高分，合并多结果）
     try {
+      const types = dominantTypes.length > 1
+        ? dominantTypes.map(t => t.type + '_PERSONALITY')
+        : [type];
+
       const result = await query(`
-        SELECT rt.analysis_en, rt.type_name_en
+        SELECT rt.type_code, rt.type_name_en, rt.description_en, rt.analysis_en
         FROM result_types rt
         JOIN test_projects tp ON rt.project_id = tp.id
-        WHERE tp.project_id = 'four_colors_en' AND rt.type_code = $1
-      `, [type]);
-      
+        WHERE tp.project_id = 'four_colors_en' AND rt.type_code = ANY($1::text[])
+      `, [types]);
+
       if (result.rows.length > 0) {
-        const fourColorsData = result.rows[0];
+        const map = {}; result.rows.forEach(r => { map[r.type_code] = r; });
+        const order = ['RED_PERSONALITY','BLUE_PERSONALITY','YELLOW_PERSONALITY','GREEN_PERSONALITY'];
+        const fallbackName = {
+          RED_PERSONALITY: 'Red personality',
+          BLUE_PERSONALITY: 'Blue personality',
+          YELLOW_PERSONALITY: 'Yellow personality',
+          GREEN_PERSONALITY: 'Green personality'
+        };
+        const selected = (types || []).slice().sort((a,b)=>order.indexOf(a)-order.indexOf(b));
+
+        const summaries = [];
+        const analyses = [];
+        selected.forEach(code => {
+          const r = map[code] || {};
+          const typeName = r.type_name_en || fallbackName[code] || code;
+          const s = r.description_en || typeName;
+          const a = r.analysis_en || '';
+          summaries.push(s);
+          if (a) analyses.push(`## ${typeName}\n\n${a}`); else analyses.push(`## ${typeName}`);
+        });
+
         return {
-          summary: fourColorsData.description_en || summary,
-          summaryEn: fourColorsData.description_en || summary,
-          analysis: fourColorsData.analysis_en || '',
-          analysisEn: fourColorsData.analysis_en || '',
-          typeName: fourColorsData.type_name_en,
-          typeNameEn: fourColorsData.type_name_en,
+          summary: summaries.join(' | '),
+          summaryEn: summaries.join(' | '),
+          analysis: analyses.join('\n\n---\n\n'),
+          analysisEn: analyses.join('\n\n---\n\n'),
+          typeName: selected.join(', '),
+          typeNameEn: selected.join(', '),
           total: maxCount,
           type: type,
           counts: {

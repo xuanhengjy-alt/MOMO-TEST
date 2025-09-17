@@ -1,8 +1,8 @@
 $ErrorActionPreference = 'SilentlyContinue'
 
-Write-Host "[1/5] Freeing port 3000..."
+Write-Host "[1/5] Freeing port 3001..."
 try {
-  $pids = Get-NetTCPConnection -LocalPort 3000 | Select-Object -ExpandProperty OwningProcess | Get-Unique
+  $pids = Get-NetTCPConnection -LocalPort 3001 | Select-Object -ExpandProperty OwningProcess | Get-Unique
   if ($pids) { $pids | ForEach-Object { Stop-Process -Id $_ -Force } }
 } catch {}
 
@@ -12,11 +12,11 @@ try {
   if ($pids8000) { $pids8000 | ForEach-Object { Stop-Process -Id $_ -Force } }
 } catch {}
 
-Write-Host "[3/5] Starting backend (http://localhost:3000)..."
+Write-Host "[3/5] Starting backend (http://localhost:3001)..."
 try {
   $backendPath = Join-Path $PSScriptRoot 'backend'
   if (Test-Path (Join-Path $backendPath 'package.json')) {
-    Start-Process -WindowStyle Minimized -WorkingDirectory $backendPath cmd.exe -ArgumentList '/c','npm run dev'
+    Start-Process -WindowStyle Minimized -WorkingDirectory $backendPath cmd.exe -ArgumentList '/c','set PORT=3001 && set NODE_ENV=development && npm run dev'
   }
 } catch {}
 
