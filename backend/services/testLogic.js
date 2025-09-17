@@ -804,39 +804,41 @@ class TestLogicService {
     const conventionalQuestions = [5, 11, 17, 23, 29, 35, 41, 47, 53, 59, 65, 71, 77, 83, 89];  // 第6,12,18,24,30,36,42,48,54,60,66,72,78,84,90题
     
     // 计算每种类型的分数（选Yes得1分，选No得0分）
+    const asYes = (idx) => (idx === 0 ? 1 : 0); // 前端答案索引：0=Yes(A)，1=No(B)
+
     realisticQuestions.forEach(qIndex => {
       if (qIndex < answers.length) {
-        realisticScore += answers[qIndex]; // 0=No, 1=Yes
+        realisticScore += asYes(answers[qIndex]);
       }
     });
     
     investigativeQuestions.forEach(qIndex => {
       if (qIndex < answers.length) {
-        investigativeScore += answers[qIndex];
+        investigativeScore += asYes(answers[qIndex]);
       }
     });
     
     artisticQuestions.forEach(qIndex => {
       if (qIndex < answers.length) {
-        artisticScore += answers[qIndex];
+        artisticScore += asYes(answers[qIndex]);
       }
     });
     
     socialQuestions.forEach(qIndex => {
       if (qIndex < answers.length) {
-        socialScore += answers[qIndex];
+        socialScore += asYes(answers[qIndex]);
       }
     });
     
     enterprisingQuestions.forEach(qIndex => {
       if (qIndex < answers.length) {
-        enterprisingScore += answers[qIndex];
+        enterprisingScore += asYes(answers[qIndex]);
       }
     });
     
     conventionalQuestions.forEach(qIndex => {
       if (qIndex < answers.length) {
-        conventionalScore += answers[qIndex];
+        conventionalScore += asYes(answers[qIndex]);
       }
     });
     
@@ -891,24 +893,41 @@ class TestLogicService {
       type = dominantTypes[0].type;
     }
     
-    // 从数据库获取完整的分析
+    // 从数据库获取完整的分析（支持并列最高分，合并多结果）
     try {
+      const types = dominantTypes.length > 1
+        ? dominantTypes.map(obj => obj.type)
+        : [type];
+
       const result = await query(`
-        SELECT rt.analysis_en, rt.type_name_en
+        SELECT rt.type_code, rt.type_name_en, rt.description_en, rt.analysis_en
         FROM result_types rt
         JOIN test_projects tp ON rt.project_id = tp.id
-        WHERE tp.project_id = 'holland_test_en' AND rt.type_code = $1
-      `, [type]);
-      
+        WHERE tp.project_id = 'holland_test_en' AND rt.type_code = ANY($1::text[])
+      `, [types]);
+
       if (result.rows.length > 0) {
-        const hollandData = result.rows[0];
+        const map = {}; result.rows.forEach(r => { map[r.type_code] = r; });
+        const order = ['REALISTIC','INVESTIGATIVE','ARTISTIC','SOCIAL','ENTERPRISING','CONVENTIONAL'];
+        const selected = (types || []).slice().sort((a,b)=>order.indexOf(a)-order.indexOf(b));
+
+        const summaries = [];
+        const analyses = [];
+        selected.forEach(code => {
+          const r = map[code] || {};
+          const s = r.description_en || r.type_name_en || code;
+          const a = r.analysis_en || '';
+          summaries.push(s);
+          if (a) analyses.push(`## ${r.type_name_en || code}\n\n${a}`); else analyses.push(`## ${r.type_name_en || code}`);
+        });
+
         return {
-          summary: hollandData.description_en || summary,
-          summaryEn: hollandData.description_en || summary,
-          analysis: hollandData.analysis_en || '',
-          analysisEn: hollandData.analysis_en || '',
-          typeName: hollandData.type_name_en,
-          typeNameEn: hollandData.type_name_en,
+          summary: summaries.join(' | '),
+          summaryEn: summaries.join(' | '),
+          analysis: analyses.join('\n\n---\n\n'),
+          analysisEn: analyses.join('\n\n---\n\n'),
+          typeName: selected.join(', '),
+          typeNameEn: selected.join(', '),
           total: maxScore,
           type: type,
           scores: {
@@ -944,6 +963,104 @@ class TestLogicService {
         conventional: conventionalScore
       }
     };
+  }
+
+  // Temperament Type Test 计算（四种气质：CHOLERIC/SANGUINE/PHLEGMATIC/MELANCHOLIC）
+  async scoreTemperamentType(answers) {
+    try {
+      // 读取题库中每题各选项携带的四维度得分（存于 score_value JSON）
+      const qres = await query(`
+        SELECT q.question_number, o.option_number, o.score_value
+        FROM questions q
+        JOIN question_options o ON o.question_id = q.id
+        WHERE q.project_id = (SELECT id FROM test_projects WHERE project_id = 'temperament_type_test')
+        ORDER BY q.question_number ASC, o.option_number ASC
+      `);
+
+      // scoreMap: question_number -> [{CHOLERIC: x, SANGUINE: y, PHLEGMATIC: z, MELANCHOLIC: w} per option]
+      const scoreMap = new Map();
+      for (const row of qres.rows) {
+        const qn = Number(row.question_number);
+        if (!scoreMap.has(qn)) scoreMap.set(qn, []);
+        const arr = scoreMap.get(qn);
+        const optIdx = Number(row.option_number) - 1;
+        let sv = { CHOLERIC: 0, SANGUINE: 0, PHLEGMATIC: 0, MELANCHOLIC: 0 };
+        try {
+          const v = row.score_value || {};
+          if (v && typeof v === 'object') {
+            sv = {
+              CHOLERIC: Number(v.CHOLERIC ?? 0),
+              SANGUINE: Number(v.SANGUINE ?? 0),
+              PHLEGMATIC: Number(v.PHLEGMATIC ?? 0),
+              MELANCHOLIC: Number(v.MELANCHOLIC ?? 0)
+            };
+          }
+        } catch(_) {}
+        arr[optIdx] = sv;
+      }
+
+      // 汇总分数
+      const totals = { CHOLERIC: 0, SANGUINE: 0, PHLEGMATIC: 0, MELANCHOLIC: 0 };
+      for (let i = 0; i < answers.length; i++) {
+        const qn = i + 1;
+        const optIndex = Number(answers[i]);
+        const opts = scoreMap.get(qn) || [];
+        if (optIndex >= 0 && optIndex < opts.length) {
+          const sv = opts[optIndex] || {};
+          totals.CHOLERIC += Number(sv.CHOLERIC ?? 0);
+          totals.SANGUINE += Number(sv.SANGUINE ?? 0);
+          totals.PHLEGMATIC += Number(sv.PHLEGMATIC ?? 0);
+          totals.MELANCHOLIC += Number(sv.MELANCHOLIC ?? 0);
+        }
+      }
+
+      // 找出最高分与并列项（支持多结果合并）
+      const order = ['CHOLERIC','SANGUINE','PHLEGMATIC','MELANCHOLIC'];
+      const maxScore = Math.max(totals.CHOLERIC, totals.SANGUINE, totals.PHLEGMATIC, totals.MELANCHOLIC);
+      const tops = order.filter(k => totals[k] === maxScore);
+
+      // 批量读取结果文案
+      const r = await query(`
+        SELECT type_code, type_name_en, description_en, analysis_en
+        FROM result_types
+        WHERE project_id = (SELECT id FROM test_projects WHERE project_id = 'temperament_type_test')
+          AND type_code = ANY($1::text[])
+      `, [tops]);
+
+      // 建立映射并按既定顺序输出
+      const map = {};
+      (r.rows || []).forEach(x => { map[x.type_code] = x; });
+      const summaries = [];
+      const analyses = [];
+      for (const code of tops) {
+        const row = map[code] || {};
+        const s = row.description_en || row.type_name_en || code;
+        const a = row.analysis_en || '';
+        summaries.push(s);
+        if (a) {
+          // 为便于阅读，合并时加上类型小标题
+          analyses.push(`## ${row.type_name_en || code}\n\n${a}`);
+        } else {
+          analyses.push(`## ${row.type_name_en || code}`);
+        }
+      }
+
+      return {
+        summary: summaries.join(' | '),
+        analysis: analyses.join('\n\n---\n\n'),
+        summaryEn: summaries.join(' | '),
+        analysisEn: analyses.join('\n\n---\n\n'),
+        details: { totals, tops }
+      };
+    } catch (e) {
+      console.error('Error scoring temperament_type_test:', e);
+      return {
+        summary: 'Test scoring error',
+        analysis: 'Unable to process test results.',
+        summaryEn: 'Test scoring error',
+        analysisEn: 'Unable to process test results.'
+      };
+    }
   }
 
   // 凯尔西气质类型测试计算
@@ -1116,6 +1233,8 @@ class TestLogicService {
         return await this.scoreMentalAgeTest(answers);
       case 'holland_test':
         return await this.scoreHollandTest(answers);
+      case 'temperament_type_test':
+        return await this.scoreTemperamentType(answers);
       case 'kelsey_test':
         return await this.scoreKelseyTest(answers);
       case 'creativity_test':
@@ -1131,6 +1250,9 @@ class TestLogicService {
         return await this.scoreLonelinessTest(answers);
       case 'violence_index':
         return await this.scoreViolenceIndex(answers);
+      case 'personality_charm':
+      case 'personality_charm_1min':
+        return await this.scorePersonalityCharm(answers);
       case 'personality_charm_1min':
       case 'phil_test_en':
       case 'temperament_type_test':
@@ -1439,6 +1561,98 @@ class TestLogicService {
       };
     } catch (e) {
       console.error('Error scoring violence_index:', e);
+      return {
+        summary: 'Calculation Error',
+        analysis: 'Unable to calculate test result.',
+        summaryEn: 'Calculation Error',
+        analysisEn: 'Unable to calculate test result.'
+      };
+    }
+  }
+
+  // Personality Charm: 与 violence_index 一样为分支跳转题，选项可直达结果码（resultCode）
+  async scorePersonalityCharm(answers) {
+    try {
+      // 读取每题各选项附带的 resultCode/next（存放在 score_value JSON 中）
+      const qres = await query(`
+        SELECT q.question_number, o.option_number, o.score_value
+        FROM questions q
+        JOIN question_options o ON o.question_id = q.id
+        WHERE q.project_id = (SELECT id FROM test_projects WHERE project_id = 'personality_charm_1min')
+        ORDER BY q.question_number ASC, o.option_number ASC
+      `);
+
+      const jumpMap = new Map();
+      for (const row of qres.rows) {
+        const qn = Number(row.question_number);
+        if (!jumpMap.has(qn)) jumpMap.set(qn, []);
+        const arr = jumpMap.get(qn);
+        const optIdx = Number(row.option_number) - 1;
+        let rc = null;
+        let nx = null;
+        try {
+          const v = row.score_value || {};
+          rc = (v && typeof v === 'object') ? (v.resultCode ?? null) : null;
+          nx = (v && typeof v === 'object') ? (v.next ?? null) : null;
+        } catch(_) { rc = null; nx = null; }
+        arr[optIdx] = { resultCode: rc, next: nx };
+      }
+
+      // 依据答案顺序，从第1题开始沿 next 跳转，取最后一个非空 resultCode
+      let currentQ = 1;
+      let finalCode = null;
+      const SAFE_MAX_STEPS = 50;
+      let step = 0;
+      for (let i = 0; i < answers.length && step < SAFE_MAX_STEPS; i++, step++) {
+        const optIndex = Number(answers[i]);
+        const options = jumpMap.get(currentQ) || [];
+        const picked = (optIndex >= 0 && optIndex < options.length) ? options[optIndex] : null;
+        if (!picked) break;
+        if (picked.resultCode) finalCode = String(picked.resultCode).trim();
+        if (picked.next != null && picked.next !== '') {
+          const nxt = Number(picked.next);
+          currentQ = Number.isFinite(nxt) ? nxt : currentQ + 1;
+        } else {
+          break;
+        }
+      }
+
+      if (!finalCode) {
+        return {
+          summary: 'Personality Charm: (undetermined)',
+          analysis: '',
+          summaryEn: 'Personality Charm: (undetermined)',
+          analysisEn: ''
+        };
+      }
+
+      // 直接按 type_code 查找描述与分析（RESULT1..RESULT5）
+      const r1 = await query(`
+        SELECT description_en, analysis_en, type_name_en
+        FROM result_types 
+        WHERE project_id = (SELECT id FROM test_projects WHERE project_id='personality_charm_1min')
+          AND type_code = $1
+        LIMIT 1
+      `, [finalCode]);
+
+      const row = r1.rows[0] || null;
+      if (!row) {
+        return {
+          summary: 'Personality Charm',
+          analysis: '',
+          summaryEn: 'Personality Charm',
+          analysisEn: ''
+        };
+      }
+
+      return {
+        summary: row.description_en || row.type_name_en || 'Personality Charm',
+        analysis: row.analysis_en || '',
+        summaryEn: row.description_en || row.type_name_en || 'Personality Charm',
+        analysisEn: row.analysis_en || ''
+      };
+    } catch (e) {
+      console.error('Error scoring personality_charm:', e);
       return {
         summary: 'Calculation Error',
         analysis: 'Unable to calculate test result.',

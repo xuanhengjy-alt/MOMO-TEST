@@ -401,33 +401,27 @@
     }
     const q = qlist[qIndex];
     if (!q) { // 结束
-      // 优先尝试提交结果到API并获取完整分析
+      // 仅从后端获取结果，不再使用本地兜底
       let apiResult = null;
       try {
         const sessionId = window.ApiService.generateSessionId();
         apiResult = await window.ApiService.submitTestResult(project.id, answers, sessionId);
         console.log('Test result submitted to API successfully');
       } catch (error) {
-        console.warn('Failed to submit test result to API:', error);
+        console.error('Failed to submit test result to API (no fallback):', error);
       }
-      
-      // 如果API调用失败，尝试使用前端计算（仅对支持的测试类型）
-      let result = null;
+
       if (!apiResult || !apiResult.result) {
-        try {
-          result = await window.TestLogic.score(project.type, answers);
-        } catch (error) {
-          console.warn('Frontend calculation also failed:', error);
-          result = { summary: 'Calculation Error', analysis: 'Unable to calculate test result.' };
-        }
+        // 后端不可用时，提示错误并终止
+        resultTitle.textContent = project.name;
+        resultSummary.innerHTML = `<span class="font-semibold text-red-600">Calculation Error</span>`;
+        resultAnalysis.textContent = 'Unable to calculate test result. Please try again later.';
+        show('result');
+        return;
       }
-      
-      // 优先使用API返回的结果，如果没有则使用本地计算结果
-      const finalResult = apiResult && apiResult.result ? apiResult.result : result;
-      
-      // 调试日志
+
+      const finalResult = apiResult.result;
       console.log('API Result:', apiResult);
-      console.log('Local Result:', result);
       console.log('Final Result:', finalResult);
       
       resultTitle.textContent = project.name;
