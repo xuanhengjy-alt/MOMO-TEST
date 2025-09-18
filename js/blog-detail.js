@@ -16,6 +16,23 @@
   const breadcrumb = document.getElementById('breadcrumb-title');
 
   function renderMarkdown(md){
+    // 规范化粗体：
+    // 1) ** <text> ** 或 **  text  ** → **text**（去掉两端空格，避免 CommonMark 解析失败）
+    // 2) **<span>text</span>** → <span><strong>text</strong></span>
+    function normalizeStrongSpans(src){
+      if (!src) return '';
+      try {
+        let out = src;
+        // 修正 ** 前后留白导致的不解析
+        out = out.replace(/\*\*\s+([\s\S]*?)\s+\*\*/g, '**$1**');
+        // 处理被 span 包裹的情况
+        out = out.replace(/\*\*(\s*<span\b[^>]*>)([\s\S]*?)(<\/span>)\s*\*\*/gi, function(_, open, inner, close){
+          return `${open}<strong>${inner}</strong>${close}`;
+        });
+        return out;
+      } catch(_) { return src; }
+    }
+    md = normalizeStrongSpans(md);
     // Markdown 渲染（兼容性兜底）
     try {
       if (window.marked && window.DOMPurify) {
@@ -106,6 +123,53 @@
     renderMarkdown(b.content_md);
     try { if (window.Analytics) window.Analytics.logDetailRead(slug); } catch(_) {}
 
+    // Recommended test card
+    try {
+      const testId = b.test_project_id;
+      if (testId) {
+        const sec = document.getElementById('test-card-sec');
+        const imgEl = document.getElementById('test-card-img');
+        const titleEl = document.getElementById('test-card-title');
+        const peopleEl = document.getElementById('test-card-people');
+        const btnEl = document.getElementById('test-card-btn');
+        const map = {
+          mbti: '/assets/images/mbti-career-personality-test.png',
+          disc40: '/assets/images/disc-personality-test.png',
+          observation: '/assets/images/observation-ability-test.png'
+        };
+        let project;
+        try { project = await window.ApiService.getTestProject(testId); } catch(_) {}
+        if (!project) {
+          const list = await window.ApiService.getTestProjects();
+          project = (list || []).find(p => p.id === testId);
+        }
+        if (project) {
+          titleEl.textContent = project.nameEn || project.name || testId;
+          // 格式化测试人数（与首页一致）
+          try {
+            const n = project.testedCount;
+            const formatted = window.Utils ? window.Utils.formatNumber(n) : (n || '');
+            if (formatted) {
+              peopleEl.innerHTML = `<span class="font-semibold text-amber-600">${formatted}</span> people tested`;
+            } else {
+              peopleEl.textContent = '';
+            }
+          } catch(_) { peopleEl.textContent = ''; }
+          const img0 = map[project.id] || project.image || '/assets/images/logo.png';
+          imgEl.src = img0.startsWith('/') ? img0 : `/${img0}`;
+          btnEl.onclick = function(){ location.href = `/test-detail.html/${encodeURIComponent(project.id)}`; };
+          // 免费标签显示
+          try {
+            const pricingEl = document.getElementById('test-card-pricing');
+            if (pricingEl && (project.pricingType === '免费' || project.pricingType === 'free')) {
+              pricingEl.classList.remove('hidden');
+            }
+          } catch(_) {}
+          sec.classList.remove('hidden');
+        }
+      }
+    } catch(_) {}
+
     // 推荐
     try {
       const rec = await window.ApiService.getBlogRecommendations(slug);
@@ -118,17 +182,22 @@
           const sk = node.querySelector('.skeleton');
           const h3 = node.querySelector('h3');
           h3.textContent = r.title;
-          const fallback = sanitizeTitleToFilename(r.title);
-          const byTitle2 = `/assets/blogs/${fallback}.png`;
-          img.loading = 'lazy';
-          const s0 = r.cover_image_url || byTitle2;
-          const s = s0.startsWith('/') ? s0 : `/${s0}`;
-          img.src = `${s}?v=${Date.now()}`;
-          img.onerror = function(){ img.onerror = null; img.src = 'assets/images/logo.png'; };
-          img.addEventListener('load', function(){ sk.classList.add('hidden'); img.classList.remove('hidden'); });
+          // 优先用数据库封面，否则按 slug 规则
+          const fallbackBySlug = `/assets/blogs/${encodeURIComponent(r.slug)}.png`;
+          const cover0 = (r.cover_image_url || '').trim();
+          const coverAbs = cover0 ? (cover0.startsWith('/') ? cover0 : `/${cover0}`) : fallbackBySlug;
+          const real = `${coverAbs}?v=${Date.now()}`;
+          const pre = new Image();
+          pre.onload = function(){
+            img.src = real;
+            sk.classList.add('hidden');
+            img.classList.remove('hidden');
+          };
+          pre.onerror = function(){ sk.classList.add('hidden'); img.src = '/assets/images/logo.png'; img.classList.remove('hidden'); };
+          pre.src = real;
           node.querySelector('article').onclick = function(){
             try { if (window.Analytics) window.Analytics.logRecClick(slug, r.slug); } catch(_) {}
-            location.href = `blog-detail.html?slug=${encodeURIComponent(r.slug)}`;
+            location.href = `/blog-detail.html/${encodeURIComponent(r.slug)}`;
           };
           recContainer.appendChild(node);
         });

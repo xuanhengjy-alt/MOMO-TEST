@@ -18,6 +18,8 @@
     #blog-content h2 { margin: 1.75rem 0 1rem; font-size: 1.5rem; font-weight: 700; }
     #blog-content h3 { margin: 1.5rem 0 .75rem; font-size: 1.25rem; font-weight: 700; }
     #blog-content ul, #blog-content ol { margin: 1rem 0 1rem 1.25rem; }
+    #blog-content ul { list-style: disc; padding-left: 1.25rem; }
+    #blog-content ol { list-style: decimal; padding-left: 1.25rem; }
     #blog-content li { margin: .4rem 0; }
     #blog-content blockquote { border-left: 4px solid #e5e7eb; padding: .5rem 1rem; color: #374151; background:#fafafa; margin: 1rem 0; }
     #blog-content pre { background:#0b1021; color:#e5e7eb; padding: 1rem; border-radius: .5rem; overflow:auto; margin: 1rem 0; }
@@ -53,6 +55,22 @@
     <img id="blog-cover" class="w-full aspect-video object-cover rounded-lg mb-6 hidden" alt="cover" />
     <h1 id="blog-title" class="text-3xl font-extrabold mb-4"></h1>
     <article id="blog-content" class="prose prose-zinc max-w-none"></article>
+
+    <section id="test-card-sec" class="mt-10 hidden">
+      <div id="test-card" class="flex items-center gap-5 p-5 border rounded-lg bg-white shadow-sm">
+        <div class="relative shrink-0">
+          <img id="test-card-img" class="w-56 h-32 object-cover rounded" alt="test" />
+          <div id="test-card-pricing" class="absolute top-2 right-2 hidden">
+            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-500 text-white shadow-sm">Free</span>
+          </div>
+        </div>
+        <div class="flex-1 min-w-0">
+          <div id="test-card-title" class="font-semibold leading-snug"></div>
+          <div id="test-card-people" class="text-sm text-gray-600 mt-1"></div>
+          <button id="test-card-btn" class="mt-3 inline-flex items-center justify-center px-5 py-2.5 rounded bg-blue-600 text-white hover:bg-blue-700 text-sm">Start Test</button>
+        </div>
+      </div>
+    </section>
 
     <section class="mt-10">
       <h2 class="text-xl font-semibold mb-4">Recommended</h2>

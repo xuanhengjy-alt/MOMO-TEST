@@ -56,7 +56,7 @@ router.get('/:slug', async (req, res) => {
   try {
     const { slug } = req.params;
     const row = await query(
-      `SELECT id, slug, title, summary, content_md, cover_image_url, created_at, reading_count, is_published
+      `SELECT id, slug, title, summary, content_md, cover_image_url, created_at, reading_count, is_published, test_project_id
        FROM blogs WHERE slug = $1`,
       [slug]
     );
@@ -84,7 +84,8 @@ router.get('/:slug', async (req, res) => {
       content_md: b.content_md,
       cover_image_url: b.cover_image_url,
       created_at: b.created_at,
-      reading_count: b.reading_count
+      reading_count: b.reading_count,
+      test_project_id: b.test_project_id || null
     });
   } catch (err) {
     console.error('Error fetching blog detail:', err);

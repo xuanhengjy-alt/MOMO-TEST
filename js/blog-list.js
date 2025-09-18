@@ -40,29 +40,25 @@
         h3.textContent = b.title;
         p.textContent = b.summary || '';
 
-        const fallbackName = sanitizeTitleToFilename(b.title);
-        const byTitle = `assets/blogs/${fallbackName}.png`;
+        // 优先使用数据库提供的封面 URL（按你的新规则）
+        const dbCover = (b.cover_image_url || '').trim();
+        const normalizedDbCover = dbCover ? (dbCover.startsWith('/') ? dbCover : `/${dbCover}`) : '';
+        const bySlug = `/assets/blogs/${encodeURIComponent(b.slug)}.png`;
         // 取消懒加载，确保首屏立即加载
         try { img.removeAttribute('loading'); } catch(_) {}
-        // 先注册事件，再设置 src，避免瞬时加载错过 load 事件
-        img.addEventListener('load', function(){
+        // 预加载再挂载，彻底规避缓存时序导致的 load 丢失
+        const realSrc = `${(normalizedDbCover || bySlug)}?v=${Date.now()}`;
+        const pre = new Image();
+        pre.onload = function(){
+          img.src = realSrc;
           sk.classList.add('hidden');
           img.classList.remove('hidden');
-        });
-        img.addEventListener('error', function(){ sk.classList.add('hidden'); console.error('Blog image load failed:', byTitle); });
-        img.src = byTitle;
-        // 若已缓存完成，主动触发展示
-        if (img.complete && img.naturalWidth > 0) {
-          // 强制一次重绘，避免某些情况下不渲染
-          void img.offsetHeight;
+        };
+        pre.onerror = function(){
           sk.classList.add('hidden');
-          img.classList.remove('hidden');
-        } else if (img.decode) {
-          img.decode().then(function(){
-            sk.classList.add('hidden');
-            img.classList.remove('hidden');
-          }).catch(function(){});
-        }
+          console.error('Blog image preload failed:', normalizedDbCover || bySlug);
+        };
+        pre.src = realSrc;
 
         card.addEventListener('click', function(){
           location.href = `blog-detail.html/${encodeURIComponent(b.slug)}`;
