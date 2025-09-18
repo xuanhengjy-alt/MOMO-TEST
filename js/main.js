@@ -112,10 +112,17 @@
       pricingLabel.classList.remove('hidden');
     }
 
+    function sanitizeTitleToFilename(title){
+      return String(title || '')
+        .toLowerCase().trim()
+        .replace(/[\s/_.,:：—-]+/g, '-')
+        .replace(/[^a-z0-9-]/g, '')
+        .replace(/-+/g, '-')
+        .slice(0, 60);
+    }
     btn.addEventListener('click', () => {
-      const url = new URL('test-detail.html', location.href);
-      url.searchParams.set('id', p.id);
-      location.href = url.toString();
+      const slug = sanitizeTitleToFilename(p.nameEn || p.name || p.id);
+      location.href = `/test-detail.html/${encodeURIComponent(slug)}`;
     });
 
     container.appendChild(node);

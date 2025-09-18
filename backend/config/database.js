@@ -1,5 +1,7 @@
 const { Pool } = require('pg');
-require('dotenv').config();
+const path = require('path');
+// 始终从 backend/.env 加载，避免在项目根运行脚本找不到 .env
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 // 创建数据库连接池
 const pool = new Pool({

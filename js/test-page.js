@@ -1,7 +1,44 @@
 (async function() {
-  const params = new URLSearchParams(location.search);
-  const id = params.get('id');
-  if (!id) { location.replace('index.html'); return; }
+  // 支持 pretty URL: /test-detail.html/<id-or-slug>
+  function extractIdFromUrl(){
+    try {
+      // 1) 优先从 pathname 解析
+      const parts = location.pathname.split('/').filter(Boolean);
+      if (parts.length >= 2 && parts[parts.length-2] === 'test-detail.html') {
+        const v = decodeURIComponent(parts[parts.length-1] || '');
+        if (v) return v;
+      }
+      // 2) 再从 href 正则解析（兼容某些代理重写场景）
+      const m = /test-detail\.html\/(.+?)(?:[?#]|$)/i.exec(location.href);
+      if (m && m[1]) return decodeURIComponent(m[1]);
+      // 3) 兼容旧链接 ?id=
+      const params = new URLSearchParams(location.search);
+      const q = params.get('id');
+      if (q) return q;
+    } catch(_) {}
+    return '';
+  }
+  let id = extractIdFromUrl();
+  if (!id) { location.replace('/index.html'); return; }
+
+  // 若 URL 传入的是 name_en 生成的 slug，需要映射回项目 id
+  async function resolveProjectId(input){
+    // 先尝试直接按 id 取
+    try {
+      const prj = await window.ApiService.getTestProject(input);
+      if (prj && prj.id) return prj.id;
+    } catch(_) {}
+    // 拉取项目列表，根据 nameEn 规范化匹配
+    try {
+      const projects = await window.ApiService.getTestProjects();
+      const sanitize = (s)=>String(s||'').toLowerCase().trim().replace(/[\s/_.,:：—-]+/g,'-').replace(/[^a-z0-9-]/g,'').replace(/-+/g,'-').slice(0,60);
+      const hit = (projects||[]).find(p => sanitize(p.nameEn||p.name) === input);
+      if (hit) return hit.id;
+    } catch(_) {}
+    return input; // 回退：仍用原值
+  }
+
+  id = await resolveProjectId(id);
 
   // 使用API服务获取项目数据
   let project;
@@ -154,6 +191,7 @@
   // 元素
   const breadcrumbProject = $('#breadcrumb-project');
   const breadcrumbSubview = $('#breadcrumb-subview');
+  const breadcrumbBar = document.getElementById('breadcrumb-bar');
   const viewDetail = $('#view-detail');
   const viewStart = $('#view-start');
   const viewResult = $('#view-result');
@@ -207,19 +245,24 @@
     } catch (_) {}
   }
 
-  // 初始化项目信息
-  breadcrumbProject.textContent = project.nameEn;
+  // 初始化项目信息（先隐藏面包屑，等数据就绪后再填充与显示，避免闪现默认文案）
+  try { if (breadcrumbBar) breadcrumbBar.classList.add('hidden'); } catch(_) {}
+  breadcrumbProject.textContent = project.nameEn || project.name || '';
+  breadcrumbSubview.textContent = 'Detail';
+  try { if (breadcrumbBar) breadcrumbBar.classList.remove('hidden'); } catch(_) {}
   // 统一从 assets/images 取图：优先按项目 id 匹配本地图，其次使用返回图，再退回 logo
   (function(){
     var map = {
-      mbti: 'assets/images/mbti-career-personality-test.png',
-      disc40: 'assets/images/disc-personality-test.png',
-      mgmt_en: 'assets/images/self-assessment-of-management-skills.png',
-      observation: 'assets/images/observation-ability-test.png',
-      personality_charm_1min: 'assets/images/find-out-your-personality-charm-level-in-just-1-minute.png'
+      mbti: '/assets/images/mbti-career-personality-test.png',
+      disc40: '/assets/images/disc-personality-test.png',
+      mgmt_en: '/assets/images/self-assessment-of-management-skills.png',
+      observation: '/assets/images/observation-ability-test.png',
+      personality_charm_1min: '/assets/images/find-out-your-personality-charm-level-in-just-1-minute.png'
     };
     var preferred = (project && project.id && map[project.id]) ? map[project.id] : '';
-    projectImage.src = preferred || project.image || 'assets/images/logo.png';
+    var fallback = '/assets/images/logo.png';
+    var src0 = preferred || project.image || fallback;
+    projectImage.src = src0.startsWith('/') ? src0 : ('/' + src0);
   })();
   
   // 显示免费标签
@@ -250,7 +293,7 @@
   try {
     projectImage.onerror = function(){
       projectImage.onerror = null;
-      projectImage.src = 'assets/images/mbti-career%20personality-test.png';
+      projectImage.src = '/assets/images/logo.png';
     };
   } catch(_) {}
   projectTitle.textContent = project.nameEn;

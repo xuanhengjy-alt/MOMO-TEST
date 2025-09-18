@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MOMO TEST - Blog</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="icon" href="assets/images/logo.png" type="image/png" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <header class="sticky top-0 z-10 bg-white/80 backdrop-blur border-b">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <img src="assets/images/logo.png" alt="MOMO TEST" class="w-10 h-10 rounded" />
+        <h1 class="text-2xl font-bold tracking-wide">MOMO TEST</h1>
+      </div>
+      <nav class="flex items-center gap-6 text-sm">
+        <a href="index.html" class="text-gray-600 hover:text-gray-900">TEST</a>
+        <a href="blog.html" class="text-blue-600 font-semibold border-b-2 border-blue-600">Blog</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-6">
+    <h2 class="text-xl font-semibold mb-4">Blog</h2>
+
+    <div id="blog-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      <!-- 列表由 JS 渲染 -->
+    </div>
+
+    <div id="blog-empty" class="hidden text-center text-gray-500 py-10">
+      <div>No blog posts yet.</div>
+      <button id="blog-retry" class="mt-4 inline-flex items-center justify-center px-4 py-2 rounded border hover:bg-gray-50 text-sm">Retry</button>
+    </div>
+
+    
+  </main>
+
+  <template id="blog-card-template">
+    <article class="rounded-lg overflow-hidden border bg-white shadow-sm transition flex flex-col cursor-pointer hover:shadow-md hover:-translate-y-0.5 active:scale-[.99] focus:outline-none focus:ring-2 focus:ring-blue-500/50" tabindex="0" role="link">
+      <div class="w-full aspect-video skeleton"></div>
+      <img class="w-full aspect-video object-cover hidden" />
+      <div class="p-4 flex flex-col grow">
+        <h3 class="text-lg font-semibold mb-2"></h3>
+        <p class="text-sm text-gray-600 line-clamp-3 mb-4"></p>
+      </div>
+    </article>
+  </template>
+
+  <script src="js/api.js?v=20250918"></script>
+  <script src="js/utils.js?v=20250918"></script>
+  <script src="js/blog-list.js?v=20250919"></script>
+</body>
+</html>
+
+

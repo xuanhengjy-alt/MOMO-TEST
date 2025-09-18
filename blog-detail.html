@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blog - MOMO TEST</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/highlight.min.js"></script>
+  <link rel="icon" href="/assets/images/logo.png" type="image/png" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <style>
+    /* 详情正文基础排版与段落间距 */
+    #blog-content { line-height: 1.85; font-size: 1.05rem; color: #111827; }
+    #blog-content p { margin: 1rem 0; }
+    #blog-content h2 { margin: 1.75rem 0 1rem; font-size: 1.5rem; font-weight: 700; }
+    #blog-content h3 { margin: 1.5rem 0 .75rem; font-size: 1.25rem; font-weight: 700; }
+    #blog-content ul, #blog-content ol { margin: 1rem 0 1rem 1.25rem; }
+    #blog-content li { margin: .4rem 0; }
+    #blog-content blockquote { border-left: 4px solid #e5e7eb; padding: .5rem 1rem; color: #374151; background:#fafafa; margin: 1rem 0; }
+    #blog-content pre { background:#0b1021; color:#e5e7eb; padding: 1rem; border-radius: .5rem; overflow:auto; margin: 1rem 0; }
+    #blog-content code { background:#f3f4f6; padding: .15rem .35rem; border-radius: .25rem; }
+    #blog-content img { max-width: 100%; height: auto; border-radius: .5rem; margin: 1rem 0; }
+    @media (max-width: 640px) { #blog-content { font-size: 1rem; line-height: 1.8; } }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <header class="sticky top-0 z-10 bg-white/80 backdrop-blur border-b">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <a href="/index.html" class="flex items-center gap-2">
+        <img src="/assets/images/logo.png" alt="MOMO TEST" class="w-6 h-6" />
+        <span class="text-sm text-gray-600 hover:text-gray-900">MOMO TEST</span>
+      </a>
+      <nav class="flex items-center gap-6 text-sm">
+        <a href="/index.html" class="text-gray-600 hover:text-gray-900">TEST</a>
+        <a href="/blog.html" class="text-blue-600 font-semibold border-b-2 border-blue-600">Blog</a>
+      </nav>
+    </div>
+  </header>
+  <div class="bg-gray-50">
+    <div class="max-w-6xl mx-auto px-4 py-2 text-sm text-gray-600">
+      <a href="/index.html" class="text-blue-600 hover:underline">Home</a>
+      <span class="mx-1">/</span>
+      <a href="/blog.html" class="text-blue-600 hover:underline">Blog</a>
+      <span class="mx-1">/</span>
+      <span id="breadcrumb-title" class="text-gray-900 font-medium">Detail</span>
+    </div>
+  </div>
+
+  <main class="max-w-3xl mx-auto px-4 py-8">
+    <img id="blog-cover" class="w-full aspect-video object-cover rounded-lg mb-6 hidden" alt="cover" />
+    <h1 id="blog-title" class="text-3xl font-extrabold mb-4"></h1>
+    <article id="blog-content" class="prose prose-zinc max-w-none"></article>
+
+    <section class="mt-10">
+      <h2 class="text-xl font-semibold mb-4">Recommended</h2>
+      <div id="rec-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
+    </section>
+  </main>
+
+  <template id="rec-card-template">
+    <article class="rounded-lg overflow-hidden border bg-white shadow-sm hover:shadow transition flex flex-col">
+      <div class="w-full aspect-video skeleton"></div>
+      <img class="w-full aspect-video object-cover hidden" />
+      <div class="p-3">
+        <h3 class="text-sm font-semibold line-clamp-2"></h3>
+      </div>
+    </article>
+  </template>
+
+  <script src="/js/api.js?v=20250918"></script>
+  <script src="/js/utils.js?v=20250918"></script>
+  <script src="/js/blog-detail.js?v=20250918"></script>
+</body>
+</html>
+
+

@@ -42,6 +42,15 @@ const server = http.createServer((req, res) => {
     let filePath = url.split('?')[0].split('#')[0];
     if (filePath === '/' || filePath === '') filePath = '/index.html';
 
+    // Pretty URL rewrites (robust):
+    //  - Any "/<page>.html/..." -> "/<page>.html"
+    //  - Specific shortcuts kept for clarity
+    if (filePath.includes('.html/')) {
+      filePath = filePath.replace(/^(.*\.html)\/.*/i, '$1');
+    }
+    if (filePath.startsWith('/blog-detail.html/')) filePath = '/blog-detail.html';
+    if (filePath.startsWith('/test-detail.html/')) filePath = '/test-detail.html';
+
     const abs = safeJoin(ROOT, filePath);
     if (!abs) return send(res, 400, { 'Content-Type': 'text/plain' }, 'Bad Request');
 

@@ -156,6 +156,25 @@ class ApiService {
     return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
   }
 
+  // -----------------
+  // 博客相关 API
+  // -----------------
+  async getBlogs({ page = 1, pageSize = 12, keyword = '' } = {}) {
+    const qs = new URLSearchParams();
+    if (page) qs.set('page', String(page));
+    if (pageSize) qs.set('pageSize', String(pageSize));
+    if (keyword) qs.set('keyword', keyword);
+    return await this.request(`/blogs?${qs.toString()}`);
+  }
+
+  async getBlogDetail(slug) {
+    return await this.request(`/blogs/${encodeURIComponent(slug)}`);
+  }
+
+  async getBlogRecommendations(slug) {
+    return await this.request(`/blogs/${encodeURIComponent(slug)}/recommend`);
+  }
+
   // 兜底数据（当API不可用时）
   getFallbackProjects() {
     return [

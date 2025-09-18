@@ -7,6 +7,7 @@ require('dotenv').config();
 const db = require('./config/database');
 const testRoutes = require('./routes/tests');
 const resultRoutes = require('./routes/results');
+const blogRoutes = require('./routes/blogs');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -50,6 +51,7 @@ app.get('/health', (req, res) => {
 // API 路由
 app.use('/api/tests', testRoutes);
 app.use('/api/results', resultRoutes);
+app.use('/api/blogs', blogRoutes);
 
 // 错误处理中间件
 app.use((err, req, res, next) => {

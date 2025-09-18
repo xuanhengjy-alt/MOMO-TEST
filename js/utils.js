@@ -63,3 +63,14 @@ window.Utils = {
 };
 
 
+// 简单埋点（控制台打印，可后续对接后端）
+(function(){
+  function log(event, payload){
+    try { console.log('[analytics]', event, payload || {}); } catch(_) {}
+  }
+  window.Analytics = {
+    logListExpose(items){ try { log('blog_list_expose', { slugs: (items||[]).map(i=>i.slug) }); } catch(_) {} },
+    logDetailRead(slug){ log('blog_detail_read', { slug }); },
+    logRecClick(slug, target){ log('blog_rec_click', { slug, target }); }
+  };
+})();
