@@ -71,16 +71,149 @@ class TestLogicService {
   }
 
   // 管理能力测试计算
-  scoreMgmt(answers) {
+  async scoreMgmt(answers) {
     const total = answers.reduce((s, v) => s + (v === 0 ? 1 : 0), 0);
-    let summary = '';
-    if (total <= 5) summary = '管理能力很差。但你具有较高的艺术创造力，适合从事与艺术有关的具体工作。';
-    else if (total <= 9) summary = '管理能力较差。这可能与你言行自由，不服约束有关。';
-    else if (total <= 12) summary = '管理能力一般，对你的专业方面的事务性管理尚可。管理方法经常受到情绪的干扰是最大的遗憾。';
-    else if (total <= 14) summary = '管理能力较强。能稳重、扎实地作好工作，很少出现以外或有损组织发展的失误。';
-    else summary = '管理能力很强。擅长有计划地工作和学习，尤其适合管理大型组织';
     
-    return { total, summary, analysis: summary };
+    // 根据分数确定结果类型
+    let typeCode = '';
+    let summary = '';
+    if (total <= 5) {
+      typeCode = 'POOR';
+      summary = 'Poor management ability';
+    } else if (total <= 9) {
+      typeCode = 'BELOW_AVERAGE';
+      summary = 'Below-average management ability';
+    } else if (total <= 12) {
+      typeCode = 'AVERAGE';
+      summary = 'Average management ability';
+    } else if (total <= 14) {
+      typeCode = 'STRONG';
+      summary = 'Strong management ability';
+    } else {
+      typeCode = 'VERY_STRONG';
+      summary = 'Very strong management ability';
+    }
+    
+    // 从数据库获取完整的分析
+    try {
+      const result = await query(`
+        SELECT rt.analysis_en, rt.type_name_en, rt.description_en
+        FROM result_types rt
+        JOIN test_projects tp ON rt.project_id = tp.id
+        WHERE tp.project_id = 'mgmt_en' AND rt.type_code = $1
+      `, [typeCode]);
+      
+      if (result.rows.length > 0) {
+        const mgmtData = result.rows[0];
+        return {
+          summary: mgmtData.description_en || summary,
+          summaryEn: mgmtData.description_en || summary,
+          analysis: mgmtData.analysis_en || '',
+          analysisEn: mgmtData.analysis_en || '',
+          typeName: mgmtData.type_name_en,
+          typeNameEn: mgmtData.type_name_en,
+          total: total,
+          type: typeCode
+        };
+      }
+    } catch (error) {
+      console.error('Error fetching mgmt description from database:', error);
+    }
+    
+    // 如果数据库查询失败，返回默认结果
+    return {
+      summary: summary,
+      summaryEn: summary,
+      analysis: `Your management ability assessment: **${summary}**\n\nBased on your responses, you scored ${total} out of 15 points. This indicates your current level of management skills across various dimensions including planning, execution, and self-discipline.`,
+      analysisEn: `Your management ability assessment: **${summary}**\n\nBased on your responses, you scored ${total} out of 15 points. This indicates your current level of management skills across various dimensions including planning, execution, and self-discipline.`,
+      typeName: summary,
+      typeNameEn: summary,
+      total: total,
+      type: typeCode
+    };
+  }
+
+  // 观察能力测试计算
+  async scoreObservation(answers) {
+    // 根据文档中的评分表计算总分
+    const scoreMap = [
+      [3, 10, 5],   // 题目1: A=3, B=10, C=5
+      [5, 10, 3],   // 题目2: A=5, B=10, C=3
+      [10, 5, 3],   // 题目3: A=10, B=5, C=3
+      [10, 3, 5],   // 题目4: A=10, B=3, C=5
+      [3, 5, 10],   // 题目5: A=3, B=5, C=10
+      [5, 3, 10],   // 题目6: A=5, B=3, C=10
+      [3, 5, 10],   // 题目7: A=3, B=5, C=10
+      [10, 5, 3],   // 题目8: A=10, B=5, C=3
+      [5, 3, 10],   // 题目9: A=5, B=3, C=10
+      [10, 5, 3],   // 题目10: A=10, B=5, C=3
+      [10, 5, 3],   // 题目11: A=10, B=5, C=3
+      [10, 5, 3],   // 题目12: A=10, B=5, C=3
+      [10, 5, 3],   // 题目13: A=10, B=5, C=3
+      [10, 3, 5],   // 题目14: A=10, B=3, C=5
+      [3, 10, 5]    // 题目15: A=3, B=10, C=5
+    ];
+    
+    let total = 0;
+    answers.forEach((answerIndex, questionIndex) => {
+      if (scoreMap[questionIndex] && scoreMap[questionIndex][answerIndex] !== undefined) {
+        total += scoreMap[questionIndex][answerIndex];
+      }
+    });
+    
+    let summary = '';
+    let type = '';
+    if (total >= 100) {
+      summary = 'Outstanding observation skills';
+      type = 'EXCELLENT';
+    } else if (total >= 75) {
+      summary = 'Quite acute observation abilities';
+      type = 'GOOD';
+    } else if (total >= 45) {
+      summary = 'You Live on the Surface';
+      type = 'AVERAGE';
+    } else {
+      summary = 'Immersers in Their Own Worlds';
+      type = 'POOR';
+    }
+    
+    // 从数据库获取完整的分析
+    try {
+      const result = await query(`
+        SELECT rt.analysis_en, rt.type_name_en, rt.description_en
+        FROM result_types rt
+        JOIN test_projects tp ON rt.project_id = tp.id
+        WHERE tp.project_id = 'observation' AND rt.type_code = $1
+      `, [type]);
+      
+      if (result.rows.length > 0) {
+        const observationData = result.rows[0];
+        return {
+          summary: observationData.description_en || summary,
+          summaryEn: observationData.description_en || summary,
+          analysis: observationData.analysis_en || '',
+          analysisEn: observationData.analysis_en || '',
+          typeName: observationData.type_name_en,
+          typeNameEn: observationData.type_name_en,
+          total: total,
+          type: type
+        };
+      }
+    } catch (error) {
+      console.error('Error fetching observation description from database:', error);
+    }
+    
+    // 如果数据库查询失败，返回默认结果
+    return {
+      summary: summary,
+      summaryEn: summary,
+      analysis: `Your observation ability assessment: **${summary}**\n\nBased on your responses, you scored ${total} out of 150 points. This indicates your current level of observation skills across various dimensions including detail capture, interpersonal perception, and environmental awareness.`,
+      analysisEn: `Your observation ability assessment: **${summary}**\n\nBased on your responses, you scored ${total} out of 150 points. This indicates your current level of observation skills across various dimensions including detail capture, interpersonal perception, and environmental awareness.`,
+      typeName: summary,
+      typeNameEn: summary,
+      total: total,
+      type: type
+    };
   }
 
   // 内向外向测试计算
@@ -126,7 +259,7 @@ class TestLogicService {
     // 从数据库获取完整的分析
     try {
       const result = await query(`
-        SELECT rt.analysis_en, rt.type_name_en
+        SELECT rt.analysis_en, rt.type_name_en, rt.description_en
         FROM result_types rt
         JOIN test_projects tp ON rt.project_id = tp.id
         WHERE tp.project_id = 'introversion_en' AND rt.type_code = $1
@@ -217,36 +350,53 @@ class TestLogicService {
       'The Peacemaker, The Mediator'
     ];
     
-    let summary = '';
-    let type = '';
-    if (dominantTypes.length === 1) {
-      summary = `Type ${dominantTypes[0]}: ${typeNames[dominantTypes[0] - 1]}`;
-      type = `TYPE_${dominantTypes[0]}`;
-    } else {
-      summary = `Types ${dominantTypes.join(', ')}: ${dominantTypes.map(t => typeNames[t-1]).join(', ')}`;
-      type = `TYPE_${dominantTypes[0]}`;
-    }
+    // 构建类型代码数组用于数据库查询
+    const typeCodes = dominantTypes.map(t => `TYPE_${t}`);
     
-    // 从数据库获取完整的分析
+    // 从数据库获取所有并列类型的完整分析
     try {
       const result = await query(`
-        SELECT rt.analysis_en, rt.type_name_en
+        SELECT rt.type_code, rt.type_name_en, rt.description_en, rt.analysis_en
         FROM result_types rt
         JOIN test_projects tp ON rt.project_id = tp.id
-        WHERE tp.project_id = 'enneagram_en' AND rt.type_code = $1
-      `, [type]);
+        WHERE tp.project_id = 'enneagram_en' AND rt.type_code = ANY($1::text[])
+        ORDER BY rt.type_code
+      `, [typeCodes]);
       
       if (result.rows.length > 0) {
-        const enneagramData = result.rows[0];
+        // 建立映射
+        const typeMap = {};
+        result.rows.forEach(row => {
+          typeMap[row.type_code] = row;
+        });
+        
+        // 构建摘要和分析
+        const summaries = [];
+        const analyses = [];
+        
+        for (const typeCode of typeCodes) {
+          const row = typeMap[typeCode];
+          if (row) {
+            const description = row.description_en || row.type_name_en || typeCode;
+            summaries.push(description);
+            
+            if (row.analysis_en) {
+              analyses.push(`## ${row.type_name_en || typeCode}\n\n${row.analysis_en}`);
+            } else {
+              analyses.push(`## ${row.type_name_en || typeCode}`);
+            }
+          }
+        }
+        
         return {
-          summary: enneagramData.description_en || summary,
-          summaryEn: enneagramData.description_en || summary,
-          analysis: enneagramData.analysis_en || '',
-          analysisEn: enneagramData.analysis_en || '',
-          typeName: enneagramData.type_name_en,
-          typeNameEn: enneagramData.type_name_en,
+          summary: summaries.join(' | '),
+          summaryEn: summaries.join(' | '),
+          analysis: analyses.join('\n\n---\n\n'),
+          analysisEn: analyses.join('\n\n---\n\n'),
+          typeName: typeMap[typeCodes[0]]?.type_name_en || '',
+          typeNameEn: typeMap[typeCodes[0]]?.type_name_en || '',
           total: maxScore,
-          type: type,
+          type: typeCodes[0], // 保持第一个类型用于兼容性
           personalityScores: personalityScores,
           dominantTypes: dominantTypes
         };
@@ -256,15 +406,19 @@ class TestLogicService {
     }
     
     // 如果数据库查询失败，返回默认结果
+    const fallbackSummary = dominantTypes.length === 1 
+      ? `Type ${dominantTypes[0]}: ${typeNames[dominantTypes[0] - 1]}`
+      : `Types ${dominantTypes.join(', ')}: ${dominantTypes.map(t => typeNames[t-1]).join(', ')}`;
+    
     return {
-      summary: summary,
-      summaryEn: summary,
-      analysis: `After testing, you are **${summary}** personality type.`,
-      analysisEn: `After testing, you are **${summary}** personality type.`,
-      typeName: summary,
-      typeNameEn: summary,
+      summary: fallbackSummary,
+      summaryEn: fallbackSummary,
+      analysis: `After testing, you are **${fallbackSummary}** personality type.`,
+      analysisEn: `After testing, you are **${fallbackSummary}** personality type.`,
+      typeName: dominantTypes.length === 1 ? typeNames[dominantTypes[0] - 1] : '',
+      typeNameEn: dominantTypes.length === 1 ? typeNames[dominantTypes[0] - 1] : '',
       total: maxScore,
-      type: type,
+      type: `TYPE_${dominantTypes[0]}`,
       personalityScores: personalityScores,
       dominantTypes: dominantTypes
     };
@@ -321,7 +475,7 @@ class TestLogicService {
     // 从数据库获取完整的分析
     try {
       const result = await query(`
-        SELECT rt.analysis_en, rt.type_name_en
+        SELECT rt.analysis_en, rt.type_name_en, rt.description_en
         FROM result_types rt
         JOIN test_projects tp ON rt.project_id = tp.id
         WHERE tp.project_id = 'eq_test_en' AND rt.type_code = $1
@@ -1275,6 +1429,7 @@ class TestLogicService {
       case 'disc':
         return await this.scoreDisc(answers, 'disc');
       case 'mgmt':
+      case 'mgmt_en':
         return this.scoreMgmt(answers);
       case 'disc40':
         return await this.scoreDisc40(answers);
@@ -1316,6 +1471,8 @@ class TestLogicService {
       case 'personality_charm':
       case 'personality_charm_1min':
         return await this.scorePersonalityCharm(answers);
+      case 'observation':
+        return await this.scoreObservation(answers);
       case 'personality_charm_1min':
       case 'phil_test_en':
       case 'temperament_type_test':
@@ -1725,9 +1882,54 @@ class TestLogicService {
     }
   }
 
-  // DISC 40题测试计算（当前沿用5题映射，取前5题；仅DB英文分析）
+  // DISC 40题测试计算（使用40题映射表）
   async scoreDisc40(answers) {
-    return await this.scoreDisc(answers.slice(0, 5), 'disc40');
+    // DISC 40 计分表（按题1-40，对应 D/I/S/C 的序号 1..4）
+    const disc40Values = [
+      [1,3,2,4],[3,2,4,1],[4,3,1,2],[3,1,4,2],[3,1,4,2],
+      [4,1,2,3],[3,4,2,1],[1,2,3,4],[4,3,1,2],[1,3,4,2],
+      [1,4,2,3],[3,1,4,2],[2,4,3,1],[3,1,4,2],[3,4,1,2],
+      [2,3,4,1],[3,4,1,2],[2,4,1,3],[3,4,2,1],[2,1,4,3],
+      [4,3,1,2],[2,1,3,4],[3,4,1,2],[4,3,2,1],[1,4,2,3],
+      [4,3,2,1],[1,2,4,3],[3,4,1,2],[3,1,2,4],[3,1,4,2],
+      [3,4,1,2],[2,4,3,1],[3,2,1,4],[3,1,4,2],[4,1,3,2],
+      [2,3,1,4],[2,4,3,1],[3,4,1,2],[4,2,3,1],[3,4,1,2]
+    ];
+
+    // Convert 1..4 rank table to mapping for quick lookup
+    const map = disc40Values.map(row => {
+      const order = ['D','I','S','C'];
+      const arr = [];
+      // row: [D,I,S,C] ranks; we need index->type by option index 0..3
+      // We pick the type whose rank equals (option+1)
+      for (let opt = 1; opt <= 4; opt++) {
+        const idx = row.findIndex(r => r === opt);
+        arr.push(order[idx]);
+      }
+      return arr;
+    });
+
+    const counts = { D: 0, I: 0, S: 0, C: 0 };
+    answers.forEach((optIndex, qi) => {
+      const typeKey = (map[qi] || map[0])[optIndex];
+      if (counts[typeKey] !== undefined) counts[typeKey] += 1;
+    });
+
+    const max = Math.max(counts.D, counts.I, counts.S, counts.C);
+    const tops = Object.entries(counts).filter(([_, v]) => v === max).map(([k]) => k);
+
+    // 尝试从数据库读取英文分析
+    const dbMap = await this.fetchDiscFromDatabase('disc40', tops);
+    if (dbMap) {
+      const names = tops.map(k => (dbMap[k] && dbMap[k].type_name_en) ? dbMap[k].type_name_en : k);
+      const analysis = tops.map(k => (dbMap[k] && dbMap[k].analysis_en) ? dbMap[k].analysis_en : '').filter(Boolean).join('\n\n');
+      return { counts, tops, summary: names.join(', '), analysis };
+    }
+
+    // 无数据库内容时，返回基本结果
+    const names = { D: 'Dominance', I: 'Influence', S: 'Steadiness', C: 'Compliance' };
+    const summary = tops.length ? tops.map(k => names[k]).join(', ') : 'No dominant traits';
+    return { counts, tops, summary, analysis: '' };
   }
 
   // MBTI测试计算
