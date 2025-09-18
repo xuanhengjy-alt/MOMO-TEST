@@ -550,16 +550,19 @@
       resultTitle.textContent = project.name;
       (function(){
         var map = {
-          mbti: 'assets/images/mbti-career-personality-test.png',
-          disc40: 'assets/images/disc-personality-test.png'
+          mbti: '/assets/images/mbti-career-personality-test.png',
+          disc40: '/assets/images/disc-personality-test.png',
+          personality_charm_1min: '/assets/images/find-out-your-personality-charm-level-in-just-1-minute.png'
         };
         var preferred = (project && project.id && map[project.id]) ? map[project.id] : '';
-        resultImage.src = preferred || project.image || 'assets/images/logo.png';
+        var fallback = '/assets/images/logo.png';
+        var src0 = preferred || project.image || fallback;
+        resultImage.src = src0.startsWith('/') ? src0 : ('/' + src0);
       })();
       try {
         resultImage.onerror = function(){
           resultImage.onerror = null;
-          resultImage.src = 'assets/images/mbti-career%20personality-test.png';
+          resultImage.src = '/assets/images/logo.png';
         };
       } catch(_) {}
       // 统一用后端（或本地评分）返回的 summary/analysis 展示，保持从数据库获取
@@ -647,12 +650,14 @@
               resultTitle.textContent = project.name;
               (function(){
                 var map = {
-                  mbti: 'assets/images/mbti-career-personality-test.png',
-                  disc40: 'assets/images/disc-personality-test.png',
-                  personality_charm_1min: 'assets/images/find-out-your-personality-charm-level-in-just-1-minute.png'
+                  mbti: '/assets/images/mbti-career-personality-test.png',
+                  disc40: '/assets/images/disc-personality-test.png',
+                  personality_charm_1min: '/assets/images/find-out-your-personality-charm-level-in-just-1-minute.png'
                 };
                 var preferred = (project && project.id && map[project.id]) ? map[project.id] : '';
-                resultImage.src = preferred || project.image || 'assets/images/logo.png';
+                var fallback = '/assets/images/logo.png';
+                var src0 = preferred || project.image || fallback;
+                resultImage.src = src0.startsWith('/') ? src0 : ('/' + src0);
               })();
               resultSummary.innerHTML = `<span class=\"font-semibold text-blue-700\">${r.summary || r.summaryEn || ''}</span>`;
               try { resultAnalysis.classList.add('mbti-analysis'); resultAnalysis.classList.add('analysis-rich'); } catch(_) {}
