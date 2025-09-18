@@ -25,6 +25,7 @@ router.get('/', async (req, res) => {
       intro: row.intro_en,
       introEn: row.intro_en,
       type: row.test_type,
+      pricingType: row.pricing_type,
       estimatedTime: row.estimated_time,
       questionCount: row.question_count,
       testedCount: row.total_tests || 0,
@@ -67,6 +68,7 @@ router.get('/:projectId', async (req, res) => {
       intro: project.intro_en,
       introEn: project.intro_en,
       type: project.test_type,
+      pricingType: project.pricing_type,
       estimatedTime: project.estimated_time,
       questionCount: project.question_count,
       testedCount: project.total_tests || 0,
@@ -140,23 +142,77 @@ router.get('/:projectId/questions', async (req, res) => {
   }
 });
 
-// 点赞测试项目
+// 点赞/取消点赞测试项目
 router.post('/:projectId/like', async (req, res) => {
   try {
     const { projectId } = req.params;
+    const { action = 'toggle' } = req.body; // 'like', 'unlike', 'toggle'
     
-    await query(`
-      INSERT INTO test_statistics (project_id, total_likes, last_updated)
-      SELECT id, 1, CURRENT_TIMESTAMP
-      FROM test_projects 
+    // 获取用户标识（使用IP地址作为简单标识）
+    const userIdentifier = req.ip || req.connection.remoteAddress || 'unknown';
+    
+    // 获取项目内部ID
+    const projectResult = await query(`
+      SELECT id FROM test_projects 
       WHERE project_id = $1 AND is_active = true
-      ON CONFLICT (project_id) 
-      DO UPDATE SET 
-        total_likes = test_statistics.total_likes + 1,
-        last_updated = CURRENT_TIMESTAMP
     `, [projectId]);
+    
+    if (projectResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Test project not found' });
+    }
+    
+    const projectInternalId = projectResult.rows[0].id;
+    
+    // 检查用户是否已经点赞
+    const likeRecord = await query(`
+      SELECT id FROM user_likes 
+      WHERE project_id = $1 AND user_identifier = $2
+    `, [projectInternalId, userIdentifier]);
+    
+    const isLiked = likeRecord.rows.length > 0;
+    let shouldLike = false;
+    
+    // 根据action决定是否点赞
+    if (action === 'like') {
+      shouldLike = true;
+    } else if (action === 'unlike') {
+      shouldLike = false;
+    } else { // toggle
+      shouldLike = !isLiked;
+    }
+    
+    if (shouldLike && !isLiked) {
+      // 点赞
+      await query(`
+        INSERT INTO user_likes (project_id, user_identifier, created_at)
+        VALUES ($1, $2, CURRENT_TIMESTAMP)
+      `, [projectInternalId, userIdentifier]);
+      
+      await query(`
+        INSERT INTO test_statistics (project_id, total_likes, last_updated)
+        VALUES ($1, 1, CURRENT_TIMESTAMP)
+        ON CONFLICT (project_id) 
+        DO UPDATE SET 
+          total_likes = test_statistics.total_likes + 1,
+          last_updated = CURRENT_TIMESTAMP
+      `, [projectInternalId]);
+      
+    } else if (!shouldLike && isLiked) {
+      // 取消点赞
+      await query(`
+        DELETE FROM user_likes 
+        WHERE project_id = $1 AND user_identifier = $2
+      `, [projectInternalId, userIdentifier]);
+      
+      await query(`
+        UPDATE test_statistics 
+        SET total_likes = GREATEST(total_likes - 1, 0),
+            last_updated = CURRENT_TIMESTAMP
+        WHERE project_id = $1
+      `, [projectInternalId]);
+    }
 
-    // 返回更新后的点赞数
+    // 返回更新后的点赞数和状态
     const result = await query(`
       SELECT ts.total_likes
       FROM test_projects tp
@@ -166,11 +222,48 @@ router.post('/:projectId/like', async (req, res) => {
 
     res.json({ 
       success: true, 
-      likes: result.rows[0]?.total_likes || 0 
+      likes: result.rows[0]?.total_likes || 0,
+      isLiked: shouldLike
     });
   } catch (error) {
     console.error('Error updating likes:', error);
     res.status(500).json({ error: 'Failed to update likes' });
+  }
+});
+
+// 检查用户点赞状态
+router.get('/:projectId/like-status', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const userIdentifier = req.ip || req.connection.remoteAddress || 'unknown';
+    
+    // 获取项目内部ID
+    const projectResult = await query(`
+      SELECT id FROM test_projects 
+      WHERE project_id = $1 AND is_active = true
+    `, [projectId]);
+    
+    if (projectResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Test project not found' });
+    }
+    
+    const projectInternalId = projectResult.rows[0].id;
+    
+    // 检查用户是否已经点赞
+    const likeRecord = await query(`
+      SELECT id FROM user_likes 
+      WHERE project_id = $1 AND user_identifier = $2
+    `, [projectInternalId, userIdentifier]);
+    
+    const isLiked = likeRecord.rows.length > 0;
+    
+    res.json({ 
+      success: true, 
+      isLiked: isLiked
+    });
+  } catch (error) {
+    console.error('Error checking like status:', error);
+    res.status(500).json({ error: 'Failed to check like status' });
   }
 });
 

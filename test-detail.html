@@ -31,14 +31,22 @@
     <section id="view-detail" class="view">
       <div class="w-full max-w-5xl mx-auto bg-white border rounded-2xl shadow p-6 md:p-8 flex flex-col items-center gap-6">
         <h1 id="project-title" class="text-3xl md:text-4xl font-extrabold text-center"></h1>
-        <img id="project-image" class="w-full rounded-xl object-cover aspect-video" />
+        <div class="w-full relative">
+          <img id="project-image" class="w-full rounded-xl object-cover aspect-video" />
+          <!-- 免费标签 -->
+          <div id="pricing-label" class="absolute top-2 right-2 hidden">
+            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-500 text-white shadow-sm">
+              Free
+            </span>
+          </div>
+        </div>
         <div class="flex items-center gap-6 text-sm text-gray-600">
           <div>
             <span id="tested-count" class="text-amber-600 font-semibold"></span> people tested
           </div>
           <div class="flex items-center gap-2">
-            <button id="like-btn" class="p-2 text-sm cursor-pointer" aria-label="点赞">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-7 w-7 text-blue-600 hover:text-blue-700" fill="currentColor" aria-hidden="true">
+            <button id="like-btn" class="p-2 text-sm cursor-pointer text-gray-400 hover:text-gray-500" aria-label="点赞">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-7 w-7" fill="currentColor" aria-hidden="true">
                 <path d="M2 10.5a1.5 1.5 0 011.5-1.5H6v10H3.5A1.5 1.5 0 012 17.5v-7z"/>
                 <path d="M7.5 20h7a3 3 0 002.82-1.96l2-5.5A2 2 0 0017.5 10H13V6.5A2.5 2.5 0 0010.5 4h-.25A1.25 1.25 0 009 5.25V7c0 .52-.11 1.03-.32 1.5L7.5 11v9z"/>
               </svg>
@@ -128,7 +136,7 @@
       update();
     })();
   </script>
-    <script src="js/test-page.js?v=20250918"></script>
+    <script src="js/test-page.js?v=20250116"></script>
 </body>
 </html>
 

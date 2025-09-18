@@ -221,6 +221,12 @@
     var preferred = (project && project.id && map[project.id]) ? map[project.id] : '';
     projectImage.src = preferred || project.image || 'assets/images/logo.png';
   })();
+  
+  // 显示免费标签
+  const pricingLabel = document.getElementById('pricing-label');
+  if (pricingLabel && project.pricingType === '免费') {
+    pricingLabel.classList.remove('hidden');
+  }
   // 加载项目结果类型与分析（用于跳转型结果展示）
   async function loadAnalyses(projectId) {
     try {
@@ -283,22 +289,57 @@
   testedCount.textContent = formatNumber(tested);
   likeCount.textContent = formatNumber(likes);
 
+  // 初始化点赞状态
+  let isLiked = false;
+  
+  // 检查用户点赞状态
+  async function checkLikeStatus() {
+    try {
+      const result = await window.ApiService.checkLikeStatus(project.id);
+      isLiked = result.isLiked;
+      updateLikeButtonState();
+    } catch (error) {
+      console.error('Failed to check like status:', error);
+      // 如果检查失败，保持默认状态（未点赞）
+      isLiked = false;
+      updateLikeButtonState();
+    }
+  }
+  
+  // 页面加载时检查点赞状态
+  checkLikeStatus();
+
   likeBtn.addEventListener('click', async () => {
     try {
       // 尝试通过API更新点赞数
       const result = await window.ApiService.likeTestProject(project.id);
       likes = result.likes;
+      isLiked = result.isLiked;
       likeCount.textContent = formatNumber(likes);
+      updateLikeButtonState();
     } catch (error) {
+      console.error('Failed to update likes:', error);
       // API失败时使用本地存储
-      likes += 1;
+      isLiked = !isLiked;
+      likes += isLiked ? 1 : -1;
       likeCount.textContent = formatNumber(likes);
       saveLocal(likesKey, likes);
+      updateLikeButtonState();
     }
     
     likeBtn.classList.add('animate-pulse');
     setTimeout(() => likeBtn.classList.remove('animate-pulse'), 300);
   });
+
+  function updateLikeButtonState() {
+    if (isLiked) {
+      likeBtn.classList.add('text-blue-600', 'hover:text-blue-700');
+      likeBtn.classList.remove('text-gray-400', 'hover:text-gray-500');
+    } else {
+      likeBtn.classList.add('text-gray-400', 'hover:text-gray-500');
+      likeBtn.classList.remove('text-blue-600', 'hover:text-blue-700');
+    }
+  }
 
   // 视图状态
   function show(view) {

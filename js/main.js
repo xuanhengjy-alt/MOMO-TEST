@@ -44,6 +44,7 @@
     const title = node.querySelector('h3');
     const people = node.querySelector('.people');
     const btn = node.querySelector('.start-btn');
+    const pricingLabel = node.querySelector('.pricing-label');
 
     const skeleton = node.querySelector('.skeleton');
     // 统一从 assets/images 取图，并针对常见文件名提供回退
@@ -104,6 +105,11 @@
       Utils.saveLocal(likeKey, p.likes);
     } else if (Utils.loadLocal(likeKey, null) == null) {
       Utils.saveLocal(likeKey, Utils.getRandomLikes());
+    }
+
+    // 显示免费标签
+    if (p.pricingType === '免费') {
+      pricingLabel.classList.remove('hidden');
     }
 
     btn.addEventListener('click', () => {

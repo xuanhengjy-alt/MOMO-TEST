@@ -46,6 +46,7 @@ module.exports = async function handler(req, res) {
         tp.intro,
         tp.intro_en,
         tp.test_type,
+        tp.pricing_type,
         ts.total_tests,
         ts.total_likes
       FROM test_projects tp
@@ -62,6 +63,7 @@ module.exports = async function handler(req, res) {
       intro: row.intro_en,
       introEn: row.intro_en,
       type: row.test_type,
+      pricingType: row.pricing_type,
       testedCount: row.total_tests ? formatNumber(row.total_tests) : '0',
       likes: row.total_likes || 0
     }));

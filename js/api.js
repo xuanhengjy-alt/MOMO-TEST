@@ -111,15 +111,32 @@ class ApiService {
     }
   }
 
-  // 点赞测试项目
-  async likeTestProject(projectId) {
+  // 点赞/取消点赞测试项目
+  async likeTestProject(projectId, action = 'toggle') {
     try {
       const result = await this.request(`/tests/${projectId}/like`, {
-        method: 'POST'
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ action })
       });
       return result;
     } catch (error) {
       console.error('Failed to like test project:', error);
+      throw error;
+    }
+  }
+
+  // 检查用户点赞状态
+  async checkLikeStatus(projectId) {
+    try {
+      const result = await this.request(`/tests/${projectId}/like-status`, {
+        method: 'GET'
+      });
+      return result;
+    } catch (error) {
+      console.error('Failed to check like status:', error);
       throw error;
     }
   }
