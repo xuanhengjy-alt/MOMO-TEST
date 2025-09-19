@@ -13,7 +13,7 @@ const project = {
   project_id: 'creativity_test',
   name: 'Test your creativity',
   name_en: 'Test your creativity',
-  image_url: 'assets/images/test-your-creativity.png',
+  image_url: 'assets/images/test-your-creativity.jpg',
   intro: 'A 10-question quiz to measure your creativity score across everyday scenarios.',
   intro_en: 'A 10-question quiz to measure your creativity score across everyday scenarios.',
   test_type: 'creativity_test',

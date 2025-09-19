@@ -3,7 +3,7 @@
     {
       "id": "mbti",
       "name": "MBTI Career Personality Test",
-      "image": "assets/images/mbti-career personality-test.png",
+      "image": "assets/images/mbti-career personality-test.jpg",
       "intro": "The MBTI personality theory is based on the classification of psychological types by Carl Jung, later developed by Katharine Cook Briggs and Isabel Briggs Myers. It helps explain why people have different interests, excel at different jobs, and sometimes misunderstand each other. For decades, MBTI has been used worldwide by couples, teachers and students, young people choosing careers, and organizations to improve relationships, team communication, organizational building and diagnostics. In the Fortune 500, 80% of companies have experience applying MBTI.\n\nPeople tend to develop relatively stable personality types after adolescence, which then grow dynamically with experience. According to Jung, once formed, personality is difficult to change; different manifestations arise as underused functions develop. Like handedness, MBTI preferences reflect the hand you use most naturally, while with experience you may practice the other hand.\n\nThere are no good or bad personality types—only differences. Each trait has strengths and weaknesses. Understanding them helps one leverage strengths, avoid pitfalls, get along better with others, and make better decisions.\n\nTest-takers should answer honestly and independently to obtain effective results.",
       "type": "mbti",
       "isJumpType": false
@@ -11,7 +11,7 @@
     {
       "id": "disc40",
       "name": "DISC Personality Test",
-      "image": "assets/images/disc-personality-test.png",
+      "image": "assets/images/disc-personality-test.jpg",
       "intro": "In the 1920s, American psychologist William Moulton Marston developed a theory to explain human emotional responses. Prior to this, such research had been largely confined to studies of psychiatric patients or individuals with mental disorders. Dr. Marston sought to broaden the scope of this research to apply it to the general population with normal mental health. Consequently, he structured his theory into a systematic framework titled The Emotions of Normal People.\nTo test his theory, Dr. Marston needed a psychological assessment method to measure emotional responses—specifically, \"personality traits.\" He identified four highly representative personality factors: Dominance, Influence, Steadiness, and Compliance. DISC represents the initial letters of these four English words. In 1928, Dr. Marston formally introduced the DISC assessment and its theoretical framework within his book The Emotions of Normal People.\nToday, DISC theory is extensively applied in talent recruitment by Fortune 500 companies worldwide, distinguished by its longstanding history, strong professionalism, and high authority.",
       "type": "disc40",
       "isJumpType": false
@@ -19,7 +19,7 @@
     {
       "id": "temperament_type_test",
       "name": "Temperament Type Test",
-      "image": "assets/images/temperament-type-test.png",
+      "image": "assets/images/temperament-type-test.jpg",
       "intro": "Temperament refers to the dynamic characteristics of psychological activities, and it is similar to the concepts of \"temper\" or \"natural disposition\" commonly used in daily life. As the natural expression of personality traits, temperament is mainly shaped by the neural activity patterns of the brain and acquired habits. There is no distinction between good and bad, or superiority and inferiority, in terms of social value evaluation for different temperament types. In fact, every temperament type contains both positive and negative elements. Therefore, in the process of self-improvement of personality, one should promote strengths and avoid weaknesses. Importantly, temperament does not determine a person's moral and ethical qualities, nor does it decide the level of achievement in their activities. Individuals of all temperament types can make contributions to society, though the negative elements of their temperament may exert adverse effects on their behavior.",
       "type": "temperament_type_test",
       "isJumpType": false
@@ -27,7 +27,7 @@
     {
       "id": "personality_charm_1min",
       "name": "Find Out Your Personality Charm Level in Just 1 Minute",
-      "image": "assets/images/find-out-your-personality-charm-level-in-just-1-minute.png",
+      "image": "assets/images/find-out-your-personality-charm-level-in-just-1-minute.jpg",
       "intro": "This ultra-convenient personality charm test can give you the answer in just 1 minute! Branching questions lead to 5 possible results.",
       "type": "personality_charm",
       "isJumpType": true

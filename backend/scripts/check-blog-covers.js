@@ -15,7 +15,7 @@ async function main(){
   const rows = r.rows;
   const results = [];
   for (const row of rows){
-    const cover = (row.cover_image_url && row.cover_image_url.trim()) ? row.cover_image_url.trim() : `/assets/blogs/${row.slug}.png`;
+    const cover = (row.cover_image_url && row.cover_image_url.trim()) ? row.cover_image_url.trim() : `/assets/blogs/${row.slug}.jpg`;
     const local = toLocalPath(cover);
     const exists = fs.existsSync(local);
     results.push({ slug: row.slug, cover, local, exists });

@@ -49,21 +49,25 @@
     const skeleton = node.querySelector('.skeleton');
     // 统一从 assets/images 取图，并针对常见文件名提供回退
     const imageFallbacks = {
-      mbti: 'assets/images/mbti-career-personality-test.png',
-      disc40: 'assets/images/disc-personality-test.png',
-      mgmt_en: 'assets/images/self-assessment-of-management-skills.png',
-      observation: 'assets/images/observation-ability-test.png',
-      introversion_en: 'assets/images/professional-test-for-introversion-extraversion-degree.png',
-      enneagram_en: 'assets/images/enneagram-personality-test.png',
-      eq_test_en: 'assets/images/international-standard-emotional-intelligence-test.png',
-      phil_test_en: 'assets/images/phil-personality-test.png',
-      four_colors_en: 'assets/images/four-colors-personality-analysis.png',
-      pdp_test_en: 'assets/images/professional-dyna-metric-program.png',
-      mental_age_test_en: 'assets/images/test-your-mental-age.png',
-      holland_test_en: 'assets/images/holland-occupational-interest-test.png',
-      kelsey_test_en: 'assets/images/kelsey-temperament-type-test.png',
-      temperament_type_test: 'assets/images/temperament-type-test.png',
-      social_anxiety_test: 'assets/images/social-anxiety-level-test.png'
+      mbti: 'assets/images/mbti-career-personality-test.jpg',
+      disc40: 'assets/images/disc-personality-test.jpg',
+      mgmt_en: 'assets/images/self-assessment-of-management-skills.jpg',
+      observation: 'assets/images/observation-ability-test.jpg',
+      introversion_en: 'assets/images/professional-test-for-introversion-extraversion-degree.jpg',
+      enneagram_en: 'assets/images/enneagram-personality-test.jpg',
+      eq_test_en: 'assets/images/international-standard-emotional-intelligence-test.jpg',
+      phil_test_en: 'assets/images/phil-personality-test.jpg',
+      four_colors_en: 'assets/images/four-colors-personality-analysis.jpg',
+      pdp_test_en: 'assets/images/professional-dyna-metric-program.jpg',
+      mental_age_test_en: 'assets/images/test-your-mental-age.jpg',
+      holland_test_en: 'assets/images/holland-occupational-interest-test.jpg',
+      kelsey_test_en: 'assets/images/kelsey-temperament-type-test.jpg',
+      temperament_type_test: 'assets/images/temperament-type-test.jpg',
+      social_anxiety_test: 'assets/images/social-anxiety-level-test.jpg',
+      creativity_test: 'assets/images/test-your-creativity.jpg',
+      anxiety_depression_test: 'assets/images/anxiety-and-depression-level-test.jpg',
+      personality_charm_1min: 'assets/images/find-out-your-personality-charm-level-in-just-1-minute.jpg',
+      loneliness_1min: 'assets/images/find-out-just-how-lonely-your-heart-really-is.jpg'
     };
     const byId = imageFallbacks[p.id] || null;
     img.src = byId || p.image;
@@ -72,8 +76,13 @@
       img.onerror = null;
       // MBTI: 新文件名优先，旧文件名兜底
       if (p.id === 'mbti') {
-        img.src = 'assets/images/mbti-career personality-test.png';
+        img.src = 'assets/images/mbti-career personality-test.jpg';
         img.onerror = function(){ img.src = 'assets/images/logo.png'; };
+        return;
+      }
+      if (p.id === 'violence_index') {
+        img.src = 'assets/images/find-out-how-many-stars-your-violence-index-has.jpg';
+        img.onerror = function(){ img.src = byId || 'assets/images/logo.png'; };
         return;
       }
       img.src = byId || 'assets/images/logo.png';

@@ -13,7 +13,7 @@ const project = {
   project_id: 'anxiety_depression_test',
   name: 'Anxiety and Depression Level Test',
   name_en: 'Anxiety and Depression Level Test',
-  image_url: 'assets/images/anxiety-and-depression-level-test.png',
+  image_url: 'assets/images/anxiety-and-depression-level-test.jpg',
   intro: 'This test helps you intuitively see the severity of your emotions across anxiety & depression dimensions. Not a diagnosis, but a quick reflection.',
   intro_en: 'This test helps you intuitively see the severity of your emotions across anxiety & depression dimensions. Not a diagnosis, but a quick reflection.',
   test_type: 'anxiety_depression_test',

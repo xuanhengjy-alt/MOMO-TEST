@@ -76,7 +76,7 @@ function parseFileContent(raw) {
 async function upsertBlogFromData(data) {
   const slug = sanitizeTitleToSlug(data.title);
   // 通用规则：若未显式提供封面，则按标题规范化生成本地路径
-  const defaultCover = `/assets/blogs/${slug}.png`;
+  const defaultCover = `/assets/blogs/${slug}.jpg`;
   const cover = ((data.cover_image_url && data.cover_image_url.trim()) ? data.cover_image_url.trim() : defaultCover).slice(0, 300);
   const title = (data.title || '').slice(0, 200);
   const summary = (data.summary || '').slice(0, 500);

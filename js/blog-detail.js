@@ -128,7 +128,7 @@
       const ogImg = document.createElement('meta');
       ogImg.setAttribute('property', 'og:image');
       const fallbackName = sanitizeTitleToFilename(b.title);
-      const byTitle = `assets/blogs/${fallbackName}.png`;
+      const byTitle = `assets/blogs/${fallbackName}.jpg`;
       const imgUrl = (b.cover_image_url && (b.cover_image_url.startsWith('/') ? b.cover_image_url : `/${b.cover_image_url}`)) || `/${byTitle}`;
       ogImg.setAttribute('content', imgUrl);
       head.appendChild(ogImg);
@@ -137,7 +137,7 @@
     if (breadcrumb) breadcrumb.textContent = b.title;
 
     const fallbackName = sanitizeTitleToFilename(b.title);
-    const byTitle = `/assets/blogs/${fallbackName}.png`;
+    const byTitle = `/assets/blogs/${fallbackName}.jpg`;
     const src0 = b.cover_image_url || byTitle;
     const src = src0.startsWith('/') ? src0 : `/${src0}`;
     try { coverEl.removeAttribute('loading'); } catch(_) {}
@@ -167,9 +167,9 @@
         const peopleEl = document.getElementById('test-card-people');
         const btnEl = document.getElementById('test-card-btn');
         const map = {
-          mbti: '/assets/images/mbti-career-personality-test.png',
-          disc40: '/assets/images/disc-personality-test.png',
-          observation: '/assets/images/observation-ability-test.png'
+          mbti: '/assets/images/mbti-career-personality-test.jpg',
+          disc40: '/assets/images/disc-personality-test.jpg',
+          observation: '/assets/images/observation-ability-test.jpg'
         };
         let project;
         try { project = await window.ApiService.getTestProject(testId); } catch(_) {}
@@ -217,7 +217,7 @@
           const h3 = node.querySelector('h3');
           h3.textContent = r.title;
           // 优先用数据库封面，否则按 slug 规则
-          const fallbackBySlug = `/assets/blogs/${encodeURIComponent(r.slug)}.png`;
+          const fallbackBySlug = `/assets/blogs/${encodeURIComponent(r.slug)}.jpg`;
           const cover0 = (r.cover_image_url || '').trim();
           const coverAbs = cover0 ? (cover0.startsWith('/') ? cover0 : `/${cover0}`) : fallbackBySlug;
           const real = `${coverAbs}?v=${Date.now()}`;

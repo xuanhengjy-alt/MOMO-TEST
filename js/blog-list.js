@@ -43,7 +43,7 @@
         // 优先使用数据库提供的封面 URL（按你的新规则）
         const dbCover = (b.cover_image_url || '').trim();
         const normalizedDbCover = dbCover ? (dbCover.startsWith('/') ? dbCover : `/${dbCover}`) : '';
-        const bySlug = `/assets/blogs/${encodeURIComponent(b.slug)}.png`;
+        const bySlug = `/assets/blogs/${encodeURIComponent(b.slug)}.jpg`;
         // 取消懒加载，确保首屏立即加载
         try { img.removeAttribute('loading'); } catch(_) {}
         // 预加载再挂载，彻底规避缓存时序导致的 load 丢失

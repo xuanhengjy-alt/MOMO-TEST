@@ -13,7 +13,7 @@ const project = {
   project_id: 'violence_index',
   name: 'Find out how many stars your violence index has',
   name_en: 'Find out how many stars your violence index has',
-  image_url: 'assets/images/find-out-how-many-stars-your-violence-index-has.png',
+  image_url: 'assets/images/find-out-how-many-stars-your-violence-index-has.jpg',
   intro: 'A branching test that tells you how many stars your “violence index” has through daily scenarios.',
   intro_en: 'A branching test that tells you how many stars your “violence index” has through daily scenarios.',
   test_type: 'violence_index',
