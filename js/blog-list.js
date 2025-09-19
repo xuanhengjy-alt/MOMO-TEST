@@ -47,7 +47,8 @@
         // 取消懒加载，确保首屏立即加载
         try { img.removeAttribute('loading'); } catch(_) {}
         // 预加载再挂载，彻底规避缓存时序导致的 load 丢失
-        const realSrc = `${(normalizedDbCover || bySlug)}?v=${Date.now()}`;
+        const ver = b.updated_at ? new Date(b.updated_at).getTime() : '';
+        const realSrc = ver ? `${(normalizedDbCover || bySlug)}?v=${ver}` : (normalizedDbCover || bySlug);
         const pre = new Image();
         pre.onload = function(){
           img.src = realSrc;

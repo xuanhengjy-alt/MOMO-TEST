@@ -168,11 +168,13 @@ class ApiService {
   }
 
   async getBlogDetail(slug) {
-    return await this.request(`/blogs/${encodeURIComponent(slug)}`);
+    const v = Date.now();
+    return await this.request(`/blogs/${encodeURIComponent(slug)}?v=${v}`);
   }
 
   async getBlogRecommendations(slug) {
-    return await this.request(`/blogs/${encodeURIComponent(slug)}/recommend`);
+    const v = Date.now();
+    return await this.request(`/blogs/${encodeURIComponent(slug)}/recommend?v=${v}`);
   }
 
   // 兜底数据（当API不可用时）

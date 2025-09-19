@@ -479,11 +479,17 @@
   let isSubmitting = false;
 
   // 统计信息：题数与预计时长（按每题约12秒估算）
-  const totalQ = await getQList().then(q => q.length).catch(() => 0);
-  const estMinutes = Math.max(1, Math.round((totalQ * 12) / 60));
+  // 先显示占位骨架，随后并行获取题量后覆盖
   if (infoLine) {
-    infoLine.innerHTML = `Total <span class="font-semibold text-rose-600">${totalQ}</span> questions, estimated <span class="font-semibold text-rose-600">${estMinutes}</span> minutes`;
+    infoLine.innerHTML = `Total <span class="font-semibold text-rose-600">--</span> questions, estimated <span class="font-semibold text-rose-600">--</span> minutes`;
   }
+  (async () => {
+    const totalQ = await getQList().then(q => q.length).catch(() => 0);
+    const estMinutes = Math.max(1, Math.round((totalQ * 12) / 60));
+    if (infoLine) {
+      infoLine.innerHTML = `Total <span class="font-semibold text-rose-600">${totalQ}</span> questions, estimated <span class="font-semibold text-rose-600">${estMinutes}</span> minutes`;
+    }
+  })();
 
   async function renderProgress() {
     // 跳转型测试不显示进度条

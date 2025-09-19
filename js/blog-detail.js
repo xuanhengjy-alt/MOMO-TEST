@@ -1,4 +1,30 @@
 (async function(){
+  async function loadScript(src){
+    return new Promise((resolve,reject)=>{
+      const s=document.createElement('script');
+      s.src=src; s.async=true; s.onload=()=>resolve(true); s.onerror=()=>reject(new Error('load fail '+src));
+      document.head.appendChild(s);
+    });
+  }
+  async function ensureLibs(){
+    const markedCdn = [
+      'https://cdn.jsdelivr.net/npm/marked/marked.min.js',
+      'https://unpkg.com/marked/marked.min.js',
+      'https://cdn.bootcdn.net/ajax/libs/marked/12.0.2/marked.min.js'
+    ];
+    const purifyCdn = [
+      'https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js',
+      'https://unpkg.com/dompurify@3.0.6/dist/purify.min.js',
+      'https://cdn.bootcdn.net/ajax/libs/dompurify/3.0.6/purify.min.js'
+    ];
+    if(!window.marked){
+      for (const u of markedCdn){ try{ await loadScript(u); if(window.marked) break; }catch(e){} }
+    }
+    if(!window.DOMPurify){
+      for (const u of purifyCdn){ try{ await loadScript(u); if(window.DOMPurify) break; }catch(e){} }
+    }
+  }
+  await ensureLibs();
   const pathParts = location.pathname.split('/').filter(Boolean);
   let slug = null;
   if (pathParts.length >= 2 && pathParts[pathParts.length-2] === 'blog-detail.html') {
@@ -23,7 +49,10 @@
       if (!src) return '';
       try {
         let out = src;
-        // 修正 ** 前后留白导致的不解析
+        // 确保 ** 两侧有空格，避免紧贴表情/符号导致解析失败
+        out = out.replace(/([^\s*])\*\*/g, '$1 **');
+        out = out.replace(/\*\*([^\s*])/g, '** $1');
+        // 修正 ** 前后留白导致的不解析（仅修正粗体，不改动分段）
         out = out.replace(/\*\*\s+([\s\S]*?)\s+\*\*/g, '**$1**');
         // 处理被 span 包裹的情况
         out = out.replace(/\*\*(\s*<span\b[^>]*>)([\s\S]*?)(<\/span>)\s*\*\*/gi, function(_, open, inner, close){
@@ -36,12 +65,16 @@
     // Markdown 渲染（兼容性兜底）
     try {
       if (window.marked && window.DOMPurify) {
-        // 配置 marked，保证换行转段落
+        // 配置 marked，开启 GFM 表格、换行
         if (window.marked.setOptions) {
           window.marked.setOptions({ breaks: true, gfm: true });
         }
+        // 兼容旧版 marked 的表格支持
+        if (window.marked.use) {
+          try { window.marked.use({ gfm: true }); } catch(_) {}
+        }
         const html = window.marked.parse(md || '');
-        contentEl.innerHTML = window.DOMPurify.sanitize(html);
+        contentEl.innerHTML = window.DOMPurify.sanitize(html, { ADD_TAGS: ['table','thead','tbody','tr','th','td'] });
         try {
           if (window.hljs) {
             contentEl.querySelectorAll('pre code').forEach((block) => {
@@ -111,7 +144,8 @@
     // 先绑定事件，再设置 src，避免瞬时缓存命中错过 onload
     coverEl.addEventListener('load', function(){ coverEl.classList.remove('hidden'); });
     coverEl.onerror = function(){ coverEl.onerror = null; coverEl.classList.add('hidden'); };
-    const finalSrc = `${src}?v=${Date.now()}`;
+    const ver = b.updated_at ? new Date(b.updated_at).getTime() : '';
+    const finalSrc = ver ? `${src}?v=${ver}` : src;
     coverEl.src = finalSrc;
     if (coverEl.complete && coverEl.naturalWidth > 0) {
       void coverEl.offsetHeight;
