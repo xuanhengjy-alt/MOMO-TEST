@@ -4,8 +4,8 @@
   "description": "MOMO TEST - Psychology Test Platform",
   "main": "api/index.js",
   "scripts": {
-    "start": "node local-server.js",
-    "dev": "node local-server.js",
+    "start": "node local-server-simple.js",
+    "dev": "node local-server-simple.js",
     "backend": "node backend/server.js",
     "build": "echo 'No build step required for static site'"
   },

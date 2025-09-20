@@ -1,7 +1,7 @@
 // API 服务模块
 // 根据环境自动选择API基础URL
 const API_BASE_URL = window.location.hostname === 'localhost' 
-  ? 'http://localhost:3001/api' 
+  ? 'http://localhost:3000/api' 
   : '/api'; // 生产环境使用相对路径
 
 class ApiService {
@@ -73,7 +73,8 @@ class ApiService {
   // 获取特定测试项目
   async getTestProject(projectId) {
     try {
-      return await this.request(`/tests/${projectId}`);
+      const response = await this.request(`/tests/${projectId}`);
+      return response.project || response;
     } catch (error) {
       console.error(`Failed to fetch test project ${projectId} from API`, error);
       throw error;

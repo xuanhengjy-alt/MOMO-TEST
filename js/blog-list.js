@@ -23,7 +23,8 @@
     if (loading || ended) return;
     loading = true;
     try {
-      const items = await window.ApiService.getBlogs({ page, pageSize });
+      const response = await window.ApiService.getBlogs({ page, pageSize });
+      const items = response.blogs || response.data?.blogs || response;
       if (!items || !items.length) {
         if (page === 1) empty.classList.remove('hidden');
         ended = true;

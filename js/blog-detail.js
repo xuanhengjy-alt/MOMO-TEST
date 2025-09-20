@@ -26,6 +26,7 @@
   }
   await ensureLibs();
   const pathParts = location.pathname.split('/').filter(Boolean);
+  console.log('Path parts:', pathParts);
   let slug = null;
   if (pathParts.length >= 2 && pathParts[pathParts.length-2] === 'blog-detail.html') {
     slug = decodeURIComponent(pathParts[pathParts.length-1] || '');
@@ -34,6 +35,7 @@
     const params = new URLSearchParams(location.search);
     slug = params.get('slug');
   }
+  console.log('Extracted slug:', slug);
   if (!slug) { location.replace('/blog.html'); return; }
 
   const titleEl = document.getElementById('blog-title');
@@ -42,6 +44,7 @@
   const breadcrumb = document.getElementById('breadcrumb-title');
 
   function renderMarkdown(md){
+    console.log('renderMarkdown called with:', md ? 'content' : 'no content');
     // 规范化粗体：
     // 1) ** <text> ** 或 **  text  ** → **text**（去掉两端空格，避免 CommonMark 解析失败）
     // 2) **<span>text</span>** → <span><strong>text</strong></span>
@@ -100,7 +103,9 @@
   }
 
   try {
+    console.log('Loading blog detail for slug:', slug);
     const b = await window.ApiService.getBlogDetail(slug);
+    console.log('Blog data received:', b);
     document.title = `${b.title} - MOMO TEST`;
     // 基础 SEO/OG 注入
     try {
@@ -133,6 +138,7 @@
       ogImg.setAttribute('content', imgUrl);
       head.appendChild(ogImg);
     } catch(_) {}
+    console.log('Setting title:', b.title);
     titleEl.textContent = b.title;
     if (breadcrumb) breadcrumb.textContent = b.title;
 
@@ -154,6 +160,7 @@
       coverEl.decode().then(function(){ coverEl.classList.remove('hidden'); }).catch(function(){});
     }
 
+    console.log('Rendering content:', b.content_md ? 'has content' : 'no content');
     renderMarkdown(b.content_md);
     try { if (window.Analytics) window.Analytics.logDetailRead(slug); } catch(_) {}
 

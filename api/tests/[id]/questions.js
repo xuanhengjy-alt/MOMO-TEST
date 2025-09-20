@@ -21,7 +21,7 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const { id: projectId } = req.query;
+  const projectId = req.params?.id || req.query?.id;
 
   if (!projectId) {
     res.status(400).json({ error: 'Project ID is required' });
@@ -31,23 +31,39 @@ module.exports = async function handler(req, res) {
   try {
     console.log(`Fetching questions for project: ${projectId}`);
     
+    // 首先检查项目是否存在
+    const projectCheck = await pool.query(`
+      SELECT id, project_id FROM test_projects WHERE project_id = $1
+    `, [projectId]);
+    
+    console.log(`Project check result:`, projectCheck.rows);
+    
+    if (projectCheck.rows.length === 0) {
+      console.log(`Project ${projectId} not found in database`);
+      res.status(200).json({ questions: [] });
+      return;
+    }
+    
+    const projectInternalId = projectCheck.rows[0].id;
+    console.log(`Project internal ID: ${projectInternalId}`);
+    
     // 查询数据库获取测试题目
     const result = await pool.query(`
       SELECT 
         q.id,
-        q.question_text,
+        q.question_text_en as question_text,
         q.question_text_en,
         q.question_number,
         qo.id as option_id,
-        qo.option_text,
+        qo.option_text_en as option_text,
         qo.option_text_en,
         qo.score_value,
         qo.option_number
       FROM questions q
       LEFT JOIN question_options qo ON q.id = qo.question_id
-      WHERE q.project_id = (SELECT id FROM test_projects WHERE project_id = $1)
+      WHERE q.project_id = $1
       ORDER BY q.question_number, qo.option_number
-    `, [projectId]);
+    `, [projectInternalId]);
 
     // 组织题目数据
     const questionsMap = new Map();

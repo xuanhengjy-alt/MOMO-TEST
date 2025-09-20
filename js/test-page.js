@@ -19,7 +19,11 @@
     return '';
   }
   let id = extractIdFromUrl();
-  if (!id) { location.replace('/index.html'); return; }
+  if (!id) { 
+    // 如果没有项目ID，使用默认的MBTI项目
+    id = 'mbti';
+    console.log('No project ID in URL, using default: mbti');
+  }
 
   // 若 URL 传入的是 name_en 生成的 slug，需要映射回项目 id
   async function resolveProjectId(input){
@@ -28,14 +32,41 @@
       const prj = await window.ApiService.getTestProject(input);
       if (prj && prj.id) return prj.id;
     } catch(_) {}
+    
     // 拉取项目列表，根据 nameEn 规范化匹配
     try {
       const projects = await window.ApiService.getTestProjects();
       const sanitize = (s)=>String(s||'').toLowerCase().trim().replace(/[\s/_.,:：—-]+/g,'-').replace(/[^a-z0-9-]/g,'').replace(/-+/g,'-').slice(0,60);
-      const hit = (projects||[]).find(p => sanitize(p.nameEn||p.name) === input);
+      
+      // 先尝试精确匹配
+      let hit = (projects||[]).find(p => sanitize(p.nameEn||p.name) === input);
       if (hit) return hit.id;
+      
+      // 再尝试部分匹配（处理 social-test-anxiety-test -> social_anxiety_test 的情况）
+      hit = (projects||[]).find(p => {
+        const projectSlug = sanitize(p.nameEn||p.name);
+        const inputSlug = input.toLowerCase();
+        // 检查是否包含关键词汇
+        const projectWords = projectSlug.split('-');
+        const inputWords = inputSlug.split('-');
+        return projectWords.some(word => inputWords.includes(word)) && 
+               inputWords.some(word => projectWords.includes(word));
+      });
+      if (hit) return hit.id;
+      
+      // 最后尝试模糊匹配
+      hit = (projects||[]).find(p => {
+        const projectSlug = sanitize(p.nameEn||p.name);
+        const inputSlug = input.toLowerCase();
+        return projectSlug.includes(inputSlug) || inputSlug.includes(projectSlug);
+      });
+      if (hit) return hit.id;
+      
     } catch(_) {}
-    return input; // 回退：仍用原值
+    
+    // 如果都找不到，返回默认的mbti项目
+    console.warn(`Project not found: ${input}, using default: mbti`);
+    return 'mbti';
   }
 
   id = await resolveProjectId(id);
@@ -44,13 +75,22 @@
   let project;
   try {
     project = await window.ApiService.getTestProject(id);
+    console.log('Project data from API:', project);
   } catch (e) {
     console.warn('Failed to fetch project from API, using fallback data', e);
     // 回退到内置数据
     const fallbackProjects = window.ApiService.getFallbackProjects();
     project = fallbackProjects.find(p => p.id === id);
+    console.log('Project data from fallback:', project);
   }
-  if (!project) { location.replace('index.html'); return; }
+  if (!project) { 
+    console.error('No project data found, redirecting to index');
+    location.replace('index.html'); 
+    return; 
+  }
+  
+  console.log('Final project data:', project);
+  console.log('Project ID:', project.id);
   
   // 检查是否为隐藏的测试项目
   if (Utils.isProjectHidden(project.id)) {
@@ -155,6 +195,9 @@
     const lines = String(raw).split('\n');
     const out = [];
     const headingRules = [
+      // 通用标题规则 - 处理已有的Markdown标题
+      { re: /^#{1,6}\s+(.+)$/, h: (match) => match[0] }, // 保持已有的Markdown标题
+      
       // MBTI 相关标题
       { re: /^(A\s*brief\s*description|Brief\s*Description)\b/i, h: '# A Brief Description' },
       { re: /^(Personality\s*traits)\b/i, h: '## Personality Traits' },
@@ -165,8 +208,33 @@
       { re: /^(Contribution)\b/i, h: '## Contribution' },
       { re: /^(Preferred\s*(work|environment))\b/i, h: '## Preferred Work Environment' },
       { re: /^(Development\s*(suggestions?|advice))\b/i, h: '## Development Suggestions' },
+      
       // DISC 相关标题
       { re: /^(Dominance|Influence|Steadiness|Compliance)\b/i, h: '## $1' },
+      
+      // 九型人格相关标题
+      { re: /^(The\s+(Perfectionist|Helper|Achiever|Individualist|Investigator|Loyalist|Enthusiast|Challenger|Peacemaker).*)$/i, h: '## $1' },
+      { re: /^(Desire\s*Trait|Basic\s*Thought|Main\s*Characteristics|Main\s*Traits|Suitable\s*Careers)$/i, h: '### $1' },
+      
+      // 社交焦虑和抑郁相关标题
+      { re: /^(Low|Mild|Moderate|High|Severe)\s+(Social\s*Anxiety|Anxiety\s*&\s*Depression)$/i, h: '## $1 $2' },
+      { re: /^(Key\s*characteristics|Recommendations|Areas\s*for\s*(improvement|development))$/i, h: '### $1' },
+      
+      // 内外向相关标题
+      { re: /^(Introverted|Extroverted|Ambivert)\s+Personality$/i, h: '## $1 Personality' },
+      
+      // 情商相关标题
+      { re: /^(High|Good|Average|Low)\s+Emotional\s+Intelligence$/i, h: '## $1 Emotional Intelligence' },
+      
+      // 创造力相关标题
+      { re: /^(Creativity|Creative)\s*:?\s*\*{1,5}$/i, h: '## $1' },
+      { re: /^(Strengths|Weaknesses)$/i, h: '### $1' },
+      
+      // 通用标题模式
+      { re: /^(Key\s*characteristics|Strengths|Weaknesses|Recommendations|Areas\s*for\s*(improvement|development))$/i, h: '### $1' },
+      { re: /^(Overview|Summary|Analysis|Description)$/i, h: '## $1' },
+      
+      // 中文标题
       { re: /^(在情感方面|在情感上)\b/i, h: '### Emotional Aspects' },
       { re: /^(在工作方面|在工作上)\b/i, h: '### Work Aspects' },
       { re: /^(在人际关系方面|在人际关系上)\b/i, h: '### Interpersonal Relationships' },
@@ -177,7 +245,14 @@
       const line = rawLine.trim();
       if (!line) { out.push(''); continue; }
       const rule = headingRules.find(r => r.re.test(line));
-      if (rule) { out.push(rule.h); continue; }
+      if (rule) { 
+        if (typeof rule.h === 'function') {
+          out.push(rule.h(line.match(rule.re)));
+        } else {
+          out.push(rule.h);
+        }
+        continue; 
+      }
       // 列表符号归一化
       if (/^[•▪▫\u2713\u2714\u2022\u25CF\u25CB\u25A0\u25A1\-\*]/.test(line)) {
         out.push('- ' + line.replace(/^[•▪▫\u2713\u2714\u2022\u25CF\u25CB\u25A0\u25A1\-\*]\s*/, ''));
@@ -438,16 +513,28 @@
       // 尝试从API获取题目
       const questions = await window.ApiService.getTestQuestions(project.id);
       if (questions && questions.length > 0) {
+        // 转换API数据格式为前端期望的格式
+        const convertedQuestions = questions.map(q => ({
+          id: q.id || q.order || 0,
+          text: q.text || q.question_text || '',
+          opts: (q.options || []).map(opt => ({
+            text: opt.text || opt.option_text || '',
+            value: opt.value || opt.score_value || 0
+          }))
+        }));
+        
+        console.log('Converted questions:', convertedQuestions.slice(0, 2)); // 调试日志
+        
         // 一致性校验：MBTI 必须 93题且每题2选项(A/B)
         if (project && project.id === 'mbti') {
-          const okLen = questions.length === 93;
-          const okOpts = questions.every(q => Array.isArray(q.opts) && q.opts.length === 2);
+          const okLen = convertedQuestions.length === 93;
+          const okOpts = convertedQuestions.every(q => Array.isArray(q.opts) && q.opts.length === 2);
           if (!okLen || !okOpts) {
-            console.warn('MBTI questions integrity check failed', { okLen, okOpts, len: questions.length });
+            console.warn('MBTI questions integrity check failed', { okLen, okOpts, len: convertedQuestions.length });
           }
         }
-        cachedQuestions = questions;
-        return questions;
+        cachedQuestions = convertedQuestions;
+        return convertedQuestions;
       }
     } catch (error) {
       console.warn('Failed to fetch questions from API, using local logic', error);
@@ -531,13 +618,18 @@
     if (resultShown) { return; }
     await ensureTestLogicLoaded();
     const qlist = await getQList();
+    console.log('renderQuestion - qlist length:', qlist ? qlist.length : 0);
+    console.log('renderQuestion - qIndex:', qIndex);
+    
     // 若题库为空，给出友好提示
     if (!qlist || !qlist.length) {
+      console.log('No questions available');
       questionTitle.textContent = 'Question set failed to load. Please open with a local server and try again.';
       options.innerHTML = '';
       return;
     }
     const q = qlist[qIndex];
+    console.log('Current question:', q);
     if (!q) { // 结束
       // 非跳转型：答完题，开始计算（防重复提交）
       if (resultShown || isSubmitting) { return; }
@@ -643,8 +735,8 @@
         try { resultAnalysis.classList.add('analysis-rich'); } catch(_) {}
         try {
           if (window.marked && window.DOMPurify) {
-            // 非 MBTI/DISC：不做标题粗加工，保留原有 **...** 粗体
-            const enhanced = normalizeStrong(rawAnalysis || '');
+            // 所有测试类型都支持Markdown标题渲染
+            const enhanced = toMarkdownWithHeadings(normalizeStrong(rawAnalysis || ''));
             const mdHtml = window.marked.parse(enhanced);
             resultAnalysis.innerHTML = window.DOMPurify.sanitize(mdHtml);
           } else {
@@ -715,7 +807,8 @@
               const text = r.analysis || r.analysisEn || '';
               try {
                 if (window.marked && window.DOMPurify) {
-                  const mdHtml = window.marked.parse(normalizeStrong(text));
+                  const enhanced = toMarkdownWithHeadings(normalizeStrong(text));
+                  const mdHtml = window.marked.parse(enhanced);
                   resultAnalysis.innerHTML = window.DOMPurify.sanitize(mdHtml);
                 } else {
                   resultAnalysis.textContent = text;
@@ -787,8 +880,11 @@
   });
 
   // 初始显示
+  console.log('Initializing test page...');
   show('detail');
   renderProgress();
+  console.log('About to call renderQuestion...');
+  renderQuestion();
 })();
 
 

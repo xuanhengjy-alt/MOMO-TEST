@@ -2,13 +2,31 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/*.js",
+      "src": "api/**/*.js",
       "use": "@vercel/node"
     }
   ],
   "functions": {
-    "api/*.js": {
+    "api/**/*.js": {
       "maxDuration": 30
     }
-  }
+  },
+  "routes": [
+    {
+      "src": "/api/tests/([^/]+)/like",
+      "dest": "/api/tests/[id]/like.js"
+    },
+    {
+      "src": "/api/tests/([^/]+)/like-status",
+      "dest": "/api/tests/[id]/like.js"
+    },
+    {
+      "src": "/api/tests/([^/]+)/questions",
+      "dest": "/api/tests/[id]/questions.js"
+    },
+    {
+      "src": "/api/results/stats/([^/]+)",
+      "dest": "/api/results/stats/[id].js"
+    }
+  ]
 }

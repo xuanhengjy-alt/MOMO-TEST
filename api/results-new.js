@@ -215,35 +215,23 @@ async function calculateDisc40Result(projectId, answers) {
     
     const tops = Object.entries(counts).filter(([k,v]) => v > 10).map(([k]) => k);
     const names = { D: 'Dominance', I: 'Influence', S: 'Steadiness', C: 'Compliance' };
-    const dominantTypes = tops.length ? tops.map(k => names[k]).join(', ') : 'No dominant traits';
+    const summary = tops.length ? tops.map(k => names[k]).join(', ') : 'No dominant traits';
     
-    // 使用统一规则获取结果类型信息
-    let summary = dominantTypes;
+    // 获取分析内容
     let analysis = '';
-    
     if (tops.length > 0) {
-      // 获取主要类型的结果信息
-      const primaryType = tops[0]; // 取第一个主要类型
-      const resultType = await getResultTypeFromDatabase(projectId, primaryType);
+      const analysisResult = await pool.query(`
+        SELECT rt.type_code, rt.type_name_en, COALESCE(rt.analysis_en, '') AS analysis_en
+        FROM result_types rt
+        JOIN test_projects tp ON rt.project_id = tp.id
+        WHERE tp.project_id = $1 AND rt.type_code = ANY($2::text[])
+      `, [projectId, tops]);
       
-      if (resultType) {
-        summary = resultType.description_en || dominantTypes;
-        analysis = resultType.analysis_en || '';
-        
-        // 如果有多个主要类型，添加其他类型的分析
-        if (tops.length > 1) {
-          for (let i = 1; i < tops.length; i++) {
-            const additionalType = await getResultTypeFromDatabase(projectId, tops[i]);
-            if (additionalType && additionalType.analysis_en) {
-              analysis += `\n\n## ${additionalType.type_name_en || names[tops[i]]}\n\n${additionalType.analysis_en}`;
-            }
-          }
-        }
-      } else {
-        analysis = `Your dominant personality traits are: ${dominantTypes}. This indicates your behavioral preferences in various situations.`;
+      if (analysisResult.rows.length > 0) {
+        analysis = analysisResult.rows.map(row => 
+          `## ${row.type_name_en}\n\n${row.analysis_en}`
+        ).join('\n\n');
       }
-    } else {
-      analysis = 'No dominant traits were identified. This suggests a balanced personality across all DISC dimensions.';
     }
     
     return { counts, tops, summary, analysis };
@@ -313,25 +301,24 @@ async function calculateMbtiResult(answers) {
     const jp = traits.J > traits.P ? 'J' : 'P';
     const code = `${ei}${sn}${tf}${jp}`;
     
-    // 从数据库获取结果类型信息（统一规则）
-    const resultType = await getResultTypeFromDatabase('mbti', code);
+    // 从数据库获取完整的分析内容
+    const analysisResult = await pool.query(`
+      SELECT rt.type_code, rt.type_name_en, COALESCE(rt.analysis_en, '') AS analysis_en
+      FROM result_types rt
+      JOIN test_projects tp ON rt.project_id = tp.id
+      WHERE tp.project_id = 'mbti' AND rt.type_code = $1
+    `, [code]);
     
-    if (resultType) {
-      return {
-        summary: resultType.description_en || code,
-        analysis: resultType.analysis_en,
-        traits,
-        code
-      };
+    let analysis = '';
+    if (analysisResult.rows.length > 0) {
+      const row = analysisResult.rows[0];
+      analysis = `After testing, you are **${code}** personality type.\n\n${row.analysis_en}`;
     } else {
-      // 如果数据库没有结果类型，使用默认分析
-      return {
-        summary: code,
-        analysis: `After testing, you are **${code}** personality type.\n\nThis is a comprehensive personality assessment based on the Myers-Briggs Type Indicator. Your type indicates your preferences in how you perceive the world and make decisions.`,
-        traits,
-        code
-      };
+      // 如果数据库没有分析内容，使用默认分析
+      analysis = `After testing, you are **${code}** personality type.\n\nThis is a comprehensive personality assessment based on the Myers-Briggs Type Indicator. Your type indicates your preferences in how you perceive the world and make decisions.`;
     }
+    
+    return { summary: code, analysis, traits, code };
   } catch (error) {
     console.error('Error calculating MBTI result:', error);
     // 如果数据库计算失败，回退到默认映射
@@ -773,602 +760,47 @@ async function calculateGenericTestResult(projectId, answers, testName) {
 
 // 为所有其他测试类型创建通用计算函数
 async function calculatePhilTestResult(projectId, answers) {
-  try {
-    const total = answers.reduce((sum, answer) => sum + (answer + 1), 0);
-    const maxScore = answers.length * 5;
-    const percentage = Math.round((total / maxScore) * 100);
-    
-    // 根据分数确定结果类型 - Phil测试有特定的类型代码
-    let typeCode = '';
-    if (percentage >= 80) {
-      typeCode = 'PHIL_ADVENTURER';
-    } else if (percentage >= 60) {
-      typeCode = 'PHIL_PROTECTOR';
-    } else if (percentage >= 40) {
-      typeCode = 'PHIL_MODERATE';
-    } else if (percentage >= 20) {
-      typeCode = 'PHIL_CRITIC';
-    } else {
-      typeCode = 'PHIL_PESSIMIST';
-    }
-    
-    // 从数据库获取结果
-    const resultType = await getResultTypeFromDatabase(projectId, typeCode);
-    
-    if (resultType) {
-      return {
-        summary: resultType.description_en || resultType.type_name_en,
-        analysis: resultType.analysis_en,
-        total,
-        level: typeCode,
-        score: total,
-        maxScore: maxScore,
-        percentage: percentage
-      };
-    } else {
-      return {
-        summary: 'Phil Personality Assessment Completed',
-        analysis: 'Unable to generate detailed analysis at this time. Please try again later.',
-        total,
-        level: typeCode,
-        score: total,
-        maxScore: maxScore,
-        percentage: percentage
-      };
-    }
-  } catch (error) {
-    console.error('Error calculating Phil test result:', error);
-    return { 
-      summary: 'Assessment completed', 
-      analysis: 'Unable to generate detailed analysis at this time. Please try again later.', 
-      total: 0, 
-      level: 'UNKNOWN' 
-    };
-  }
+  return await calculateGenericTestResult(projectId, answers, 'Phil Personality');
 }
 
 async function calculateFourColorsResult(projectId, answers) {
-  try {
-    const total = answers.reduce((sum, answer) => sum + (answer + 1), 0);
-    const maxScore = answers.length * 5;
-    const percentage = Math.round((total / maxScore) * 100);
-    
-    // 根据分数确定颜色类型
-    let typeCode = '';
-    if (percentage >= 80) {
-      typeCode = 'RED_PERSONALITY';
-    } else if (percentage >= 60) {
-      typeCode = 'YELLOW_PERSONALITY';
-    } else if (percentage >= 40) {
-      typeCode = 'GREEN_PERSONALITY';
-    } else {
-      typeCode = 'BLUE_PERSONALITY';
-    }
-    
-    // 从数据库获取结果类型信息（统一规则）
-    const resultType = await getResultTypeFromDatabase(projectId, typeCode);
-    
-    if (resultType) {
-      return {
-        summary: resultType.description_en || resultType.type_name_en,
-        analysis: resultType.analysis_en,
-        total,
-        level: typeCode,
-        score: total,
-        maxScore: maxScore,
-        percentage: percentage
-      };
-    } else {
-      return {
-        summary: 'Four Colors Personality Assessment Completed',
-        analysis: 'Unable to generate detailed analysis at this time. Please try again later.',
-        total,
-        level: typeCode,
-        score: total,
-        maxScore: maxScore,
-        percentage: percentage
-      };
-    }
-  } catch (error) {
-    console.error('Error calculating Four Colors result:', error);
-    return { 
-      summary: 'Assessment completed', 
-      analysis: 'Unable to generate detailed analysis at this time. Please try again later.', 
-      total: 0, 
-      level: 'UNKNOWN' 
-    };
-  }
+  return await calculateGenericTestResult(projectId, answers, 'Four Colors Personality');
 }
 
 async function calculatePdpTestResult(projectId, answers) {
-  try {
-    const total = answers.reduce((sum, answer) => sum + (answer + 1), 0);
-    const maxScore = answers.length * 5;
-    const percentage = Math.round((total / maxScore) * 100);
-    
-    // 根据分数确定PDP类型
-    let typeCode = '';
-    if (percentage >= 80) {
-      typeCode = 'TIGER_TYPE';
-    } else if (percentage >= 60) {
-      typeCode = 'PEACOCK_TYPE';
-    } else if (percentage >= 40) {
-      typeCode = 'OWL_TYPE';
-    } else if (percentage >= 20) {
-      typeCode = 'KOALA_TYPE';
-    } else {
-      typeCode = 'CHAMELEON_TYPE';
-    }
-    
-    // 从数据库获取结果类型信息（统一规则）
-    const resultType = await getResultTypeFromDatabase(projectId, typeCode);
-    
-    if (resultType) {
-      return {
-        summary: resultType.description_en || resultType.type_name_en,
-        analysis: resultType.analysis_en,
-        total,
-        level: typeCode,
-        score: total,
-        maxScore: maxScore,
-        percentage: percentage
-      };
-    } else {
-      return {
-        summary: 'PDP Professional Assessment Completed',
-        analysis: 'Unable to generate detailed analysis at this time. Please try again later.',
-        total,
-        level: typeCode,
-        score: total,
-        maxScore: maxScore,
-        percentage: percentage
-      };
-    }
-  } catch (error) {
-    console.error('Error calculating PDP test result:', error);
-    return { 
-      summary: 'Assessment completed', 
-      analysis: 'Unable to generate detailed analysis at this time. Please try again later.', 
-      total: 0, 
-      level: 'UNKNOWN' 
-    };
-  }
+  return await calculateGenericTestResult(projectId, answers, 'PDP Professional');
 }
 
 async function calculateMentalAgeTestResult(projectId, answers) {
-  try {
-    const total = answers.reduce((sum, answer) => sum + (answer + 1), 0);
-    const maxScore = answers.length * 5;
-    const percentage = Math.round((total / maxScore) * 100);
-    
-    // 根据分数确定心理年龄阶段
-    let typeCode = '';
-    if (percentage >= 70) {
-      typeCode = 'MATURE_STAGE';
-    } else if (percentage >= 40) {
-      typeCode = 'ADOLESCENT_STAGE';
-    } else {
-      typeCode = 'CHILD_STAGE';
-    }
-    
-    // 从数据库获取结果类型信息（统一规则）
-    const resultType = await getResultTypeFromDatabase(projectId, typeCode);
-    
-    if (resultType) {
-      return {
-        summary: resultType.description_en || resultType.type_name_en,
-        analysis: resultType.analysis_en,
-        total,
-        level: typeCode,
-        score: total,
-        maxScore: maxScore,
-        percentage: percentage
-      };
-    } else {
-      return {
-        summary: 'Mental Age Assessment Completed',
-        analysis: 'Unable to generate detailed analysis at this time. Please try again later.',
-        total,
-        level: typeCode,
-        score: total,
-        maxScore: maxScore,
-        percentage: percentage
-      };
-    }
-  } catch (error) {
-    console.error('Error calculating Mental Age test result:', error);
-    return { 
-      summary: 'Assessment completed', 
-      analysis: 'Unable to generate detailed analysis at this time. Please try again later.', 
-      total: 0, 
-      level: 'UNKNOWN' 
-    };
-  }
+  return await calculateGenericTestResult(projectId, answers, 'Mental Age');
 }
 
 async function calculateHollandTestResult(projectId, answers) {
-  try {
-    // Holland测试需要根据答案模式确定类型，这里简化处理
-    const total = answers.reduce((sum, answer) => sum + (answer + 1), 0);
-    const maxScore = answers.length * 5;
-    const percentage = Math.round((total / maxScore) * 100);
-    
-    // 根据分数确定Holland类型（简化版本）
-    let typeCode = '';
-    if (percentage >= 80) {
-      typeCode = 'ARTISTIC';
-    } else if (percentage >= 60) {
-      typeCode = 'SOCIAL';
-    } else if (percentage >= 40) {
-      typeCode = 'INVESTIGATIVE';
-    } else if (percentage >= 20) {
-      typeCode = 'ENTERPRISING';
-    } else {
-      typeCode = 'REALISTIC';
-    }
-    
-    // 从数据库获取结果类型信息（统一规则）
-    const resultType = await getResultTypeFromDatabase(projectId, typeCode);
-    
-    if (resultType) {
-      return {
-        summary: resultType.description_en || resultType.type_name_en,
-        analysis: resultType.analysis_en,
-        total,
-        level: typeCode,
-        score: total,
-        maxScore: maxScore,
-        percentage: percentage
-      };
-    } else {
-      return {
-        summary: 'Holland Occupational Interest Assessment Completed',
-        analysis: 'Unable to generate detailed analysis at this time. Please try again later.',
-        total,
-        level: typeCode,
-        score: total,
-        maxScore: maxScore,
-        percentage: percentage
-      };
-    }
-  } catch (error) {
-    console.error('Error calculating Holland test result:', error);
-    return { 
-      summary: 'Assessment completed', 
-      analysis: 'Unable to generate detailed analysis at this time. Please try again later.', 
-      total: 0, 
-      level: 'UNKNOWN' 
-    };
-  }
+  return await calculateGenericTestResult(projectId, answers, 'Holland Occupational Interest');
 }
 
 async function calculateKelseyTestResult(projectId, answers) {
-  try {
-    // Kelsey测试使用MBTI类型，这里简化处理
-    const total = answers.reduce((sum, answer) => sum + (answer + 1), 0);
-    const maxScore = answers.length * 5;
-    const percentage = Math.round((total / maxScore) * 100);
-    
-    // 根据分数确定MBTI类型（简化版本）
-    let typeCode = '';
-    if (percentage >= 80) {
-      typeCode = 'ENFJ';
-    } else if (percentage >= 70) {
-      typeCode = 'ENFP';
-    } else if (percentage >= 60) {
-      typeCode = 'ENTJ';
-    } else if (percentage >= 50) {
-      typeCode = 'ENTP';
-    } else if (percentage >= 40) {
-      typeCode = 'ESFJ';
-    } else if (percentage >= 30) {
-      typeCode = 'ESFP';
-    } else if (percentage >= 20) {
-      typeCode = 'ESTJ';
-    } else {
-      typeCode = 'ESTP';
-    }
-    
-    // 从数据库获取结果类型信息（统一规则）
-    const resultType = await getResultTypeFromDatabase(projectId, typeCode);
-    
-    if (resultType) {
-      return {
-        summary: resultType.description_en || resultType.type_name_en,
-        analysis: resultType.analysis_en,
-        total,
-        level: typeCode,
-        score: total,
-        maxScore: maxScore,
-        percentage: percentage
-      };
-    } else {
-      return {
-        summary: 'Kelsey Temperament Assessment Completed',
-        analysis: 'Unable to generate detailed analysis at this time. Please try again later.',
-        total,
-        level: typeCode,
-        score: total,
-        maxScore: maxScore,
-        percentage: percentage
-      };
-    }
-  } catch (error) {
-    console.error('Error calculating Kelsey test result:', error);
-    return { 
-      summary: 'Assessment completed', 
-      analysis: 'Unable to generate detailed analysis at this time. Please try again later.', 
-      total: 0, 
-      level: 'UNKNOWN' 
-    };
-  }
+  return await calculateGenericTestResult(projectId, answers, 'Kelsey Temperament');
 }
 
 async function calculateTemperamentTypeTestResult(projectId, answers) {
-  try {
-    const total = answers.reduce((sum, answer) => sum + (answer + 1), 0);
-    const maxScore = answers.length * 5;
-    const percentage = Math.round((total / maxScore) * 100);
-    
-    // 根据分数确定气质类型
-    let typeCode = '';
-    if (percentage >= 80) {
-      typeCode = 'SANGUINE';
-    } else if (percentage >= 60) {
-      typeCode = 'CHOLERIC';
-    } else if (percentage >= 40) {
-      typeCode = 'MELANCHOLIC';
-    } else {
-      typeCode = 'PHLEGMATIC';
-    }
-    
-    // 从数据库获取结果类型信息（统一规则）
-    const resultType = await getResultTypeFromDatabase(projectId, typeCode);
-    
-    if (resultType) {
-      return {
-        summary: resultType.description_en || resultType.type_name_en,
-        analysis: resultType.analysis_en,
-        total,
-        level: typeCode,
-        score: total,
-        maxScore: maxScore,
-        percentage: percentage
-      };
-    } else {
-      return {
-        summary: 'Temperament Type Assessment Completed',
-        analysis: 'Unable to generate detailed analysis at this time. Please try again later.',
-        total,
-        level: typeCode,
-        score: total,
-        maxScore: maxScore,
-        percentage: percentage
-      };
-    }
-  } catch (error) {
-    console.error('Error calculating Temperament Type test result:', error);
-    return { 
-      summary: 'Assessment completed', 
-      analysis: 'Unable to generate detailed analysis at this time. Please try again later.', 
-      total: 0, 
-      level: 'UNKNOWN' 
-    };
-  }
+  return await calculateGenericTestResult(projectId, answers, 'Temperament Type');
 }
 
 async function calculatePersonalityCharmResult(projectId, answers) {
-  try {
-    const total = answers.reduce((sum, answer) => sum + (answer + 1), 0);
-    const maxScore = answers.length * 5;
-    const percentage = Math.round((total / maxScore) * 100);
-    
-    // 根据分数确定魅力等级
-    let typeCode = '';
-    if (percentage >= 90) {
-      typeCode = 'RESULT5';
-    } else if (percentage >= 70) {
-      typeCode = 'RESULT4';
-    } else if (percentage >= 50) {
-      typeCode = 'RESULT3';
-    } else if (percentage >= 30) {
-      typeCode = 'RESULT2';
-    } else {
-      typeCode = 'RESULT1';
-    }
-    
-    // 从数据库获取结果类型信息（统一规则）
-    const resultType = await getResultTypeFromDatabase(projectId, typeCode);
-    
-    if (resultType) {
-      return {
-        summary: resultType.description_en || resultType.type_name_en,
-        analysis: resultType.analysis_en,
-        total,
-        level: typeCode,
-        score: total,
-        maxScore: maxScore,
-        percentage: percentage
-      };
-    } else {
-      return {
-        summary: 'Personality Charm Assessment Completed',
-        analysis: 'Unable to generate detailed analysis at this time. Please try again later.',
-        total,
-        level: typeCode,
-        score: total,
-        maxScore: maxScore,
-        percentage: percentage
-      };
-    }
-  } catch (error) {
-    console.error('Error calculating Personality Charm result:', error);
-    return { 
-      summary: 'Assessment completed', 
-      analysis: 'Unable to generate detailed analysis at this time. Please try again later.', 
-      total: 0, 
-      level: 'UNKNOWN' 
-    };
-  }
+  return await calculateGenericTestResult(projectId, answers, 'Personality Charm');
 }
 
 async function calculateLonelinessTestResult(projectId, answers) {
-  try {
-    const total = answers.reduce((sum, answer) => sum + (answer + 1), 0);
-    const maxScore = answers.length * 5;
-    const percentage = Math.round((total / maxScore) * 100);
-    
-    // 根据分数确定孤独等级
-    let typeCode = '';
-    if (percentage >= 90) {
-      typeCode = '9-10';
-    } else if (percentage >= 60) {
-      typeCode = '6-8';
-    } else if (percentage >= 30) {
-      typeCode = '3-5';
-    } else {
-      typeCode = '0-2';
-    }
-    
-    // 从数据库获取结果类型信息（统一规则）
-    const resultType = await getResultTypeFromDatabase(projectId, typeCode);
-    
-    if (resultType) {
-      return {
-        summary: resultType.description_en || resultType.type_name_en,
-        analysis: resultType.analysis_en,
-        total,
-        level: typeCode,
-        score: total,
-        maxScore: maxScore,
-        percentage: percentage
-      };
-    } else {
-      return {
-        summary: 'Loneliness Level Assessment Completed',
-        analysis: 'Unable to generate detailed analysis at this time. Please try again later.',
-        total,
-        level: typeCode,
-        score: total,
-        maxScore: maxScore,
-        percentage: percentage
-      };
-    }
-  } catch (error) {
-    console.error('Error calculating Loneliness test result:', error);
-    return { 
-      summary: 'Assessment completed', 
-      analysis: 'Unable to generate detailed analysis at this time. Please try again later.', 
-      total: 0, 
-      level: 'UNKNOWN' 
-    };
-  }
+  return await calculateGenericTestResult(projectId, answers, 'Loneliness Level');
 }
 
 async function calculateViolenceIndexResult(projectId, answers) {
-  try {
-    const total = answers.reduce((sum, answer) => sum + (answer + 1), 0);
-    const maxScore = answers.length * 5;
-    const percentage = Math.round((total / maxScore) * 100);
-    
-    // 根据分数确定暴力指数等级
-    let typeCode = '';
-    if (percentage >= 80) {
-      typeCode = 'Result 4';
-    } else if (percentage >= 60) {
-      typeCode = 'Result 3';
-    } else if (percentage >= 40) {
-      typeCode = 'Result 2';
-    } else {
-      typeCode = 'Result 1';
-    }
-    
-    // 从数据库获取结果类型信息（统一规则）
-    const resultType = await getResultTypeFromDatabase(projectId, typeCode);
-    
-    if (resultType) {
-      return {
-        summary: resultType.description_en || resultType.type_name_en,
-        analysis: resultType.analysis_en,
-        total,
-        level: typeCode,
-        score: total,
-        maxScore: maxScore,
-        percentage: percentage
-      };
-    } else {
-      return {
-        summary: 'Violence Index Assessment Completed',
-        analysis: 'Unable to generate detailed analysis at this time. Please try again later.',
-        total,
-        level: typeCode,
-        score: total,
-        maxScore: maxScore,
-        percentage: percentage
-      };
-    }
-  } catch (error) {
-    console.error('Error calculating Violence Index result:', error);
-    return { 
-      summary: 'Assessment completed', 
-      analysis: 'Unable to generate detailed analysis at this time. Please try again later.', 
-      total: 0, 
-      level: 'UNKNOWN' 
-    };
-  }
+  return await calculateGenericTestResult(projectId, answers, 'Violence Index');
 }
 
 async function calculateCreativityTestResult(projectId, answers) {
-  try {
-    const total = answers.reduce((sum, answer) => sum + (answer + 1), 0);
-    const maxScore = answers.length * 5;
-    const percentage = Math.round((total / maxScore) * 100);
-    
-    // 根据分数确定结果类型
-    let typeCode = '';
-    if (percentage >= 80) {
-      typeCode = 'CREATIVE_5_STAR';
-    } else if (percentage >= 60) {
-      typeCode = 'CREATIVE_4_STAR';
-    } else if (percentage >= 40) {
-      typeCode = 'CREATIVE_3_STAR';
-    } else {
-      typeCode = 'CREATIVE_2_STAR';
-    }
-    
-    // 从数据库获取结果
-    const resultType = await getResultTypeFromDatabase(projectId, typeCode);
-    
-    if (resultType) {
-      return {
-        summary: resultType.description_en || resultType.type_name_en,
-        analysis: resultType.analysis_en,
-        total,
-        level: typeCode,
-        score: total,
-        maxScore: maxScore,
-        percentage: percentage
-      };
-    } else {
-      return {
-        summary: 'Creativity Assessment Completed',
-        analysis: 'Unable to generate detailed analysis at this time. Please try again later.',
-        total,
-        level: typeCode,
-        score: total,
-        maxScore: maxScore,
-        percentage: percentage
-      };
-    }
-  } catch (error) {
-    console.error('Error calculating Creativity test result:', error);
-    return { 
-      summary: 'Assessment completed', 
-      analysis: 'Unable to generate detailed analysis at this time. Please try again later.', 
-      total: 0, 
-      level: 'UNKNOWN' 
-    };
-  }
+  return await calculateGenericTestResult(projectId, answers, 'Creativity');
 }
 
 // MBTI 默认映射计算（回退函数）
