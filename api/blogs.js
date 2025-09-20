@@ -1,4 +1,4 @@
-// Vercel API route for blogs
+// Vercel API route for blogs - CommonJS格式
 const { Pool } = require('pg');
 
 // 创建数据库连接池
