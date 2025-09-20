@@ -13,6 +13,34 @@
   },
   "routes": [
     {
+      "src": "/api/health",
+      "dest": "/api/health-unified.js"
+    },
+    {
+      "src": "/api/tests",
+      "dest": "/api/tests-unified.js"
+    },
+    {
+      "src": "/api/tests/([^/]+)",
+      "dest": "/api/tests-unified.js"
+    },
+    {
+      "src": "/api/blogs",
+      "dest": "/api/blogs-unified.js"
+    },
+    {
+      "src": "/api/blogs/([^/]+)",
+      "dest": "/api/blogs-unified.js"
+    },
+    {
+      "src": "/api/blogs/([^/]+)/recommend",
+      "dest": "/api/blogs-unified.js"
+    },
+    {
+      "src": "/api/results",
+      "dest": "/api/results-unified.js"
+    },
+    {
       "src": "/api/tests/([^/]+)/like",
       "dest": "/api/tests/[id]/like.js"
     },
