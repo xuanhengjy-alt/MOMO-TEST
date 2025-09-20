@@ -48,6 +48,14 @@ app.get('/health', (req, res) => {
   });
 });
 
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
 // 静态文件服务 - 添加缓存头
 app.use(express.static('..', {
   maxAge: '1d', // 1天缓存

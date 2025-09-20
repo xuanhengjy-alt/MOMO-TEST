@@ -4,8 +4,9 @@
   "description": "MOMO TEST - Psychology Test Platform",
   "main": "api/index.js",
   "scripts": {
-    "start": "node backend/server.js",
-    "dev": "concurrently \"npm run start\" \"python -m http.server 8000\"",
+    "start": "node local-server.js",
+    "dev": "node local-server.js",
+    "backend": "node backend/server.js",
     "build": "echo 'No build step required for static site'"
   },
   "dependencies": {
