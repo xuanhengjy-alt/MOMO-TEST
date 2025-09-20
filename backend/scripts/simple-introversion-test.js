@@ -34,8 +34,8 @@ async function main() {
       RETURNING id
     `, [
       'introversion_en',
-      'Professional Test for Introversion-Extraversion Degree',
-      'Professional Test for Introversion-Extraversion Degree',
+      'Professional Test For Introversion vs Extroversion',
+      'Professional Test For Introversion vs Extroversion',
       'assets/images/professional-test-for-introversion-extraversion-degree.png',
       'Do you truly understand your social tendencies and energy sources? This professional test, through 70 carefully designed questions, helps you scientifically assess the extroverted and introverted traits in your personality.',
       'Do you truly understand your social tendencies and energy sources? This professional test, through 70 carefully designed questions, helps you scientifically assess the extroverted and introverted traits in your personality.',

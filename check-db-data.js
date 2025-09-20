@@ -1,4 +1,4 @@
-// 检查数据库中的Social Anxiety Level Test数据
+// 检查数据库中的Social Test Anxiety Test数据
 const { Pool } = require('pg');
 
 const pool = new Pool({
@@ -11,7 +11,7 @@ const pool = new Pool({
 
 async function checkDatabaseData() {
   try {
-    console.log('🔍 检查数据库中的Social Anxiety Level Test数据...\n');
+    console.log('🔍 检查数据库中的Social Test Anxiety Test数据...\n');
     
     // 1. 检查项目
     const projectQuery = await pool.query(`

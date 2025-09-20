@@ -47,7 +47,7 @@ function parseFileContent(raw) {
         data.title = line.replace(/^title\s*:/i, '').trim();
         continue;
       }
-      // e.g. "Recommended test 关联的测试项目是：Enneagram personality test"
+      // e.g. "Recommended test 关联的测试项目是：Enneagram personality test free"
       if (/^recommended test/i.test(line)) {
         const nm = line.split('：').pop().trim();
         data.test_project_id = mapTestProjectNameToId(nm);

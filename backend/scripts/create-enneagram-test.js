@@ -1,4 +1,4 @@
-console.log('🚀 Starting Enneagram personality test creation...');
+console.log('🚀 Starting Enneagram personality test free creation...');
 
 const { Pool } = require('pg');
 
@@ -13,8 +13,8 @@ const pool = new Pool({
 // 九型人格测试项目数据
 const projectData = {
   project_id: 'enneagram_en',
-  name: 'Enneagram personality test',
-  name_en: 'Enneagram personality test',
+  name: 'Enneagram personality test free',
+  name_en: 'Enneagram personality test free',
   image_url: 'assets/images/enneagram-personality-test.png',
   intro: 'The Enneagram, also known as the Enneatypes or the Nine Personality Types, is a system that has been highly favored by MBA students at renowned international universities such as Stanford in recent years and has become one of the most popular courses. Over the past decade or so, it has gained widespread popularity in academic and business circles in Europe and America.',
   intro_en: 'The Enneagram, also known as the Enneatypes or the Nine Personality Types, is a system that has been highly favored by MBA students at renowned international universities such as Stanford in recent years and has become one of the most popular courses. Over the past decade or so, it has gained widespread popularity in academic and business circles in Europe and America.',

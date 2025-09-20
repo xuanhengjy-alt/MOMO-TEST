@@ -1371,7 +1371,7 @@ function scoreLonelinessTest(answers) {
   };
 }
 
-// Social Anxiety Level Test 评分函数
+// Social Test Anxiety Test 评分函数
 function scoreSocialAnxietyTest(answers) {
   // 评分映射 (根据create-social-anxiety-test.js中的规则)
   const scoreMap = {

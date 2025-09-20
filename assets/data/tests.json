@@ -2,7 +2,7 @@
   "projects": [
     {
       "id": "mbti",
-      "name": "MBTI Career Personality Test",
+      "name": "MBTIonline Career Personality Test",
       "image": "assets/images/mbti-career personality-test.jpg",
       "intro": "The MBTI personality theory is based on the classification of psychological types by Carl Jung, later developed by Katharine Cook Briggs and Isabel Briggs Myers. It helps explain why people have different interests, excel at different jobs, and sometimes misunderstand each other. For decades, MBTI has been used worldwide by couples, teachers and students, young people choosing careers, and organizations to improve relationships, team communication, organizational building and diagnostics. In the Fortune 500, 80% of companies have experience applying MBTI.\n\nPeople tend to develop relatively stable personality types after adolescence, which then grow dynamically with experience. According to Jung, once formed, personality is difficult to change; different manifestations arise as underused functions develop. Like handedness, MBTI preferences reflect the hand you use most naturally, while with experience you may practice the other hand.\n\nThere are no good or bad personality types—only differences. Each trait has strengths and weaknesses. Understanding them helps one leverage strengths, avoid pitfalls, get along better with others, and make better decisions.\n\nTest-takers should answer honestly and independently to obtain effective results.",
       "type": "mbti",

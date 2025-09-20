@@ -59,7 +59,7 @@
       phil_test_en: 'assets/images/phil-personality-test.jpg',
       four_colors_en: 'assets/images/four-colors-personality-analysis.jpg',
       pdp_test_en: 'assets/images/professional-dyna-metric-program.jpg',
-      mental_age_test_en: 'assets/images/test-your-mental-age.jpg',
+      mental_age_test_en: 'assets/images/test-your-creativity.jpg', // 使用现有图片
       holland_test_en: 'assets/images/holland-occupational-interest-test.jpg',
       kelsey_test_en: 'assets/images/kelsey-temperament-type-test.jpg',
       temperament_type_test: 'assets/images/temperament-type-test.jpg',
@@ -67,30 +67,57 @@
       creativity_test: 'assets/images/test-your-creativity.jpg',
       anxiety_depression_test: 'assets/images/anxiety-and-depression-level-test.jpg',
       personality_charm_1min: 'assets/images/find-out-your-personality-charm-level-in-just-1-minute.jpg',
-      loneliness_1min: 'assets/images/find-out-just-how-lonely-your-heart-really-is.jpg'
+      loneliness_1min: 'assets/images/find-out-just-how-lonely-your-heart-really-is.jpg',
+      violence_index: 'assets/images/find-out-how-many-stars-your-violence-index-has.jpg'
     };
-    const byId = imageFallbacks[p.id] || null;
-    img.src = byId || p.image;
+    // 优先使用fallback映射，然后使用API返回的图片路径
+    let imagePath = imageFallbacks[p.id];
+    if (!imagePath && p.image) {
+      // 修复API返回的图片路径中的空格问题
+      imagePath = p.image.replace(/\s+/g, '-');
+    }
+    if (!imagePath) {
+      imagePath = 'assets/images/logo.png';
+    }
+    
+    // 确保路径以 assets/ 开头
+    if (!imagePath.startsWith('assets/')) {
+      imagePath = 'assets/images/logo.png';
+    }
+    
+    console.log(`Loading image for ${p.id}:`, imagePath); // 调试日志
+    
+    // 直接设置图片源，不使用时间戳避免问题
+    img.src = imagePath;
     img.alt = p.name;
     img.onerror = function(){
+      console.error(`Failed to load image for ${p.id}:`, img.src); // 错误日志
       img.onerror = null;
-      // MBTI: 新文件名优先，旧文件名兜底
-      if (p.id === 'mbti') {
-        img.src = 'assets/images/mbti-career personality-test.jpg';
-        img.onerror = function(){ img.src = 'assets/images/logo.png'; };
-        return;
-      }
-      if (p.id === 'violence_index') {
-        img.src = 'assets/images/find-out-how-many-stars-your-violence-index-has.jpg';
-        img.onerror = function(){ img.src = byId || 'assets/images/logo.png'; };
-        return;
-      }
-      img.src = byId || 'assets/images/logo.png';
+      // 使用logo作为兜底
+      console.log(`Using logo as fallback for ${p.id}`);
+      img.src = 'assets/images/logo.png';
     };
     img.addEventListener('load', () => {
+      console.log(`Image loaded successfully for ${p.id}:`, img.src);
       skeleton.classList.add('hidden');
       img.classList.remove('hidden');
     });
+    
+    // 如果图片已经加载完成（从缓存），立即显示
+    if (img.complete && img.naturalHeight !== 0) {
+      console.log(`Image already loaded for ${p.id}:`, img.src);
+      skeleton.classList.add('hidden');
+      img.classList.remove('hidden');
+    }
+    
+    // 设置超时，确保即使图片加载失败也能显示
+    setTimeout(() => {
+      if (skeleton && !skeleton.classList.contains('hidden')) {
+        console.log(`Timeout: showing image for ${p.id} anyway`);
+        skeleton.classList.add('hidden');
+        img.classList.remove('hidden');
+      }
+    }, 3000); // 3秒超时
     title.textContent = p.nameEn;
 
     // 使用API数据或本地存储

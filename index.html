@@ -7,6 +7,11 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="icon" href="assets/images/logo.png" type="image/png" />
   <link rel="stylesheet" href="css/style.css" />
+  
+  <!-- 预加载关键资源 -->
+  <link rel="preload" href="assets/images/logo.png" as="image">
+  <link rel="preload" href="js/main.js" as="script">
+  <link rel="preload" href="js/api.js" as="script">
 </head>
 <body class="bg-gray-50 text-gray-900">
   <header class="sticky top-0 z-10 bg-white/80 backdrop-blur border-b">
@@ -33,7 +38,7 @@
   <template id="test-card-template">
     <article class="rounded-lg overflow-hidden border bg-white shadow-sm hover:shadow transition flex flex-col relative">
       <div class="w-full aspect-video skeleton"></div>
-      <img class="w-full aspect-video object-cover hidden" />
+      <img class="w-full aspect-video object-cover hidden" loading="lazy" />
       <!-- 免费标签 -->
       <div class="pricing-label absolute top-2 right-2 hidden">
         <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-500 text-white shadow-sm">
@@ -60,6 +65,7 @@
     try { document.write(''); } catch(_) {}
   </script>
   <script src="js/test-logic.js?v=20250116"></script>
+  <script src="js/footer.js?v=20250116"></script>
   <script>
     // 确保 logo 可加载，失败则给出兜底
     (function(){
@@ -105,6 +111,25 @@
     })();
   </script>
   <script src="js/main.js?v=20250116"></script>
+  
+  <!-- Microsoft Clarity Analytics -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "tdlg9y22mr");
+  </script>
+  
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-YN0J7LHNTT"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-YN0J7LHNTT');
+  </script>
 </body>
 </html>
 

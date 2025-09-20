@@ -1,4 +1,4 @@
-console.log('🚀 Starting Test Your Mental Age creation...');
+console.log('🚀 Starting Check mental age test creation...');
 
 const { Pool } = require('pg');
 
@@ -13,8 +13,8 @@ const pool = new Pool({
 // 心理年龄测试项目数据
 const projectData = {
   project_id: 'mental_age_test_en',
-  name: 'Test Your Mental Age',
-  name_en: 'Test Your Mental Age',
+  name: 'Check mental age test',
+  name_en: 'Check mental age test',
   image_url: 'assets/images/test-your-mental-age.png',
   intro: 'Whether a person is mature cannot be simply defined by their age, because one\'s years of life do not fully align with their behaviors and emotions. Some people are physically mature, yet their actions are as childish as those of a kid. On the other hand, there are individuals who, though still young children, have already gained a good understanding of many truths about the world—this is exactly what the saying "an old head on young shoulders" means.',
   intro_en: 'Whether a person is mature cannot be simply defined by their age, because one\'s years of life do not fully align with their behaviors and emotions. Some people are physically mature, yet their actions are as childish as those of a kid. On the other hand, there are individuals who, though still young children, have already gained a good understanding of many truths about the world—this is exactly what the saying "an old head on young shoulders" means.',
@@ -70,7 +70,7 @@ async function main() {
       return;
     }
     
-    console.log('📝 Creating Test Your Mental Age project...');
+    console.log('📝 Creating Check mental age test project...');
     
     // 创建测试项目
     const projectResult = await client.query(`
@@ -112,7 +112,7 @@ async function main() {
     }
     console.log(`✅ Created ${resultTypes.length} result types`);
     
-    console.log('🎉 Test Your Mental Age setup completed!');
+    console.log('🎉 Check mental age test setup completed!');
     console.log(`📊 Project ID: ${projectId}`);
     console.log(`📋 Result types: ${resultTypes.length}`);
     

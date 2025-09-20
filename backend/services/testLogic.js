@@ -2085,7 +2085,7 @@ class TestLogicService {
     };
   }
 
-  // Social Anxiety Level Test 计算
+  // Social Test Anxiety Test 计算
   async scoreSocialAnxietyTest(answers) {
     try {
       // 评分映射 (根据create-social-anxiety-test.js中的规则)

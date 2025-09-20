@@ -1,4 +1,4 @@
-// 更新 Enneagram personality test 的 intro_en 字段
+// 更新 Enneagram personality test free 的 intro_en 字段
 process.env.DATABASE_URL = 'postgresql://neondb_owner:npg_CSmA7V5acbdJ@ep-muddy-salad-af73ejdb-pooler.c-2.us-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
 const { query } = require('../config/database');
 

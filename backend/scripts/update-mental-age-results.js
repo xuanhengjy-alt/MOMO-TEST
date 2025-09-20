@@ -1,4 +1,4 @@
-// 更新 Test Your Mental Age 的 result_types 英文字段（名称与简短描述）
+// 更新 Check mental age test 的 result_types 英文字段（名称与简短描述）
 process.env.DATABASE_URL = 'postgresql://neondb_owner:npg_CSmA7V5acbdJ@ep-muddy-salad-af73ejdb-pooler.c-2.us-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
 const { query } = require('../config/database');
 

@@ -7,7 +7,7 @@ const pool = new Pool({
 
 async function testBackendAPI() {
   try {
-    console.log('🧪 测试后端Social Anxiety Level Test API...\n');
+    console.log('🧪 测试后端Social Test Anxiety Test API...\n');
     
     // 模拟测试结果提交
     const mockAnswers = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]; // 全部选择第5个选项

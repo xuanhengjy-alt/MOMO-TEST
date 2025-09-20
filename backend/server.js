@@ -48,6 +48,20 @@ app.get('/health', (req, res) => {
   });
 });
 
+// 静态文件服务 - 添加缓存头
+app.use(express.static('..', {
+  maxAge: '1d', // 1天缓存
+  etag: true,
+  lastModified: true,
+  setHeaders: (res, path) => {
+    if (path.endsWith('.js') || path.endsWith('.css')) {
+      res.setHeader('Cache-Control', 'public, max-age=86400'); // 1天
+    } else if (path.match(/\.(jpg|jpeg|png|gif|webp)$/)) {
+      res.setHeader('Cache-Control', 'public, max-age=2592000'); // 30天
+    }
+  }
+}));
+
 // API 路由
 app.use('/api/tests', testRoutes);
 app.use('/api/results', resultRoutes);

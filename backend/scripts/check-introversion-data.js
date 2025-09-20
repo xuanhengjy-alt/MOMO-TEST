@@ -7,7 +7,7 @@ async function checkIntroversionData() {
     // 检查项目信息
     const projectResult = await query(
       'SELECT * FROM test_projects WHERE name = $1 OR test_type = $2', 
-      ['Professional Test for Introversion-Extraversion Degree', 'introversion_extraversion']
+      ['Professional Test For Introversion vs Extroversion', 'introversion_extraversion']
     );
     
     console.log('\n📋 项目信息:');

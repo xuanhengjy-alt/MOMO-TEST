@@ -6,7 +6,7 @@ async function main() {
     try {
         // 1. 创建测试项目
         const projectData = {
-            name: 'Professional Test for Introversion-Extraversion Degree',
+            name: 'Professional Test For Introversion vs Extroversion',
             description: 'Do you truly understand your social tendencies and energy sources? This professional test, through 70 carefully designed questions, helps you scientifically assess the extroverted and introverted traits in your personality. Extroverts often gain energy from interpersonal interactions, while introverts tend to restore their energy in solitude - and this is not simply a matter of being "lively" or "quiet", but rather about how you think, make decisions and perceive the world.\n\nAfter completing the test, you will receive a detailed personality analysis report, clearly indicating your position on the spectrum from "very introverted - introverted - extroverted - very extroverted", and helping you understand your strengths and potential challenges. Whether you are good at contemplation or passionate about expression, this test will assist you in better planning your career path, optimizing your social approach, and achieving more composed growth based on self-awareness.\n\nAre you ready to have a 15-minute conversation with your true self?',
             image_path: 'assets/images/professional-test-for-introversion-extraversion-degree.png',
             question_count: 70,

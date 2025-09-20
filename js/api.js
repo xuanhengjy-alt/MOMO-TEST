@@ -182,8 +182,8 @@ class ApiService {
     return [
       {
         id: 'mbti',
-        name: 'MBTI Career Personality Test',
-        nameEn: 'MBTI Career Personality Test',
+        name: 'MBTIonline Career Personality Test',
+        nameEn: 'MBTIonline Career Personality Test',
         image: 'assets/images/mbti-career-personality-test.jpg',
         intro: 'The MBTI personality theory is based on the classification of psychological types by Carl Jung, later developed by Katharine Cook Briggs and Isabel Briggs Myers. It helps explain why people have different interests, excel at different jobs, and sometimes misunderstand each other. For decades, MBTI has been used worldwide by couples, teachers and students, young people choosing careers, and organizations to improve relationships, team communication, organizational building and diagnostics. In the Fortune 500, 80% of companies have experience applying MBTI.',
         introEn: 'The MBTI personality theory is based on the classification of psychological types by Carl Jung, later developed by Katharine Cook Briggs and Isabel Briggs Myers. It helps explain why people have different interests, excel at different jobs, and sometimes misunderstand each other. For decades, MBTI has been used worldwide by couples, teachers and students, young people choosing careers, and organizations to improve relationships, team communication, organizational building and diagnostics. In the Fortune 500, 80% of companies have experience applying MBTI.',
@@ -227,8 +227,8 @@ class ApiService {
       },
       {
         id: 'introversion_en',
-        name: 'Professional Test for Introversion-Extraversion Degree',
-        nameEn: 'Professional Test for Introversion-Extraversion Degree',
+        name: 'Professional Test For Introversion vs Extroversion',
+        nameEn: 'Professional Test For Introversion vs Extroversion',
         image: 'assets/images/professional-test-for-introversion-extraversion-degree.jpg',
         intro: 'Do you truly understand your social tendencies and energy sources? This professional test, through 70 carefully designed questions, helps you scientifically assess the extroverted and introverted traits in your personality. Extroverts often gain energy from interpersonal interactions, while introverts tend to restore their energy in solitude - and this is not simply a matter of being "lively" or "quiet", but rather about how you think, make decisions and perceive the world.',
         introEn: 'Do you truly understand your social tendencies and energy sources? This professional test, through 70 carefully designed questions, helps you scientifically assess the extroverted and introverted traits in your personality. Extroverts often gain energy from interpersonal interactions, while introverts tend to restore their energy in solitude - and this is not simply a matter of being "lively" or "quiet", but rather about how you think, make decisions and perceive the world.',
@@ -240,8 +240,8 @@ class ApiService {
       },
       {
         id: 'enneagram_en',
-        name: 'Enneagram personality test',
-        nameEn: 'Enneagram personality test',
+        name: 'Enneagram personality test free',
+        nameEn: 'Enneagram personality test free',
         image: 'assets/images/enneagram-personality-test.jpg',
         intro: 'The Enneagram, also known as the Enneatypes or the Nine Personality Types, is a system that has been highly favored by MBA students at renowned international universities such as Stanford in recent years and has become one of the most popular courses. Over the past decade or so, it has gained widespread popularity in academic and business circles in Europe and America.',
         introEn: 'The Enneagram, also known as the Enneatypes or the Nine Personality Types, is a system that has been highly favored by MBA students at renowned international universities such as Stanford in recent years and has become one of the most popular courses. Over the past decade or so, it has gained widespread popularity in academic and business circles in Europe and America.',
@@ -305,8 +305,8 @@ class ApiService {
       },
       {
         id: 'mental_age_test_en',
-        name: 'Test Your Mental Age',
-        nameEn: 'Test Your Mental Age',
+        name: 'Check mental age test',
+        nameEn: 'Check mental age test',
         image: 'assets/images/test-your-mental-age.jpg',
         intro: 'Whether a person is mature cannot be simply defined by their age, because one\'s years of life do not fully align with their behaviors and emotions. Some people are physically mature, yet their actions are as childish as those of a kid. On the other hand, there are individuals who, though still young children, have already gained a good understanding of many truths about the world.',
         introEn: 'Whether a person is mature cannot be simply defined by their age, because one\'s years of life do not fully align with their behaviors and emotions. Some people are physically mature, yet their actions are as childish as those of a kid. On the other hand, there are individuals who, though still young children, have already gained a good understanding of many truths about the world.',
@@ -372,8 +372,8 @@ class ApiService {
       },
       {
         id: 'social_anxiety_test',
-        name: 'Social Anxiety Level Test',
-        nameEn: 'Social Anxiety Level Test',
+        name: 'Social Test Anxiety Test',
+        nameEn: 'Social Test Anxiety Test',
         image: 'assets/images/social-anxiety-level-test.jpg',
         intro: 'A 15-question scale covering multiple social situations to reflect your level of social anxiety. Not a diagnosis, but a quick self-check.',
         introEn: 'A 15-question scale covering multiple social situations to reflect your level of social anxiety. Not a diagnosis, but a quick self-check.',

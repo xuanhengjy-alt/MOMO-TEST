@@ -1,4 +1,4 @@
-console.log('🚀 Creating: Social Anxiety Level Test');
+console.log('🚀 Creating: Social Test Anxiety Test');
 
 const { Pool } = require('pg');
 
@@ -11,8 +11,8 @@ const pool = new Pool({
 
 const project = {
   project_id: 'social_anxiety_test',
-  name: 'Social Anxiety Level Test',
-  name_en: 'Social Anxiety Level Test',
+  name: 'Social Test Anxiety Test',
+  name_en: 'Social Test Anxiety Test',
   image_url: 'assets/images/social-anxiety-level-test.jpg',
   intro: 'A 15-question scale covering multiple social situations to reflect your level of social anxiety. Not a diagnosis, but a quick self-check.',
   intro_en: 'A 15-question scale covering multiple social situations to reflect your level of social anxiety. Not a diagnosis, but a quick self-check.',

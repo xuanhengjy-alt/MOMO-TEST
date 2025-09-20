@@ -1,4 +1,4 @@
-console.log('🔍 Final verification of Enneagram personality test...');
+console.log('🔍 Final verification of Enneagram personality test free...');
 
 const { Pool } = require('pg');
 
