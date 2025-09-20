@@ -3,7 +3,9 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+// 加载环境变量
 require('dotenv').config({ path: '.env.local' });
+require('dotenv').config(); // 也尝试加载默认的.env文件
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,6 +21,54 @@ app.use(express.static('.', {
   etag: true,
   lastModified: true
 }));
+
+// 处理SPA路由 - 确保所有页面都能正确访问
+app.get('*', (req, res, next) => {
+  // 如果是API请求，跳过
+  if (req.path.startsWith('/api/')) {
+    return next();
+  }
+  
+  // 如果是静态资源，跳过
+  if (req.path.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
+    return next();
+  }
+  
+  // 处理HTML页面路由
+  const validPages = [
+    'index.html',
+    'blog.html', 
+    'test-detail.html',
+    'blog-detail.html'
+  ];
+  
+  // 检查是否是有效的页面请求
+  for (const page of validPages) {
+    if (req.path === `/${page}` || req.path === `/${page}/`) {
+      return res.sendFile(path.join(__dirname, page));
+    }
+  }
+  
+  // 处理带参数的页面（如 test-detail.html?id=mbti）
+  if (req.path.startsWith('/test-detail.html') || req.path.startsWith('/blog-detail.html')) {
+    // 提取页面名称，忽略查询参数和路径参数
+    const pageName = req.path.split('?')[0].split('/')[1];
+    if (validPages.includes(pageName)) {
+      return res.sendFile(path.join(__dirname, pageName));
+    }
+  }
+  
+  // 处理其他可能的页面请求（如 /test-detail.html/some-id）
+  if (req.path.startsWith('/test-detail.html/') || req.path.startsWith('/blog-detail.html/')) {
+    const pageName = req.path.split('/')[1];
+    if (validPages.includes(pageName)) {
+      return res.sendFile(path.join(__dirname, pageName));
+    }
+  }
+  
+  // 默认返回index.html
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 // 动态加载API文件
 function loadApiHandler(apiPath) {
