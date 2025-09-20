@@ -41,7 +41,9 @@ function canCount(ip, slug) {
   return false;
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
+  console.log('Blogs API called:', req.method, req.url);
+  
   // 设置CORS头
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -53,6 +55,14 @@ export default async function handler(req, res) {
   }
 
   try {
+    // 检查数据库连接
+    if (!process.env.DATABASE_URL) {
+      console.error('DATABASE_URL not set');
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Database configuration missing' 
+      });
+    }
     if (req.method === 'GET') {
       // 处理博客列表请求
       const page = clamp(parseInt(req.query.page || '1', 10) || 1, 1, 1000000);
