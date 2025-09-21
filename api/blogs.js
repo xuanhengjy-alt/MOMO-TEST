@@ -124,7 +124,8 @@ async function handleBlogList(req, res) {
           slug: row.slug,
           title: row.title,
           excerpt: row.summary,
-          imageUrl: row.cover_image_url,
+          cover_image_url: row.cover_image_url, // 保持原始字段名
+          imageUrl: row.cover_image_url, // 兼容字段名
           author: 'MOMO TEST', // 默认作者
           publishedAt: row.created_at,
           viewCount: row.reading_count || 0,
@@ -217,7 +218,8 @@ async function handleBlogDetail(req, res, slug) {
       title: row.title,
       excerpt: row.summary,
       content: row.content_md,
-      imageUrl: row.cover_image_url,
+      cover_image_url: row.cover_image_url, // 保持原始字段名
+      imageUrl: row.cover_image_url, // 兼容字段名
       author: 'MOMO TEST',
       publishedAt: row.created_at,
       viewCount: (row.reading_count || 0) + 1,
@@ -260,7 +262,8 @@ async function handleBlogRecommendations(req, res, slug) {
       slug: row.slug,
       title: row.title,
       excerpt: row.summary,
-      imageUrl: row.cover_image_url,
+      cover_image_url: row.cover_image_url, // 保持原始字段名
+      imageUrl: row.cover_image_url, // 兼容字段名
       author: 'MOMO TEST',
       publishedAt: row.created_at,
       viewCount: row.reading_count || 0,
