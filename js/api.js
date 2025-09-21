@@ -22,7 +22,13 @@ class ApiService {
     if (options.body && method !== 'GET' && method !== 'HEAD' && !headers['Content-Type']) {
       headers['Content-Type'] = 'application/json';
     }
-    const config = { ...options, method, headers };
+    const config = { 
+      ...options, 
+      method, 
+      headers,
+      // 设置5秒超时，提高响应速度
+      signal: AbortSignal.timeout(5000)
+    };
 
     console.log(`API Request: ${method} ${url}`, config);
 
@@ -50,6 +56,10 @@ class ApiService {
       return data;
     } catch (error) {
       console.error('API request failed:', error);
+      if (error.name === 'TimeoutError') {
+        console.error('API请求超时:', url);
+        throw new Error('Request timeout');
+      }
       throw error;
     }
   }

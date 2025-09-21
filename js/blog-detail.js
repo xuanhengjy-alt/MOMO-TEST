@@ -56,9 +56,9 @@
   const contentEl = document.getElementById('blog-content');
   const breadcrumb = document.getElementById('breadcrumb-title');
   
-  // 显示加载状态
-  if (titleEl) titleEl.textContent = 'Loading...';
-  if (contentEl) contentEl.innerHTML = '<div class="flex items-center justify-center py-8"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div><span class="ml-3 text-gray-600">Loading blog content...</span></div>';
+  // 不显示加载状态，直接显示空内容
+  if (titleEl) titleEl.textContent = '';
+  if (contentEl) contentEl.innerHTML = '';
 
   function renderMarkdown(md){
     console.log('renderMarkdown called with:', md ? 'content' : 'no content');
@@ -122,15 +122,25 @@
   try {
     console.log('🔍 获取blog详情，slug:', slug);
     
-    // 直接调用API
-    const response = await fetch(`/api/blogs/${encodeURIComponent(slug)}`);
-    console.log('API响应状态:', response.status);
+    // 并行加载blog详情和推荐文章，提高加载速度
+    const [blogResponse, recommendationsResponse] = await Promise.allSettled([
+      fetch(`/api/blogs/${encodeURIComponent(slug)}`, { 
+        signal: AbortSignal.timeout(5000) 
+      }),
+      fetch(`/api/blogs/${encodeURIComponent(slug)}/recommend`, { 
+        signal: AbortSignal.timeout(3000) 
+      })
+    ]);
     
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    console.log('Blog API响应状态:', blogResponse.status === 'fulfilled' ? blogResponse.value.status : 'failed');
+    console.log('Recommendations API响应状态:', recommendationsResponse.status === 'fulfilled' ? recommendationsResponse.value.status : 'failed');
+    
+    // 处理blog详情
+    if (blogResponse.status !== 'fulfilled' || !blogResponse.value.ok) {
+      throw new Error(`HTTP error! status: ${blogResponse.value?.status || 'network error'}`);
     }
     
-    const b = await response.json();
+    const b = await blogResponse.value.json();
     console.log('✅ 成功获取blog数据:', b);
     document.title = `${b.title} - MOMO TEST`;
     // 基础 SEO/OG 注入
@@ -237,11 +247,17 @@
       }
     } catch(_) {}
 
-    // 推荐
+    // 推荐（已经在上面并行加载了）
     try {
-      console.log('🔍 开始加载推荐文章...');
-      const rec = await window.ApiService.getBlogRecommendations(slug);
-      console.log('✅ 推荐文章数据:', rec);
+      console.log('🔍 处理推荐文章...');
+      let rec = [];
+      
+      if (recommendationsResponse.status === 'fulfilled' && recommendationsResponse.value.ok) {
+        rec = await recommendationsResponse.value.json();
+        console.log('✅ 推荐文章数据:', rec);
+      } else {
+        console.log('⚠️ 推荐文章API调用失败');
+      }
       
       const recContainer = document.getElementById('rec-container');
       const recTpl = document.getElementById('rec-card-template');
