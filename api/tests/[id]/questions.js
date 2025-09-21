@@ -16,7 +16,22 @@ module.exports = async function handler(req, res) {
     // 从URL路径中提取项目ID
     const url = new URL(req.url, `http://${req.headers.host}`);
     const pathParts = url.pathname.split('/').filter(Boolean);
-    const projectId = pathParts[3]; // /api/tests/[id]/questions
+    
+    // 更灵活的ID提取逻辑
+    let projectId = null;
+    
+    // 方法1: 从路径中提取 (适用于 /api/tests/[id]/questions)
+    if (pathParts.length >= 4 && pathParts[1] === 'tests' && pathParts[3] === 'questions') {
+      projectId = pathParts[2];
+    }
+    // 方法2: 从查询参数中提取 (适用于某些情况)
+    else if (url.searchParams.get('id')) {
+      projectId = url.searchParams.get('id');
+    }
+    // 方法3: 从路径中直接提取 (适用于 /api/tests/[id])
+    else if (pathParts.length >= 3 && pathParts[1] === 'tests') {
+      projectId = pathParts[2];
+    }
     
     console.log(`[Dynamic Route] Fetching questions for project: ${projectId}`);
     console.log(`[Dynamic Route] URL: ${req.url}`);
