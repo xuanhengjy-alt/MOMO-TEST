@@ -432,7 +432,12 @@ async function calculateObservationResult(projectId, answers) {
 // 社交焦虑测试结果计算
 async function calculateSocialAnxietyResult(projectId, answers) {
   try {
-    const total = answers.reduce((sum, answer) => sum + (answer + 1), 0);
+    // answers 是答案索引数组，需要转换为分数
+    // 答案索引 0-4 对应分数 1-5
+    const total = answers.reduce((sum, answerIndex) => {
+      const score = answerIndex + 1; // 索引0对应分数1，索引4对应分数5
+      return sum + score;
+    }, 0);
     
     let typeCode = '';
     if (total <= 20) {
