@@ -73,11 +73,14 @@
         console.log('✅ 直接找到项目:', prj.id);
         return prj.id;
       }
-    } catch(_) {}
+    } catch(_) {
+      console.log('⚠️ 直接API调用失败，尝试其他方法');
+    }
     
     // 拉取项目列表，根据 nameEn 规范化匹配
+    let projects;
     try {
-      const projects = await window.ApiService.getTestProjects();
+      projects = await window.ApiService.getTestProjects();
       const sanitize = (s)=>String(s||'').toLowerCase().trim().replace(/[\s/_.,:：—-]+/g,'-').replace(/[^a-z0-9-]/g,'').replace(/-+/g,'-').slice(0,60);
       
       console.log('📋 项目列表:', projects.map(p => ({ id: p.id, nameEn: p.nameEn, slug: sanitize(p.nameEn||p.name) })));
@@ -118,11 +121,34 @@
       
     } catch(error) {
       console.error('❌ 获取项目列表失败:', error);
+      console.log('🔄 尝试使用回退数据...');
+      
+      // 使用回退数据
+      projects = window.ApiService.getFallbackProjects();
+      console.log('📋 回退项目列表:', projects.map(p => ({ id: p.id, nameEn: p.nameEn })));
+      
+      // 在回退数据中查找
+      const sanitize = (s)=>String(s||'').toLowerCase().trim().replace(/[\s/_.,:：—-]+/g,'-').replace(/[^a-z0-9-]/g,'').replace(/-+/g,'-').slice(0,60);
+      
+      // 先尝试精确匹配
+      let hit = projects.find(p => p.id === input);
+      if (hit) {
+        console.log('✅ 在回退数据中精确匹配找到项目:', hit.id);
+        return hit.id;
+      }
+      
+      // 尝试slug匹配
+      const inputSlug = sanitize(input);
+      hit = projects.find(p => sanitize(p.nameEn||p.name) === inputSlug);
+      if (hit) {
+        console.log('✅ 在回退数据中slug匹配找到项目:', hit.id);
+        return hit.id;
+      }
     }
     
-    // 如果都找不到，返回null表示项目不存在
-    console.warn(`❌ Project not found: ${input}`);
-    return null;
+    // 如果都找不到，返回原始输入（可能是有效的项目ID）
+    console.log(`⚠️ 项目未找到，返回原始输入: ${input}`);
+    return input;
   }
 
   console.log('🔍 开始解析项目ID:', id);
