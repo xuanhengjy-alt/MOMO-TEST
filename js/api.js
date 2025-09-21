@@ -7,6 +7,10 @@ const API_BASE_URL = window.location.hostname === 'localhost'
 class ApiService {
   constructor() {
     this.baseURL = API_BASE_URL;
+    this.isVercel = window.location.hostname.includes('vercel.app');
+    console.log('🌐 API Base URL:', this.baseURL);
+    console.log('🌐 Is Vercel:', this.isVercel);
+    console.log('🌐 Hostname:', window.location.hostname);
   }
 
   // 通用请求方法
@@ -53,30 +57,47 @@ class ApiService {
   // 获取所有测试项目
   async getTestProjects() {
     try {
-      console.log('Attempting to fetch test projects from API...');
+      console.log('🔍 尝试从API获取测试项目...');
       const data = await this.request('/tests');
-      console.log('API response:', data);
+      console.log('✅ API响应:', data);
       
       // 检查响应格式
       if (data && data.projects && Array.isArray(data.projects)) {
-        console.log('Successfully fetched projects from API:', data.projects.length);
+        console.log('✅ 成功从API获取项目:', data.projects.length);
         return data.projects;
       } else {
         throw new Error('Invalid response format from API');
       }
     } catch (error) {
-      console.error('Failed to fetch test projects from API', error);
-      throw error;
+      console.error('❌ 从API获取测试项目失败:', error);
+      console.log('🔄 尝试使用回退数据...');
+      
+      // 回退到内置数据
+      const fallbackProjects = this.getFallbackProjects();
+      console.log('✅ 使用回退数据:', fallbackProjects.length);
+      return fallbackProjects;
     }
   }
 
   // 获取特定测试项目
   async getTestProject(projectId) {
     try {
+      console.log(`🔍 尝试获取项目 ${projectId}...`);
       const response = await this.request(`/tests/${projectId}`);
+      console.log(`✅ 成功获取项目 ${projectId}:`, response);
       return response.project || response;
     } catch (error) {
-      console.error(`Failed to fetch test project ${projectId} from API`, error);
+      console.error(`❌ 获取项目 ${projectId} 失败:`, error);
+      console.log('🔄 尝试从回退数据中查找...');
+      
+      // 回退到内置数据
+      const fallbackProjects = this.getFallbackProjects();
+      const fallbackProject = fallbackProjects.find(p => p.id === projectId);
+      if (fallbackProject) {
+        console.log(`✅ 在回退数据中找到项目 ${projectId}`);
+        return fallbackProject;
+      }
+      
       throw error;
     }
   }

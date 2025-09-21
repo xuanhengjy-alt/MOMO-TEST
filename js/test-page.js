@@ -6,21 +6,35 @@
       const parts = location.pathname.split('/').filter(Boolean);
       console.log('🔍 URL parts:', parts);
       
+      // 处理 test-detail.html/mbti 格式
       if (parts.length >= 2 && parts[parts.length-2] === 'test-detail.html') {
         const v = decodeURIComponent(parts[parts.length-1] || '');
         console.log('✅ 从pathname解析到ID:', v);
-        if (v) return v;
+        if (v && v !== 'index.html') return v; // 排除index.html
       }
       
-      // 2) 再从 href 正则解析（兼容某些代理重写场景）
+      // 2) 处理 Vercel重写后的情况：test-detail.html/index.html -> 从referrer获取
+      if (parts.length >= 2 && parts[parts.length-2] === 'test-detail.html' && parts[parts.length-1] === 'index.html') {
+        console.log('🔍 检测到Vercel重写情况，尝试从referrer解析');
+        if (document.referrer) {
+          const referrerMatch = /test-detail\.html\/([^\/\?]+)/.exec(document.referrer);
+          if (referrerMatch && referrerMatch[1]) {
+            const v = decodeURIComponent(referrerMatch[1]);
+            console.log('✅ 从referrer解析到ID:', v);
+            return v;
+          }
+        }
+      }
+      
+      // 3) 再从 href 正则解析（兼容某些代理重写场景）
       const m = /test-detail\.html\/(.+?)(?:[?#]|$)/i.exec(location.href);
       if (m && m[1]) {
         const v = decodeURIComponent(m[1]);
         console.log('✅ 从href正则解析到ID:', v);
-        return v;
+        if (v && v !== 'index.html') return v; // 排除index.html
       }
       
-      // 3) 兼容旧链接 ?id=
+      // 4) 兼容旧链接 ?id=
       const params = new URLSearchParams(location.search);
       const q = params.get('id');
       if (q) {
@@ -28,7 +42,7 @@
         return q;
       }
       
-      // 4) 检查是否是直接访问test-detail.html的情况（没有项目ID）
+      // 5) 检查是否是直接访问test-detail.html的情况（没有项目ID）
       if (parts.includes('test-detail.html') && parts.length === 1) {
         console.log('❌ 直接访问test-detail.html，没有项目ID');
         return null;
