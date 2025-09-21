@@ -132,7 +132,7 @@ JOIN test_projects p ON q.project_id = p.id
 WHERE p.project_id = 'new_test' AND q.question_number = 1;
 ```
 
-### 3. 添加结果类型（如需要）
+### 3. 添加结果类型（如需要）....
 
 ```sql
 INSERT INTO result_types (project_id, type_code, type_name, type_name_en, description, analysis)
