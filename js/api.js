@@ -92,9 +92,30 @@ class ApiService {
       
       // 回退到内置数据
       const fallbackProjects = this.getFallbackProjects();
-      const fallbackProject = fallbackProjects.find(p => p.id === projectId);
+      
+      // 先尝试精确匹配ID
+      let fallbackProject = fallbackProjects.find(p => p.id === projectId);
       if (fallbackProject) {
-        console.log(`✅ 在回退数据中找到项目 ${projectId}`);
+        console.log(`✅ 在回退数据中精确匹配找到项目 ${projectId}`);
+        return fallbackProject;
+      }
+      
+      // 尝试slug匹配
+      const sanitize = (s) => String(s || '')
+        .toLowerCase().trim()
+        .replace(/[\s/_.,:：—-]+/g, '-')
+        .replace(/[^a-z0-9-]/g, '')
+        .replace(/-+/g, '-')
+        .slice(0, 60);
+      
+      const inputSlug = sanitize(projectId);
+      fallbackProject = fallbackProjects.find(p => {
+        const projectSlug = sanitize(p.nameEn || p.name);
+        return projectSlug === inputSlug;
+      });
+      
+      if (fallbackProject) {
+        console.log(`✅ 在回退数据中slug匹配找到项目 ${projectId} -> ${fallbackProject.id}`);
         return fallbackProject;
       }
       

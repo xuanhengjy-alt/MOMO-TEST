@@ -139,9 +139,20 @@
       
       // 尝试slug匹配
       const inputSlug = sanitize(input);
-      hit = projects.find(p => sanitize(p.nameEn||p.name) === inputSlug);
+      hit = projects.find(p => {
+        const projectSlug = sanitize(p.nameEn||p.name);
+        console.log(`🔍 比较: "${inputSlug}" vs "${projectSlug}"`);
+        return projectSlug === inputSlug;
+      });
       if (hit) {
         console.log('✅ 在回退数据中slug匹配找到项目:', hit.id);
+        return hit.id;
+      }
+      
+      // 尝试反向匹配：如果输入是项目ID，尝试匹配
+      hit = projects.find(p => p.id === input);
+      if (hit) {
+        console.log('✅ 在回退数据中ID匹配找到项目:', hit.id);
         return hit.id;
       }
     }
