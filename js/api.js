@@ -231,7 +231,7 @@ class ApiService {
         intro: 'The MBTI personality theory is based on the classification of psychological types by Carl Jung, later developed by Katharine Cook Briggs and Isabel Briggs Myers. It helps explain why people have different interests, excel at different jobs, and sometimes misunderstand each other. For decades, MBTI has been used worldwide by couples, teachers and students, young people choosing careers, and organizations to improve relationships, team communication, organizational building and diagnostics. In the Fortune 500, 80% of companies have experience applying MBTI.',
         introEn: 'The MBTI personality theory is based on the classification of psychological types by Carl Jung, later developed by Katharine Cook Briggs and Isabel Briggs Myers. It helps explain why people have different interests, excel at different jobs, and sometimes misunderstand each other. For decades, MBTI has been used worldwide by couples, teachers and students, young people choosing careers, and organizations to improve relationships, team communication, organizational building and diagnostics. In the Fortune 500, 80% of companies have experience applying MBTI.',
         type: 'mbti',
-        testedCount: '120K+',
+        testedCount: 120000,
         likes: 13000
       },
       {
@@ -243,7 +243,7 @@ class ApiService {
         introEn: 'In the 1920s, American psychologist William Moulton Marston developed a theory to explain human emotional responses. Prior to this, such research had been largely confined to studies of psychiatric patients or individuals with mental disorders. Dr. Marston sought to broaden the scope of this research to apply it to the general population with normal mental health. Consequently, he structured his theory into a systematic framework titled The Emotions of Normal People.',
         type: 'disc40',
         isJumpType: false,
-        testedCount: '50K+',
+        testedCount: 50000,
         likes: 4500
       },
       {
@@ -254,7 +254,7 @@ class ApiService {
         intro: 'Do you have a clear sense of purpose and efficient execution ability? This classic test quickly assesses your core management abilities such as planning, decision-making, and self-discipline through 15 questions. After completing the self-test, you will receive targeted ability analysis and improvement directions. Whether it\'s enhancing team efficiency or personal career development, you can find a breakthrough path. Spend a few minutes on the self-test and unlock your management potential!',
         introEn: 'Do you have a clear sense of purpose and efficient execution ability? This classic test quickly assesses your core management abilities such as planning, decision-making, and self-discipline through 15 questions. After completing the self-test, you will receive targeted ability analysis and improvement directions. Whether it\'s enhancing team efficiency or personal career development, you can find a breakthrough path. Spend a few minutes on the self-test and unlock your management potential!',
         type: 'mgmt_en',
-        testedCount: '0',
+        testedCount: 0,
         likes: 0
       },
       {
@@ -265,7 +265,7 @@ class ApiService {
         intro: 'Have you truly "seen" rather than just "looked" around you? This test, through 15 situational questions, helps you assess your unconscious observing habits - from detail capture to interpersonal perception, from environmental awareness to inner awareness. Observation is not only the ability to notice details, but also the key to understanding others and connecting with the world. After completing the test, you will receive a precise analysis of your cognitive style, clearly identifying your strengths and blind spots, and learn how to enhance your observation skills to improve communication, decision-making, and even creativity. Don\'t overthink, answer immediately, and unlock your observation potential in just a few minutes!',
         introEn: 'Have you truly "seen" rather than just "looked" around you? This test, through 15 situational questions, helps you assess your unconscious observing habits - from detail capture to interpersonal perception, from environmental awareness to inner awareness. Observation is not only the ability to notice details, but also the key to understanding others and connecting with the world. After completing the test, you will receive a precise analysis of your cognitive style, clearly identifying your strengths and blind spots, and learn how to enhance your observation skills to improve communication, decision-making, and even creativity. Don\'t overthink, answer immediately, and unlock your observation potential in just a few minutes!',
         type: 'observation',
-        testedCount: '0',
+        testedCount: 0,
         likes: 0
       },
       {
@@ -278,7 +278,7 @@ class ApiService {
         type: 'introversion_extraversion',
         estimatedTime: 15,
         questionCount: 70,
-        testedCount: '0',
+        testedCount: 0,
         likes: 0
       },
       {
@@ -291,7 +291,7 @@ class ApiService {
         type: 'enneagram',
         estimatedTime: 30,
         questionCount: 180,
-        testedCount: '0',
+        testedCount: 0,
         likes: 0
       },
       {
@@ -304,7 +304,7 @@ class ApiService {
         type: 'eq_test',
         estimatedTime: 15,
         questionCount: 33,
-        testedCount: '0',
+        testedCount: 0,
         likes: 0
       },
       {
@@ -317,7 +317,7 @@ class ApiService {
         type: 'phil_test',
         estimatedTime: 5,
         questionCount: 10,
-        testedCount: '0',
+        testedCount: 0,
         likes: 0
       },
       {
@@ -330,7 +330,7 @@ class ApiService {
         type: 'four_colors',
         estimatedTime: 15,
         questionCount: 30,
-        testedCount: '0',
+        testedCount: 0,
         likes: 0
       },
       {
@@ -343,7 +343,7 @@ class ApiService {
         type: 'pdp_test',
         estimatedTime: 10,
         questionCount: 30,
-        testedCount: '0',
+        testedCount: 0,
         likes: 0
       },
       {
@@ -356,7 +356,7 @@ class ApiService {
         type: 'mental_age_test',
         estimatedTime: 8,
         questionCount: 20,
-        testedCount: '0',
+        testedCount: 0,
         likes: 0
       },
       {
@@ -369,7 +369,7 @@ class ApiService {
         type: 'holland_test',
         estimatedTime: 15,
         questionCount: 90,
-        testedCount: '0',
+        testedCount: 0,
         likes: 0
       },
       {
@@ -382,7 +382,7 @@ class ApiService {
         type: 'kelsey_test',
         estimatedTime: 12,
         questionCount: 70,
-        testedCount: '0',
+        testedCount: 0,
         likes: 0
       },
       {
@@ -396,7 +396,7 @@ class ApiService {
         estimatedTime: 15,
         questionCount: 60,
         isJumpType: false,
-        testedCount: '0',
+        testedCount: 0,
         likes: 0
       },
       {
@@ -410,7 +410,7 @@ class ApiService {
         estimatedTime: 1,
         questionCount: 10,
         isJumpType: true,
-        testedCount: '0',
+        testedCount: 0,
         likes: 0
       },
       {
@@ -424,7 +424,7 @@ class ApiService {
         estimatedTime: 6,
         questionCount: 15,
         isJumpType: false,
-        testedCount: '0',
+        testedCount: 0,
         likes: 0
       }
     ];

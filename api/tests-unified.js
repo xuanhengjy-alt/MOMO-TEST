@@ -40,8 +40,10 @@ module.exports = async function handler(req, res) {
         introEn: row.intro_en,
         testType: row.test_type,
         pricingType: row.pricing_type,
-        totalTests: row.total_tests || 0,
-        totalLikes: row.total_likes || 0
+        testedCount: row.total_tests || 0,  // 修复字段名映射
+        likes: row.total_likes || 0,        // 修复字段名映射
+        totalTests: row.total_tests || 0,   // 保持兼容性
+        totalLikes: row.total_likes || 0    // 保持兼容性
       };
 
       res.status(200).json({ success: true, project: project });
@@ -66,8 +68,10 @@ module.exports = async function handler(req, res) {
         introEn: row.intro_en,
         testType: row.test_type,
         pricingType: row.pricing_type,
-        totalTests: row.total_tests || 0,
-        totalLikes: row.total_likes || 0
+        testedCount: row.total_tests || 0,  // 修复字段名映射
+        likes: row.total_likes || 0,        // 修复字段名映射
+        totalTests: row.total_tests || 0,   // 保持兼容性
+        totalLikes: row.total_likes || 0    // 保持兼容性
       }));
 
       res.status(200).json({ success: true, projects: projects });
