@@ -55,13 +55,32 @@
     const titleEl = document.getElementById('blog-title');
     const contentEl = document.getElementById('blog-content');
     if (titleEl) titleEl.textContent = 'Blog Not Found';
-    if (contentEl) contentEl.innerHTML = '<p class="text-gray-500">Sorry, the blog post you are looking for could not be found.</p>';
+    if (contentEl) contentEl.innerHTML = '<p class="text-gray-500">Sorry, the blog post you are looking for could not be found.</p><p class="text-sm text-gray-400 mt-2">Please check the URL format: /blog-detail.html/[blog-slug]</p>';
     
     // 延迟重定向，让用户看到错误信息
     setTimeout(() => {
       location.replace('/blog.html');
     }, 3000);
     return; 
+  }
+  
+  // 检查slug是否有效（不应该是常见的文件名）
+  const invalidSlugs = ['blog.html', 'index.html', 'test-detail.html', 'blog-detail.html'];
+  if (invalidSlugs.includes(slug)) {
+    console.log('❌ 检测到无效的slug:', slug);
+    console.log('当前URL:', location.href);
+    
+    // 显示友好的错误信息
+    const titleEl = document.getElementById('blog-title');
+    const contentEl = document.getElementById('blog-content');
+    if (titleEl) titleEl.textContent = 'Invalid Blog URL';
+    if (contentEl) contentEl.innerHTML = '<p class="text-gray-500">The blog URL format is incorrect.</p><p class="text-sm text-gray-400 mt-2">Please use: /blog-detail.html/[blog-slug]</p>';
+    
+    // 延迟重定向，让用户看到错误信息
+    setTimeout(() => {
+      location.replace('/blog.html');
+    }, 3000);
+    return;
   }
 
   const titleEl = document.getElementById('blog-title');
