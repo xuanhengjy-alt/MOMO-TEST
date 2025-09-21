@@ -23,8 +23,8 @@ module.exports = async function handler(req, res) {
     });
 
     // 处理 like-status 请求: /api/tests/{id}/like-status
-    if (pathParts.length === 3 && pathParts[2] === 'like-status') {
-      const projectId = pathParts[1];
+    if (pathParts.length === 4 && pathParts[1] === 'tests' && pathParts[3] === 'like-status') {
+      const projectId = pathParts[2];
       
       console.log(`Checking like status for project: ${projectId}`);
 
@@ -64,8 +64,8 @@ module.exports = async function handler(req, res) {
     }
 
     // 处理 questions 请求: /api/tests/{id}/questions
-    if (pathParts.length === 3 && pathParts[2] === 'questions') {
-      const projectId = pathParts[1];
+    if (pathParts.length === 4 && pathParts[1] === 'tests' && pathParts[3] === 'questions') {
+      const projectId = pathParts[2];
       
       console.log(`Fetching questions for project: ${projectId}`);
 
@@ -86,16 +86,33 @@ module.exports = async function handler(req, res) {
       
       const projectInternalId = projectQuery.rows[0].id;
       
-      // 获取问题列表
-      const questionsQuery = await query(
-        'SELECT id, question_text, options FROM test_questions WHERE project_id = $1 ORDER BY order_index',
-        [projectInternalId]
-      );
+      // 获取问题列表 - 题目和选项分开存储
+      const questionsQuery = await query(`
+        SELECT 
+          q.id, 
+          q.question_text_en as question_text,
+          q.question_number as order_index,
+          COALESCE(
+            json_agg(
+              json_build_object(
+                'id', qo.id,
+                'text', qo.option_text_en,
+                'value', qo.score_value
+              ) ORDER BY qo.option_number
+            ) FILTER (WHERE qo.id IS NOT NULL),
+            '[]'::json
+          ) as options
+        FROM questions q
+        LEFT JOIN question_options qo ON q.id = qo.question_id
+        WHERE q.project_id = $1
+        GROUP BY q.id, q.question_text_en, q.question_number
+        ORDER BY q.question_number
+      `, [projectInternalId]);
       
       const questions = questionsQuery.rows.map(row => ({
         id: row.id,
         text: row.question_text,
-        options: row.options
+        opts: row.options || []
       }));
       
       console.log(`Fetched ${questions.length} questions for ${projectId}`);
@@ -118,15 +135,15 @@ module.exports = async function handler(req, res) {
     const url = new URL(req.url, `http://${req.headers.host}`);
     const pathParts = url.pathname.split('/').filter(Boolean);
     
-    if (pathParts.length === 3 && (pathParts[2] === 'like-status' || pathParts[2] === 'questions')) {
-      if (pathParts[2] === 'like-status') {
+    if (pathParts.length === 4 && pathParts[1] === 'tests' && (pathParts[3] === 'like-status' || pathParts[3] === 'questions')) {
+      if (pathParts[3] === 'like-status') {
         res.status(200).json({
           success: true,
           likes: 0,
           liked: false,
           fallback: true
         });
-      } else if (pathParts[2] === 'questions') {
+      } else if (pathParts[3] === 'questions') {
         res.status(200).json({
           success: true,
           questions: [],
