@@ -2,57 +2,42 @@
   // 支持 pretty URL: /test-detail.html/<id-or-slug>
   function extractIdFromUrl(){
     try {
-      // 1) 优先从 pathname 解析
-      const parts = location.pathname.split('/').filter(Boolean);
-      console.log('🔍 URL parts:', parts);
+      console.log('🔍 当前URL:', location.href);
+      console.log('🔍 当前pathname:', location.pathname);
       
-      // 处理 test-detail.html/mbti 格式
-      if (parts.length >= 2 && parts[parts.length-2] === 'test-detail.html') {
-        const v = decodeURIComponent(parts[parts.length-1] || '');
-        console.log('✅ 从pathname解析到ID:', v);
-        if (v && v !== 'index.html') return v; // 排除index.html
-      }
+      // 简化逻辑：直接从URL中提取项目ID
+      // 支持格式：/test-detail.html/project-id 或 /test-detail.html?project=project-id
       
-      // 2) 处理 Vercel重写后的情况：test-detail.html/index.html -> 从referrer获取
-      if (parts.length >= 2 && parts[parts.length-2] === 'test-detail.html' && parts[parts.length-1] === 'index.html') {
-        console.log('🔍 检测到Vercel重写情况，尝试从referrer解析');
-        if (document.referrer) {
-          const referrerMatch = /test-detail\.html\/([^\/\?]+)/.exec(document.referrer);
-          if (referrerMatch && referrerMatch[1]) {
-            const v = decodeURIComponent(referrerMatch[1]);
-            console.log('✅ 从referrer解析到ID:', v);
-            return v;
-          }
+      // 1) 从路径中提取：/test-detail.html/project-id
+      const pathMatch = location.pathname.match(/\/test-detail\.html\/([^\/\?]+)/);
+      if (pathMatch && pathMatch[1]) {
+        const id = decodeURIComponent(pathMatch[1]);
+        console.log('✅ 从路径解析到ID:', id);
+        if (id && id !== 'index.html' && id !== 'test-detail.html') {
+          return id;
         }
       }
       
-      // 3) 再从 href 正则解析（兼容某些代理重写场景）
-      const m = /test-detail\.html\/(.+?)(?:[?#]|$)/i.exec(location.href);
-      if (m && m[1]) {
-        const v = decodeURIComponent(m[1]);
-        console.log('✅ 从href正则解析到ID:', v);
-        if (v && v !== 'index.html') return v; // 排除index.html
-      }
-      
-      // 4) 兼容旧链接 ?id=
+      // 2) 从查询参数提取：/test-detail.html?project=project-id
       const params = new URLSearchParams(location.search);
-      const q = params.get('id');
-      if (q) {
-        console.log('✅ 从查询参数解析到ID:', q);
-        return q;
+      const projectParam = params.get('project') || params.get('id');
+      if (projectParam) {
+        console.log('✅ 从查询参数解析到ID:', projectParam);
+        return projectParam;
       }
       
-      // 5) 检查是否是直接访问test-detail.html的情况（没有项目ID）
-      if (parts.includes('test-detail.html') && parts.length === 1) {
+      // 3) 如果是直接访问test-detail.html，返回null
+      if (location.pathname === '/test-detail.html' || location.pathname.endsWith('/test-detail.html')) {
         console.log('❌ 直接访问test-detail.html，没有项目ID');
         return null;
       }
       
       console.log('❌ 没有找到项目ID');
+      return null;
     } catch(error) {
       console.error('❌ URL解析错误:', error);
+      return null;
     }
-    return '';
   }
   let id = extractIdFromUrl();
   if (!id) { 
@@ -66,100 +51,49 @@
   async function resolveProjectId(input){
     console.log('🔍 解析项目ID:', input);
     
-    // 先尝试直接按 id 取（处理直接使用项目ID的情况）
+    // 简化逻辑：直接尝试使用输入作为项目ID
     try {
       const prj = await window.ApiService.getTestProject(input);
       if (prj && prj.id) {
         console.log('✅ 直接找到项目:', prj.id);
         return prj.id;
       }
-    } catch(_) {
-      console.log('⚠️ 直接API调用失败，尝试其他方法');
+    } catch(error) {
+      console.log('⚠️ 直接API调用失败:', error.message);
     }
     
-    // 拉取项目列表，根据 nameEn 规范化匹配
-    let projects;
+    // 如果直接调用失败，尝试从项目列表中查找
     try {
-      projects = await window.ApiService.getTestProjects();
-      const sanitize = (s)=>String(s||'').toLowerCase().trim().replace(/[\s/_.,:：—-]+/g,'-').replace(/[^a-z0-9-]/g,'').replace(/-+/g,'-').slice(0,60);
+      const projects = await window.ApiService.getTestProjects();
+      console.log('📋 获取到项目列表，数量:', projects.length);
       
-      console.log('📋 项目列表:', projects.map(p => ({ id: p.id, nameEn: p.nameEn, slug: sanitize(p.nameEn||p.name) })));
-      
-      // 先尝试精确匹配slug
-      const inputSlug = sanitize(input);
-      let hit = (projects||[]).find(p => sanitize(p.nameEn||p.name) === inputSlug);
+      // 尝试精确匹配ID
+      let hit = projects.find(p => p.id === input);
       if (hit) {
         console.log('✅ 精确匹配找到项目:', hit.id);
         return hit.id;
       }
       
-      // 再尝试部分匹配（处理 social-test-anxiety-test -> social_anxiety_test 的情况）
-      hit = (projects||[]).find(p => {
-        const projectSlug = sanitize(p.nameEn||p.name);
-        const inputSlug = input.toLowerCase();
-        // 检查是否包含关键词汇
-        const projectWords = projectSlug.split('-');
-        const inputWords = inputSlug.split('-');
-        return projectWords.some(word => inputWords.includes(word)) && 
-               inputWords.some(word => projectWords.includes(word));
-      });
-      if (hit) {
-        console.log('✅ 部分匹配找到项目:', hit.id);
-        return hit.id;
-      }
+      // 尝试匹配nameEn（处理slug情况）
+      const sanitize = (s) => String(s||'').toLowerCase().trim().replace(/[\s/_.,:：—-]+/g,'-').replace(/[^a-z0-9-]/g,'').replace(/-+/g,'-');
+      const inputSlug = sanitize(input);
       
-      // 最后尝试模糊匹配
-      hit = (projects||[]).find(p => {
-        const projectSlug = sanitize(p.nameEn||p.name);
-        const inputSlug = input.toLowerCase();
-        return projectSlug.includes(inputSlug) || inputSlug.includes(projectSlug);
+      hit = projects.find(p => {
+        const projectSlug = sanitize(p.nameEn || p.name);
+        return projectSlug === inputSlug;
       });
+      
       if (hit) {
-        console.log('✅ 模糊匹配找到项目:', hit.id);
+        console.log('✅ slug匹配找到项目:', hit.id);
         return hit.id;
       }
       
     } catch(error) {
       console.error('❌ 获取项目列表失败:', error);
-      console.log('🔄 尝试使用回退数据...');
-      
-      // 使用回退数据
-      projects = window.ApiService.getFallbackProjects();
-      console.log('📋 回退项目列表:', projects.map(p => ({ id: p.id, nameEn: p.nameEn })));
-      
-      // 在回退数据中查找
-      const sanitize = (s)=>String(s||'').toLowerCase().trim().replace(/[\s/_.,:：—-]+/g,'-').replace(/[^a-z0-9-]/g,'').replace(/-+/g,'-').slice(0,60);
-      
-      // 先尝试精确匹配
-      let hit = projects.find(p => p.id === input);
-      if (hit) {
-        console.log('✅ 在回退数据中精确匹配找到项目:', hit.id);
-        return hit.id;
-      }
-      
-      // 尝试slug匹配
-      const inputSlug = sanitize(input);
-      hit = projects.find(p => {
-        const projectSlug = sanitize(p.nameEn||p.name);
-        console.log(`🔍 比较: "${inputSlug}" vs "${projectSlug}"`);
-        return projectSlug === inputSlug;
-      });
-      if (hit) {
-        console.log('✅ 在回退数据中slug匹配找到项目:', hit.id);
-        return hit.id;
-      }
-      
-      // 尝试反向匹配：如果输入是项目ID，尝试匹配
-      hit = projects.find(p => p.id === input);
-      if (hit) {
-        console.log('✅ 在回退数据中ID匹配找到项目:', hit.id);
-        return hit.id;
-      }
     }
     
-    // 如果都找不到，返回原始输入（可能是有效的项目ID）
-    console.log(`⚠️ 项目未找到，返回原始输入: ${input}`);
-    return input;
+    console.log('❌ 无法解析项目ID，返回原值:', input);
+    return input; // 返回原值作为fallback
   }
 
   console.log('🔍 开始解析项目ID:', id);

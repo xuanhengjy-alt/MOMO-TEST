@@ -9,11 +9,11 @@
   "rewrites": [
     {
       "source": "/test-detail.html/(.*)",
-      "destination": "/test-detail.html"
+      "destination": "/test-detail.html?project=$1"
     },
     {
       "source": "/blog-detail.html/(.*)",
-      "destination": "/blog-detail.html"
+      "destination": "/blog-detail.html?slug=$1"
     }
   ],
   "headers": [
