@@ -19,8 +19,20 @@ const query = async (text, params, retries = 3) => {
       if (attempt === retries) {
         throw error;
       }
-      // 指数退避
-      await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt - 1)));
+      // 指数退避，增加等待时间
+      await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+      
+      // 如果是连接错误，尝试重新创建连接池
+      if (error.message.includes('Connection terminated') || error.message.includes('connection')) {
+        console.log('尝试重新连接数据库...');
+        try {
+          await pool.end();
+          const newPool = new Pool(getDatabaseConfig());
+          Object.assign(pool, newPool);
+        } catch (reconnectError) {
+          console.error('重新连接失败:', reconnectError.message);
+        }
+      }
     }
   }
 };

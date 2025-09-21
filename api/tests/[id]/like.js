@@ -96,8 +96,7 @@ module.exports = async function handler(req, res) {
         VALUES ($1, 1)
         ON CONFLICT (project_id)
         DO UPDATE SET 
-          total_likes = test_statistics.total_likes + 1,
-          last_updated = NOW()
+          total_likes = test_statistics.total_likes + 1
         RETURNING total_likes
       `, [projectInternalId]);
 
