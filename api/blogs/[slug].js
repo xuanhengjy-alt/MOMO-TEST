@@ -85,7 +85,8 @@ module.exports = async function handler(req, res) {
       author: 'MOMO TEST',
       publishedAt: row.created_at,
       viewCount: row.reading_count || 0,
-      likeCount: 0
+      likeCount: 0,
+      test_project_id: row.test_project_id
     };
 
     console.log(`✅ 成功获取博客详情: ${slug}`);

@@ -203,8 +203,8 @@
       coverEl.decode().then(function(){ coverEl.classList.remove('hidden'); }).catch(function(){});
     }
 
-    console.log('Rendering content:', b.content_md ? 'has content' : 'no content');
-    renderMarkdown(b.content_md);
+    console.log('Rendering content:', b.content ? 'has content' : 'no content');
+    renderMarkdown(b.content);
     try { if (window.Analytics) window.Analytics.logDetailRead(slug); } catch(_) {}
 
     // Recommended test card
