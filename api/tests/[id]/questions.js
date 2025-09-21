@@ -1,5 +1,6 @@
 // 专门处理 /api/tests/[id]/questions 请求
-const { query } = require('../../config/database');
+const path = require('path');
+const { query } = require(path.resolve(__dirname, '../../../config/database'));
 
 module.exports = async function handler(req, res) {
   // 设置CORS头
@@ -13,14 +14,21 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const projectId = req.query.id;
+    // 从URL路径中提取项目ID
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const pathParts = url.pathname.split('/').filter(Boolean);
+    const projectId = pathParts[3]; // /api/tests/[id]/questions
     
     console.log(`[Dynamic Route] Fetching questions for project: ${projectId}`);
+    console.log(`[Dynamic Route] URL: ${req.url}`);
+    console.log(`[Dynamic Route] Path parts: ${JSON.stringify(pathParts)}`);
 
     if (!projectId) {
       res.status(400).json({ 
         success: false,
-        error: 'Project ID is required' 
+        error: 'Project ID is required',
+        url: req.url,
+        pathParts: pathParts
       });
       return;
     }

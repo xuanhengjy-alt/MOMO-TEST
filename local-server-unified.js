@@ -43,7 +43,7 @@ app.all('/api/results', require('./api/results-unified.js'));
 
 // 其他API路由
 app.all('/api/tests/:id/like', require('./api/tests/[id]/like.js'));
-app.all('/api/tests/:id/like-status', require('./api/tests/[id]/like.js'));
+app.all('/api/tests/:id/like-status', require('./api/tests.js'));
 app.all('/api/tests/:id/questions', require('./api/tests.js'));
 app.all('/api/results/stats/:id', require('./api/results/stats/[id].js'));
 
