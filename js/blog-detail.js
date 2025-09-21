@@ -26,17 +26,28 @@
   }
   await ensureLibs();
   const pathParts = location.pathname.split('/').filter(Boolean);
+  console.log('🔍 URL解析开始:');
+  console.log('Current URL:', location.href);
   console.log('Path parts:', pathParts);
+  console.log('Search params:', location.search);
+  
   let slug = null;
   if (pathParts.length >= 2 && pathParts[pathParts.length-2] === 'blog-detail.html') {
     slug = decodeURIComponent(pathParts[pathParts.length-1] || '');
+    console.log('✅ 从URL路径提取slug:', slug);
   }
   if (!slug) {
     const params = new URLSearchParams(location.search);
     slug = params.get('slug');
+    console.log('🔍 从查询参数提取slug:', slug);
   }
-  console.log('Extracted slug:', slug);
-  if (!slug) { location.replace('/blog.html'); return; }
+  console.log('📋 最终提取的slug:', slug);
+  
+  if (!slug) { 
+    console.log('❌ 没有找到slug，重定向到blog.html');
+    location.replace('/blog.html'); 
+    return; 
+  }
 
   const titleEl = document.getElementById('blog-title');
   const coverEl = document.getElementById('blog-cover');
@@ -104,8 +115,12 @@
 
   try {
     console.log('Loading blog detail for slug:', slug);
+    console.log('API Service available:', !!window.ApiService);
+    console.log('getBlogDetail method available:', !!window.ApiService.getBlogDetail);
     const b = await window.ApiService.getBlogDetail(slug);
     console.log('Blog data received:', b);
+    console.log('Blog title:', b.title);
+    console.log('Blog content_md length:', b.content_md ? b.content_md.length : 0);
     document.title = `${b.title} - MOMO TEST`;
     // 基础 SEO/OG 注入
     try {
@@ -213,11 +228,17 @@
 
     // 推荐
     try {
+      console.log('🔍 开始加载推荐文章...');
       const rec = await window.ApiService.getBlogRecommendations(slug);
+      console.log('✅ 推荐文章数据:', rec);
+      
       const recContainer = document.getElementById('rec-container');
       const recTpl = document.getElementById('rec-card-template');
+      
       if (rec && rec.length && recContainer && recTpl) {
-        rec.forEach(r => {
+        console.log(`📝 渲染 ${rec.length} 篇推荐文章`);
+        rec.forEach((r, index) => {
+          console.log(`📝 渲染推荐文章 ${index + 1}:`, r.title);
           const node = recTpl.content.cloneNode(true);
           const img = node.querySelector('img');
           const sk = node.querySelector('.skeleton');
@@ -242,11 +263,39 @@
           };
           recContainer.appendChild(node);
         });
+        console.log('✅ 推荐文章渲染完成');
+      } else {
+        console.log('⚠️ 推荐文章数据为空或容器不存在');
+        console.log('rec:', rec);
+        console.log('recContainer:', recContainer);
+        console.log('recTpl:', recTpl);
       }
-    } catch (e) { console.warn('recommendations failed', e); }
+    } catch (e) { 
+      console.error('❌ 推荐文章加载失败:', e);
+      console.error('Error details:', {
+        message: e.message,
+        status: e.status,
+        url: e.url || 'unknown'
+      });
+    }
   } catch (e) {
     console.error('Failed to load blog detail', e);
-    location.replace('blog.html');
+    console.error('Error details:', {
+      message: e.message,
+      status: e.status,
+      url: e.url || 'unknown'
+    });
+    
+    // 显示错误信息给用户
+    const titleEl = document.getElementById('blog-title');
+    const contentEl = document.getElementById('blog-content');
+    if (titleEl) titleEl.textContent = 'Blog Not Found';
+    if (contentEl) contentEl.innerHTML = '<p class="text-gray-500">Sorry, the blog post you are looking for could not be found.</p>';
+    
+    // 延迟重定向，让用户看到错误信息
+    setTimeout(() => {
+      location.replace('blog.html');
+    }, 3000);
   }
 })();
 

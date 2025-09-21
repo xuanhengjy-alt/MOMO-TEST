@@ -213,13 +213,30 @@ class ApiService {
   }
 
   async getBlogDetail(slug) {
-    const v = Date.now();
-    return await this.request(`/blogs/${encodeURIComponent(slug)}?v=${v}`);
+    try {
+      console.log(`🔍 获取blog详情，slug: ${slug}`);
+      const v = Date.now();
+      const response = await this.request(`/blogs/${encodeURIComponent(slug)}?v=${v}`);
+      console.log(`✅ 成功获取blog详情:`, response);
+      return response;
+    } catch (error) {
+      console.error(`❌ 获取blog详情失败:`, error);
+      throw error;
+    }
   }
 
   async getBlogRecommendations(slug) {
-    const v = Date.now();
-    return await this.request(`/blogs/${encodeURIComponent(slug)}/recommend?v=${v}`);
+    try {
+      console.log(`🔍 获取blog推荐，slug: ${slug}`);
+      const v = Date.now();
+      const response = await this.request(`/blogs/${encodeURIComponent(slug)}/recommend?v=${v}`);
+      console.log(`✅ 成功获取blog推荐:`, response);
+      return response;
+    } catch (error) {
+      console.error(`❌ 获取blog推荐失败:`, error);
+      // 返回空数组而不是抛出错误，避免影响页面加载
+      return [];
+    }
   }
 
   // 兜底数据（当API不可用时）
