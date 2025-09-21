@@ -5,5 +5,15 @@
     "api/**/*.js": {
       "maxDuration": 30
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/test-detail.html/(.*)",
+      "destination": "/test-detail.html"
+    },
+    {
+      "source": "/blog-detail.html/(.*)",
+      "destination": "/blog-detail.html"
+    }
+  ]
 }
