@@ -462,7 +462,13 @@
   (function renderIntro(text){
     const el = projectIntro;
     const raw = (text || '').toString();
-    if (!raw) { el.textContent = ''; return; }
+    console.log('📝 渲染Introduction，项目ID:', project.id);
+    console.log('📝 Introduction内容:', raw.substring(0, 100) + (raw.length > 100 ? '...' : ''));
+    if (!raw) { 
+      console.log('⚠️ Introduction内容为空');
+      el.textContent = ''; 
+      return; 
+    }
     // 转义基础HTML，防止意外标签渲染
     const esc = raw
       .replace(/&/g, '&amp;')
