@@ -17,15 +17,15 @@ const getDatabaseConfig = () => {
       require: true
     },
     max: isVercel ? 2 : 5, // Vercel限制连接数
-    idleTimeoutMillis: isVercel ? 10000 : 30000,
-    connectionTimeoutMillis: isVercel ? 10000 : 30000,
-    acquireTimeoutMillis: isVercel ? 10000 : 30000,
-    createTimeoutMillis: isVercel ? 10000 : 30000,
-    destroyTimeoutMillis: isVercel ? 2000 : 5000,
-    reapIntervalMillis: isVercel ? 500 : 1000,
-    createRetryIntervalMillis: isVercel ? 100 : 200,
-    retryDelayMs: isVercel ? 500 : 1000,
-    retryAttempts: isVercel ? 2 : 3,
+    idleTimeoutMillis: isVercel ? 30000 : 60000,
+    connectionTimeoutMillis: isVercel ? 30000 : 60000,
+    acquireTimeoutMillis: isVercel ? 30000 : 60000,
+    createTimeoutMillis: isVercel ? 30000 : 60000,
+    destroyTimeoutMillis: isVercel ? 5000 : 10000,
+    reapIntervalMillis: isVercel ? 1000 : 2000,
+    createRetryIntervalMillis: isVercel ? 500 : 1000,
+    retryDelayMs: isVercel ? 1000 : 2000,
+    retryAttempts: isVercel ? 3 : 5,
   };
 };
 

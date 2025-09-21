@@ -26,8 +26,10 @@ const query = async (text, params, retries = 3) => {
       if (error.message.includes('Connection terminated') || error.message.includes('connection')) {
         console.log('尝试重新连接数据库...');
         try {
-          await pool.end();
+          // 不调用 pool.end()，直接创建新的连接池
           const newPool = new Pool(getDatabaseConfig());
+          // 更新模块级别的 pool 引用
+          Object.setPrototypeOf(pool, Object.getPrototypeOf(newPool));
           Object.assign(pool, newPool);
         } catch (reconnectError) {
           console.error('重新连接失败:', reconnectError.message);

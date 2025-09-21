@@ -97,7 +97,7 @@ module.exports = async function handler(req, res) {
               json_build_object(
                 'id', qo.id,
                 'text', qo.option_text_en,
-                'value', qo.score_value
+                'value', COALESCE(qo.score_value::text, '0')
               ) ORDER BY qo.option_number
             ) FILTER (WHERE qo.id IS NOT NULL),
             '[]'::json
@@ -130,6 +130,7 @@ module.exports = async function handler(req, res) {
     
   } catch (error) {
     console.error('Tests API error:', error);
+    console.error('Error stack:', error.stack);
     
     // 如果是like-status或questions请求失败，返回默认值
     const url = new URL(req.url, `http://${req.headers.host}`);
@@ -141,13 +142,15 @@ module.exports = async function handler(req, res) {
           success: true,
           likes: 0,
           liked: false,
-          fallback: true
+          fallback: true,
+          error: error.message
         });
       } else if (pathParts[3] === 'questions') {
         res.status(200).json({
           success: true,
           questions: [],
-          fallback: true
+          fallback: true,
+          error: error.message
         });
       }
       return;
