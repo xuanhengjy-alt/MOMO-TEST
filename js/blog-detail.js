@@ -30,6 +30,9 @@
   console.log('Current URL:', location.href);
   console.log('Path parts:', pathParts);
   console.log('Search params:', location.search);
+  console.log('User Agent:', navigator.userAgent);
+  console.log('Is Vercel:', window.location.hostname.includes('vercel'));
+  console.log('Environment:', window.location.hostname);
   
   let slug = null;
   if (pathParts.length >= 2 && pathParts[pathParts.length-2] === 'blog-detail.html') {
@@ -45,7 +48,19 @@
   
   if (!slug) { 
     console.log('❌ 没有找到slug，重定向到blog.html');
-    location.replace('/blog.html'); 
+    console.log('当前URL:', location.href);
+    console.log('路径部分:', pathParts);
+    
+    // 显示友好的错误信息
+    const titleEl = document.getElementById('blog-title');
+    const contentEl = document.getElementById('blog-content');
+    if (titleEl) titleEl.textContent = 'Blog Not Found';
+    if (contentEl) contentEl.innerHTML = '<p class="text-gray-500">Sorry, the blog post you are looking for could not be found.</p>';
+    
+    // 延迟重定向，让用户看到错误信息
+    setTimeout(() => {
+      location.replace('/blog.html');
+    }, 3000);
     return; 
   }
 
@@ -117,6 +132,19 @@
     console.log('Loading blog detail for slug:', slug);
     console.log('API Service available:', !!window.ApiService);
     console.log('getBlogDetail method available:', !!window.ApiService.getBlogDetail);
+    
+    // 测试API连接
+    console.log('🔍 测试API连接...');
+    try {
+      const testResponse = await fetch('/api/blogs');
+      console.log('API连接测试结果:', testResponse.status, testResponse.ok);
+      if (!testResponse.ok) {
+        console.error('API连接失败:', testResponse.status, testResponse.statusText);
+      }
+    } catch (apiError) {
+      console.error('API连接错误:', apiError);
+    }
+    
     const b = await window.ApiService.getBlogDetail(slug);
     console.log('Blog data received:', b);
     console.log('Blog title:', b.title);
