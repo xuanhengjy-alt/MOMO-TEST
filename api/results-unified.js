@@ -60,8 +60,7 @@ module.exports = async function handler(req, res) {
         VALUES ((SELECT id FROM test_projects WHERE project_id = $1), 1, 0)
         ON CONFLICT (project_id) 
         DO UPDATE SET 
-          total_tests = test_statistics.total_tests + 1,
-          updated_at = NOW()
+          total_tests = test_statistics.total_tests + 1
       `, [projectId]);
 
       // 提交事务

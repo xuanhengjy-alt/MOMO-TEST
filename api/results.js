@@ -1,4 +1,4 @@
-// 重定向到统一的博客API
+// 重定向到统一的测试结果API
 module.exports = async function handler(req, res) {
   // 设置CORS头
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -11,11 +11,11 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    // 重定向到统一的博客API
-    const unifiedHandler = require('./blogs-unified.js');
+    // 重定向到统一的测试结果API
+    const unifiedHandler = require('./results-unified.js');
     return unifiedHandler(req, res);
   } catch (error) {
-    console.error('Blogs API error:', error);
+    console.error('Results API error:', error);
     res.status(500).json({ 
       success: false, 
       error: 'Internal server error',
