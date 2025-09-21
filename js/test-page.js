@@ -653,43 +653,13 @@
         return convertedQuestions;
       }
     } catch (error) {
-      console.warn('Failed to fetch questions from API, using local logic', error);
+      console.warn('Failed to fetch questions from API', error);
+      // API失败时，抛出错误而不是回退到本地逻辑
+      throw new Error('API connection failed');
     }
     
-    // 回退到本地逻辑
-    try {
-      if (!(window.TestLogic && typeof window.TestLogic.getQuestions === 'function')) return [];
-      let t = project && project.type ? project.type : '';
-      let qs = window.TestLogic.getQuestions(t) || [];
-      if (qs.length) {
-        cachedQuestions = qs;
-        return qs;
-      }
-      // 兼容性兜底：按 id 猜测类型
-      const fallbackTypeById = {
-        disc: 'disc',
-        disc40: 'disc40',
-        mgmt: 'mgmt',
-        mbti: 'mbti'
-      };
-      if (project && project.id && fallbackTypeById[project.id]) {
-        qs = window.TestLogic.getQuestions(fallbackTypeById[project.id]) || [];
-        if (qs.length) {
-          cachedQuestions = qs;
-          return qs;
-        }
-      }
-      // 最后再尝试常用题库，确保不为空
-      const tryTypes = ['mbti','disc40','disc','mgmt'];
-      for (var i=0;i<tryTypes.length;i++) {
-        qs = window.TestLogic.getQuestions(tryTypes[i]) || [];
-        if (qs.length) {
-          cachedQuestions = qs;
-          return qs;
-        }
-      }
-      return [];
-    } catch(_) { return []; }
+    // 如果API返回空数据，也抛出错误
+    throw new Error('No questions available from API');
   }
   let qIndex = 0;
   const answers = [];
@@ -699,13 +669,27 @@
   // 统计信息：题数与预计时长（按每题约12秒估算）
   // 先显示占位骨架，随后并行获取题量后覆盖
   if (infoLine) {
-    infoLine.innerHTML = `Total <span class="font-semibold text-rose-600">--</span> questions, estimated <span class="font-semibold text-rose-600">--</span> minutes`;
+    infoLine.innerHTML = `Loading questions...`;
   }
   (async () => {
-    const totalQ = await getQList().then(q => q.length).catch(() => 0);
-    const estMinutes = Math.max(1, Math.round((totalQ * 12) / 60));
-    if (infoLine) {
-      infoLine.innerHTML = `Total <span class="font-semibold text-rose-600">${totalQ}</span> questions, estimated <span class="font-semibold text-rose-600">${estMinutes}</span> minutes`;
+    try {
+      const totalQ = await getQList().then(q => q.length);
+      if (totalQ > 0) {
+        const estMinutes = Math.max(1, Math.round((totalQ * 12) / 60));
+        if (infoLine) {
+          infoLine.innerHTML = `Total <span class="font-semibold text-rose-600">${totalQ}</span> questions, estimated <span class="font-semibold text-rose-600">${estMinutes}</span> minutes`;
+        }
+      } else {
+        // API失败或没有题目时，显示错误信息
+        if (infoLine) {
+          infoLine.innerHTML = `<span class="text-red-500">Unable to load questions. Please refresh the page.</span>`;
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load questions:', error);
+      if (infoLine) {
+        infoLine.innerHTML = `<span class="text-red-500">Unable to load questions. Please refresh the page.</span>`;
+      }
     }
   })();
 
@@ -966,11 +950,20 @@
     show('start');
     // 进入开始页时再次刷新题量与预估
     await ensureTestLogicLoaded();
-    const qs = getQList();
-    if (infoLine) {
-      const total = qs.length;
-      const mins = Math.max(1, Math.round((total * 12) / 60));
-      infoLine.innerHTML = `Total <span class="font-semibold text-rose-600">${total}</span> questions, estimated <span class="font-semibold text-rose-600">${mins}</span> minutes`;
+    try {
+      const qs = getQList();
+      if (infoLine && qs && qs.length > 0) {
+        const total = qs.length;
+        const mins = Math.max(1, Math.round((total * 12) / 60));
+        infoLine.innerHTML = `Total <span class="font-semibold text-rose-600">${total}</span> questions, estimated <span class="font-semibold text-rose-600">${mins}</span> minutes`;
+      } else if (infoLine) {
+        infoLine.innerHTML = `<span class="text-red-500">Unable to load questions. Please refresh the page.</span>`;
+      }
+    } catch (error) {
+      console.error('Failed to load questions:', error);
+      if (infoLine) {
+        infoLine.innerHTML = `<span class="text-red-500">Unable to load questions. Please refresh the page.</span>`;
+      }
     }
     renderProgress();
     renderQuestion();
