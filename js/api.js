@@ -213,15 +213,27 @@ class ApiService {
   }
 
   async getBlogDetail(slug) {
-    try {
-      console.log(`🔍 获取blog详情，slug: ${slug}`);
-      const v = Date.now();
-      const response = await this.request(`/blogs/${encodeURIComponent(slug)}?v=${v}`);
-      console.log(`✅ 成功获取blog详情:`, response);
-      return response;
-    } catch (error) {
-      console.error(`❌ 获取blog详情失败:`, error);
-      throw error;
+    const maxRetries = 3;
+    const retryDelay = 1000; // 1秒
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`🔍 获取blog详情，slug: ${slug} (尝试 ${attempt}/${maxRetries})`);
+        const v = Date.now();
+        const response = await this.request(`/blogs/${encodeURIComponent(slug)}?v=${v}`);
+        console.log(`✅ 成功获取blog详情:`, response);
+        return response;
+      } catch (error) {
+        console.error(`❌ 获取blog详情失败 (尝试 ${attempt}/${maxRetries}):`, error);
+        
+        if (attempt === maxRetries) {
+          throw error;
+        }
+        
+        // 等待后重试
+        console.log(`⏳ 等待 ${retryDelay}ms 后重试...`);
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
+      }
     }
   }
 

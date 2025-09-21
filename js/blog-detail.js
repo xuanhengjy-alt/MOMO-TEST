@@ -35,10 +35,21 @@
   console.log('Environment:', window.location.hostname);
   
   let slug = null;
+  
+  // 修复URL解析逻辑，处理Vercel rewrite规则
   if (pathParts.length >= 2 && pathParts[pathParts.length-2] === 'blog-detail.html') {
     slug = decodeURIComponent(pathParts[pathParts.length-1] || '');
     console.log('✅ 从URL路径提取slug:', slug);
+  } else if (pathParts.length >= 1 && pathParts[0] === 'blog-detail.html') {
+    // 处理直接访问blog-detail.html的情况
+    if (pathParts.length > 1) {
+      slug = decodeURIComponent(pathParts[1] || '');
+      console.log('✅ 从blog-detail.html后提取slug:', slug);
+    } else {
+      console.log('⚠️ 直接访问blog-detail.html，没有slug参数');
+    }
   }
+  
   if (!slug) {
     const params = new URLSearchParams(location.search);
     slug = params.get('slug');
@@ -65,7 +76,7 @@
   }
   
   // 检查slug是否有效（不应该是常见的文件名）
-  const invalidSlugs = ['blog.html', 'index.html', 'test-detail.html', 'blog-detail.html'];
+  const invalidSlugs = ['blog.html', 'index.html', 'test-detail.html', 'blog-detail.html', 'css', 'js', 'assets', 'api'];
   if (invalidSlugs.includes(slug)) {
     console.log('❌ 检测到无效的slug:', slug);
     console.log('当前URL:', location.href);
@@ -82,11 +93,33 @@
     }, 3000);
     return;
   }
+  
+  // 检查slug长度和格式
+  if (slug.length < 3 || slug.length > 200) {
+    console.log('❌ slug长度无效:', slug.length);
+    console.log('当前URL:', location.href);
+    
+    // 显示友好的错误信息
+    const titleEl = document.getElementById('blog-title');
+    const contentEl = document.getElementById('blog-content');
+    if (titleEl) titleEl.textContent = 'Invalid Blog Slug';
+    if (contentEl) contentEl.innerHTML = '<p class="text-gray-500">The blog slug is too short or too long.</p><p class="text-sm text-gray-400 mt-2">Please use a valid blog slug.</p>';
+    
+    // 延迟重定向，让用户看到错误信息
+    setTimeout(() => {
+      location.replace('/blog.html');
+    }, 3000);
+    return;
+  }
 
   const titleEl = document.getElementById('blog-title');
   const coverEl = document.getElementById('blog-cover');
   const contentEl = document.getElementById('blog-content');
   const breadcrumb = document.getElementById('breadcrumb-title');
+  
+  // 显示加载状态
+  if (titleEl) titleEl.textContent = 'Loading...';
+  if (contentEl) contentEl.innerHTML = '<div class="flex items-center justify-center py-8"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div><span class="ml-3 text-gray-600">Loading blog content...</span></div>';
 
   function renderMarkdown(md){
     console.log('renderMarkdown called with:', md ? 'content' : 'no content');
@@ -333,16 +366,35 @@
       url: e.url || 'unknown'
     });
     
-    // 显示错误信息给用户
+    // 显示详细的错误信息给用户
     const titleEl = document.getElementById('blog-title');
     const contentEl = document.getElementById('blog-content');
-    if (titleEl) titleEl.textContent = 'Blog Not Found';
-    if (contentEl) contentEl.innerHTML = '<p class="text-gray-500">Sorry, the blog post you are looking for could not be found.</p>';
+    
+    if (e.status === 404) {
+      if (titleEl) titleEl.textContent = 'Blog Not Found';
+      if (contentEl) contentEl.innerHTML = `
+        <p class="text-gray-500">Sorry, the blog post you are looking for could not be found.</p>
+        <p class="text-sm text-gray-400 mt-2">The blog slug "${slug}" does not exist in our database.</p>
+        <p class="text-sm text-gray-400 mt-1">Please check the URL or browse our <a href="/blog.html" class="text-blue-600 hover:underline">blog list</a>.</p>
+      `;
+    } else if (e.status >= 500) {
+      if (titleEl) titleEl.textContent = 'Server Error';
+      if (contentEl) contentEl.innerHTML = `
+        <p class="text-gray-500">Sorry, there was a server error while loading this blog post.</p>
+        <p class="text-sm text-gray-400 mt-2">Please try again later or contact support if the problem persists.</p>
+      `;
+    } else {
+      if (titleEl) titleEl.textContent = 'Loading Error';
+      if (contentEl) contentEl.innerHTML = `
+        <p class="text-gray-500">Sorry, there was an error while loading this blog post.</p>
+        <p class="text-sm text-gray-400 mt-2">Please try refreshing the page or check your internet connection.</p>
+      `;
+    }
     
     // 延迟重定向，让用户看到错误信息
     setTimeout(() => {
       location.replace('blog.html');
-    }, 3000);
+    }, 5000);
   }
 })();
 
