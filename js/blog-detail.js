@@ -140,15 +140,22 @@
       throw new Error(`HTTP error! status: ${blogResponse.value?.status || 'network error'}`);
     }
     
-    const b = await blogResponse.value.json();
-    console.log('✅ 成功获取blog数据:', b);
+    const response = await blogResponse.value.json();
+    console.log('✅ 成功获取blog数据:', response);
+    
+    // 检查API响应格式
+    if (!response.success || !response.blog) {
+      throw new Error('Invalid API response format');
+    }
+    
+    const b = response.blog;
     document.title = `${b.title} - MOMO TEST`;
     // 基础 SEO/OG 注入
     try {
       const head = document.head;
       const metaDesc = document.createElement('meta');
       metaDesc.name = 'description';
-      metaDesc.content = (b.summary || '').slice(0, 160);
+      metaDesc.content = (b.excerpt || '').slice(0, 160);
       head.appendChild(metaDesc);
 
       const ogTitle = document.createElement('meta');
@@ -158,7 +165,7 @@
 
       const ogDesc = document.createElement('meta');
       ogDesc.setAttribute('property', 'og:description');
-      ogDesc.setAttribute('content', (b.summary || '').slice(0, 160));
+      ogDesc.setAttribute('content', (b.excerpt || '').slice(0, 160));
       head.appendChild(ogDesc);
 
       const ogType = document.createElement('meta');
@@ -253,10 +260,19 @@
       let rec = [];
       
       if (recommendationsResponse.status === 'fulfilled' && recommendationsResponse.value.ok) {
-        rec = await recommendationsResponse.value.json();
-        console.log('✅ 推荐文章数据:', rec);
+        const recResponse = await recommendationsResponse.value.json();
+        console.log('✅ 推荐文章数据:', recResponse);
+        
+        // 检查API响应格式
+        if (recResponse.success && recResponse.recommendations) {
+          rec = recResponse.recommendations;
+        } else {
+          console.log('⚠️ 推荐文章API响应格式错误');
+          rec = [];
+        }
       } else {
         console.log('⚠️ 推荐文章API调用失败');
+        rec = [];
       }
       
       const recContainer = document.getElementById('rec-container');
