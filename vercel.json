@@ -16,16 +16,6 @@
       "destination": "/blog-detail.html"
     }
   ],
-  "routes": [
-    {
-      "src": "/test-detail.html/(.*)",
-      "dest": "/test-detail.html"
-    },
-    {
-      "src": "/blog-detail.html/(.*)",
-      "dest": "/blog-detail.html"
-    }
-  ],
   "headers": [
     {
       "source": "/(.*)",
