@@ -157,8 +157,8 @@
         .slice(0, 60);
     }
     btn.addEventListener('click', () => {
-      const slug = sanitizeTitleToFilename(p.nameEn || p.name || p.id);
-      location.href = `/test-detail.html/${encodeURIComponent(slug)}`;
+      // 直接使用项目ID，确保与数据库中的project_id匹配
+      location.href = `/test-detail.html/${encodeURIComponent(p.id)}`;
     });
 
     container.appendChild(node);
