@@ -308,36 +308,36 @@
   }
 
   // 元素
-  const breadcrumbProject = $('#breadcrumb-project');
-  const breadcrumbSubview = $('#breadcrumb-subview');
+  const breadcrumbProject = document.getElementById('breadcrumb-project');
+  const breadcrumbSubview = document.getElementById('breadcrumb-subview');
   const breadcrumbBar = document.getElementById('breadcrumb-bar');
-  const viewDetail = $('#view-detail');
-  const viewStart = $('#view-start');
-  const viewResult = $('#view-result');
+  const viewDetail = document.getElementById('view-detail');
+  const viewStart = document.getElementById('view-start');
+  const viewResult = document.getElementById('view-result');
 
   // 详情视图元素
-  const projectImage = $('#project-image');
-  const projectTitle = $('#project-title');
-  const testedCount = $('#tested-count');
-  const likeBtn = $('#like-btn');
-  const likeCount = $('#like-count');
-  const gotoStart = $('#goto-start');
-  const projectIntro = $('#project-intro');
+  const projectImage = document.getElementById('project-image');
+  const projectTitle = document.getElementById('project-title');
+  const testedCount = document.getElementById('tested-count');
+  const likeBtn = document.getElementById('like-btn');
+  const likeCount = document.getElementById('like-count');
+  const gotoStart = document.getElementById('goto-start');
+  const projectIntro = document.getElementById('project-intro');
 
   // 开始视图元素
-  const progressBar = $('#progress-bar');
-  const progressText = $('#progress-text');
-  const questionTitle = $('#question-title');
-  const options = $('#options');
-  const restartBtn = $('#restart-btn');
+  const progressBar = document.getElementById('progress-bar');
+  const progressText = document.getElementById('progress-text');
+  const questionTitle = document.getElementById('question-title');
+  const options = document.getElementById('options');
+  const restartBtn = document.getElementById('restart-btn');
 
   // 结果视图元素
-  const resultTitle = $('#result-title');
-  const resultImage = $('#result-image');
-  const resultSummary = $('#result-summary');
-  const resultAnalysis = $('#result-analysis');
-  const resultRestart = $('#result-restart');
-  const infoLine = $('#info-line');
+  const resultTitle = document.getElementById('result-title');
+  const resultImage = document.getElementById('result-image');
+  const resultSummary = document.getElementById('result-summary');
+  const resultAnalysis = document.getElementById('result-analysis');
+  const resultRestart = document.getElementById('result-restart');
+  const infoLine = document.getElementById('info-line');
 
   // 计算中提示（绿色、底部、居中）
   let calcNoticeEl = null;
