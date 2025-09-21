@@ -125,17 +125,23 @@
   // 使用API服务获取项目数据
   let project;
   try {
+    console.log('🔍 尝试获取项目数据，项目ID:', id);
     project = await window.ApiService.getTestProject(id);
-    console.log('Project data from API:', project);
+    console.log('✅ 从API获取项目数据成功:', project);
   } catch (e) {
-    console.warn('Failed to fetch project from API, using fallback data', e);
+    console.warn('⚠️ 从API获取项目数据失败，尝试使用回退数据:', e);
     // 回退到内置数据
-    const fallbackProjects = window.ApiService.getFallbackProjects();
-    project = fallbackProjects.find(p => p.id === id);
-    console.log('Project data from fallback:', project);
+    try {
+      const fallbackProjects = window.ApiService.getFallbackProjects();
+      project = fallbackProjects.find(p => p.id === id);
+      console.log('✅ 从回退数据获取项目数据:', project);
+    } catch (fallbackError) {
+      console.error('❌ 回退数据也失败:', fallbackError);
+    }
   }
+  
   if (!project) { 
-    console.error('No project data found, redirecting to index');
+    console.error('❌ 无法获取项目数据，重定向到主页');
     location.replace('index.html'); 
     return; 
   }
