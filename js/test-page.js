@@ -567,7 +567,7 @@
         const convertedQuestions = questions.map(q => ({
           id: q.id || q.order || 0,
           text: q.text || q.question_text || '',
-          opts: (q.options || []).map(opt => ({
+          opts: (q.opts || q.options || []).map(opt => ({
             text: opt.text || opt.option_text || '',
             value: opt.value || opt.score_value || 0
           }))
