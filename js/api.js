@@ -85,6 +85,8 @@ class ApiService {
       console.log(`🔍 尝试获取项目 ${projectId}...`);
       const response = await this.request(`/tests/${projectId}`);
       console.log(`✅ 成功获取项目 ${projectId}:`, response);
+      console.log('Response.project:', response.project);
+      console.log('Response.project.introEn:', response.project?.introEn);
       return response.project || response;
     } catch (error) {
       console.error(`❌ 获取项目 ${projectId} 失败:`, error);

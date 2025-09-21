@@ -37,7 +37,7 @@ module.exports = async function handler(req, res) {
         nameEn: row.name_en,
         imageUrl: row.image_url,
         intro: row.intro,
-        introEn: row.intro_en,
+        introEn: row.intro_en || row.intro,
         testType: row.test_type,
         pricingType: row.pricing_type,
         testedCount: row.total_tests || 0,  // 修复字段名映射
@@ -65,7 +65,7 @@ module.exports = async function handler(req, res) {
         nameEn: row.name_en,
         imageUrl: row.image_url,
         intro: row.intro,
-        introEn: row.intro_en,
+        introEn: row.intro_en || row.intro,
         testType: row.test_type,
         pricingType: row.pricing_type,
         testedCount: row.total_tests || 0,  // 修复字段名映射

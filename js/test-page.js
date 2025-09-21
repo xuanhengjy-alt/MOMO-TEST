@@ -199,6 +199,8 @@
   
   console.log('Final project data:', project);
   console.log('Project ID:', project.id);
+  console.log('Project introEn:', project.introEn);
+  console.log('Project intro:', project.intro);
   
   // 检查是否为隐藏的测试项目
   if (Utils.isProjectHidden(project.id)) {
@@ -521,7 +523,7 @@
       .map(p => `<p class="leading-relaxed mb-3">${p.replace(/\n/g, '<br>')}</p>`) // 段内换行
       .join('');
     el.innerHTML = html;
-  })(project.introEn || '');
+  })(project.introEn || project.intro || '');
   // 介绍统一使用数据库返回的 intro_en，不再从本地文件加载
 
   // Disable pretty URL rewriting for static server to avoid 404 on relative assets under nested paths
