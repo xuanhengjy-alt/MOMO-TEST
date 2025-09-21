@@ -2,74 +2,111 @@
 
 ## 问题描述
 博客详情页无法正常显示图片、标题、正文内容、推荐测试、推荐文章，控制台显示404错误：
-- `https://domain.com/api/blog/...` (单数形式) - 404错误
-- 正确的API路径应该是 `https://domain.com/api/blogs/...` (复数形式)
+- `https://domain.com/api/blogs/{slug}` - 404错误
+- `https://domain.com/api/blogs/{slug}/recommend` - 404错误
 
 ## 问题原因
-**API路径不匹配**：某些代码或缓存仍在调用 `/api/blog/`（单数形式），但我们的API端点是 `/api/blogs/`（复数形式）。
+**API文件被误删**：在之前的API合并过程中，误删了重要的动态路由API文件：
+- ❌ `api/blogs/[slug].js` - 处理单个博客详情的API
+- ❌ `api/blogs/[slug]/recommend.js` - 处理博客推荐的API
 
-可能的原因：
-1. 前端代码缓存问题
-2. Vercel部署时的缓存
-3. 浏览器缓存
-4. 某个旧的代码路径未发现
+这些文件被删除后，Vercel无法找到对应的API端点，导致404错误。
 
 ## 修复方案
 
-### 1. 创建重定向API文件
-创建 `api/blog.js` 文件来处理错误的单数形式API调用，并重定向到正确的复数形式：
+### 1. 恢复被删除的API文件
+重新创建被删除的动态路由API文件：
 
 ```javascript
-// api/blog.js - 重定向到正确的API路径
+// api/blogs/[slug].js - 博客详情API
 module.exports = async function handler(req, res) {
-  // 设置CORS头
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
-
   try {
-    // 获取请求的路径并重定向到正确的复数形式
-    const url = new URL(req.url, `http://${req.headers.host}`);
-    const path = url.pathname.replace('/api/blog', '/api/blogs');
+    const { slug } = req.query;
     
-    console.log('⚠️ 检测到错误的单数API路径，重定向:', {
-      原路径: url.pathname,
-      正确路径: path,
-      完整URL: req.url
-    });
+    const result = await query(`
+      SELECT id, slug, title, summary, content_md, cover_image_url, 
+             reading_count, created_at, test_project_id
+      FROM blogs
+      WHERE slug = $1 AND is_published = true
+    `, [slug]);
 
-    // 301重定向到正确的API路径
-    res.status(301).setHeader('Location', path + url.search);
-    res.end();
-    
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Blog not found'
+      });
+    }
+
+    const row = result.rows[0];
+    const blog = {
+      id: row.id,
+      slug: row.slug,
+      title: row.title,
+      excerpt: row.summary,
+      content: row.content_md,
+      cover_image_url: row.cover_image_url,
+      imageUrl: row.cover_image_url,
+      author: 'MOMO TEST',
+      publishedAt: row.created_at,
+      viewCount: row.reading_count || 0,
+      likeCount: 0
+    };
+
+    res.status(200).json({ success: true, blog });
   } catch (error) {
-    console.error('❌ 博客API重定向错误:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'API路径错误，请使用 /api/blogs/ 而不是 /api/blog/',
-      correct_path: '/api/blogs/'
+    res.status(500).json({
+      success: false,
+      error: 'Database connection failed'
     });
   }
 };
 ```
 
-### 2. 已有的正确API文件
-确保以下API文件正常工作：
-- ✅ `api/blogs.js` - 博客列表、详情和推荐API
+```javascript
+// api/blogs/[slug]/recommend.js - 博客推荐API
+module.exports = async function handler(req, res) {
+  try {
+    const { slug } = req.query;
+    
+    const result = await query(`
+      SELECT id, slug, title, summary, cover_image_url, created_at
+      FROM blogs 
+      WHERE slug != $1 AND is_published = true
+      ORDER BY RANDOM()
+      LIMIT 6
+    `, [slug]);
+
+    const recommendations = result.rows.map(row => ({
+      id: row.id,
+      slug: row.slug,
+      title: row.title,
+      excerpt: row.summary,
+      cover_image_url: row.cover_image_url,
+      imageUrl: row.cover_image_url,
+      author: 'MOMO TEST',
+      publishedAt: row.created_at,
+      viewCount: 0,
+      likeCount: 0
+    }));
+
+    res.status(200).json({ success: true, recommendations });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Database connection failed'
+    });
+  }
+};
+```
+
+### 2. 完整的API文件结构
+现在API文件结构完整：
+- ✅ `api/blogs.js` - 博客列表API
+- ✅ `api/blogs/[slug].js` - 博客详情API
+- ✅ `api/blogs/[slug]/recommend.js` - 博客推荐API
 - ✅ `api/tests.js` - 测试相关API  
 - ✅ `api/results.js` - 结果相关API
 - ✅ `api/health.js` - 健康检查API
-
-### 3. 删除旧文件
-已删除可能导致冲突的旧API文件：
-- ❌ `api/blogs-unified-optimized.js` (已删除)
-- ❌ `api/results-unified-optimized.js` (已删除)
-- ❌ `api/tests-unified-optimized.js` (已删除)
 
 ## API端点验证
 
@@ -78,9 +115,9 @@ module.exports = async function handler(req, res) {
 - ✅ `GET /api/blogs/{slug}` - 获取博客详情
 - ✅ `GET /api/blogs/{slug}/recommend` - 获取博客推荐
 
-### 错误的API路径（现在会重定向）
-- ⚠️ `GET /api/blog/{slug}` → 重定向到 `GET /api/blogs/{slug}`
-- ⚠️ `GET /api/blog/{slug}/recommend` → 重定向到 `GET /api/blogs/{slug}/recommend`
+### 动态路由API端点
+- ✅ `GET /api/blogs/{slug}` - 通过动态路由处理博客详情
+- ✅ `GET /api/blogs/{slug}/recommend` - 通过动态路由处理博客推荐
 
 ## 前端代码验证
 
@@ -115,8 +152,8 @@ async getBlogDetail(slug) {
 
 1. **提交修复**：
    ```bash
-   git add api/blog.js
-   git commit -m "Fix blog detail 404: Add redirect from /api/blog/ to /api/blogs/"
+   git add api/blogs/[slug].js api/blogs/[slug]/recommend.js
+   git commit -m "Fix blog detail 404: Restore deleted dynamic route API files"
    git push
    ```
 
@@ -141,14 +178,20 @@ async getBlogDetail(slug) {
 
 ## 技术细节
 
-### 重定向工作原理
-1. 当前端代码尝试调用 `/api/blog/...` 时
-2. Vercel路由将请求发送到 `api/blog.js`
-3. 该文件检测错误路径并发送301重定向到 `/api/blogs/...`
-4. 浏览器自动重新请求正确的API路径
-5. `api/blogs.js` 处理请求并返回正确的数据
+### 动态路由工作原理
+1. 当前端代码调用 `/api/blogs/{slug}` 时
+2. Vercel路由将请求发送到 `api/blogs/[slug].js`
+3. 该文件从URL参数中提取slug
+4. 查询数据库获取博客详情数据
+5. 返回完整的博客数据给前端
+
+1. 当前端代码调用 `/api/blogs/{slug}/recommend` 时
+2. Vercel路由将请求发送到 `api/blogs/[slug]/recommend.js`
+3. 该文件从URL参数中提取slug
+4. 查询数据库获取推荐博客列表
+5. 返回推荐文章数据给前端
 
 ### 响应格式保持一致
-重定向不会改变API响应格式，所有现有的前端代码都能正常工作。
+动态路由API返回的数据格式与之前完全一致，所有现有的前端代码都能正常工作。
 
-这个修复确保了即使有错误的API调用路径，也能通过重定向机制正确访问到博客数据。
+这个修复通过恢复被删除的动态路由API文件，确保了博客详情页能够正确访问到博客数据。
