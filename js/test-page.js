@@ -561,7 +561,10 @@
     
     try {
       // 尝试从API获取题目
+      console.log('🔍 正在获取题目，项目ID:', project.id);
       const questions = await window.ApiService.getTestQuestions(project.id);
+      console.log('📋 API返回的题目数据:', questions);
+      
       if (questions && questions.length > 0) {
         // 转换API数据格式为前端期望的格式
         const convertedQuestions = questions.map(q => ({
@@ -573,7 +576,8 @@
           }))
         }));
         
-        console.log('Converted questions:', convertedQuestions.slice(0, 2)); // 调试日志
+        console.log('✅ 转换后的题目数据:', convertedQuestions.slice(0, 2)); // 调试日志
+        console.log('📊 题目总数:', convertedQuestions.length);
         
         // 一致性校验：MBTI 必须 93题且每题2选项(A/B)
         if (project && project.id === 'mbti') {
@@ -585,15 +589,15 @@
         }
         cachedQuestions = convertedQuestions;
         return convertedQuestions;
+      } else {
+        console.warn('⚠️ API返回的题目数据为空或无效');
+        throw new Error('No questions returned from API');
       }
     } catch (error) {
-      console.warn('Failed to fetch questions from API', error);
-      // API失败时，抛出错误而不是回退到本地逻辑
-      throw new Error('API connection failed');
+      console.error('❌ 获取题目失败:', error);
+      // 抛出错误，让上层处理
+      throw error;
     }
-    
-    // 如果API返回空数据，也抛出错误
-    throw new Error('No questions available from API');
   }
   let qIndex = 0;
   const answers = [];
@@ -607,20 +611,30 @@
   }
   (async () => {
     try {
-      const totalQ = await getQList().then(q => q.length);
+      console.log('🔍 开始获取题目数量...');
+      const questions = await getQList();
+      console.log('📋 获取到的题目:', questions);
+      
+      const totalQ = questions ? questions.length : 0;
+      console.log('📊 题目总数:', totalQ);
+      
       if (totalQ > 0) {
         const estMinutes = Math.max(1, Math.round((totalQ * 12) / 60));
+        console.log('⏱️ 预计时间:', estMinutes, '分钟');
+        
         if (infoLine) {
           infoLine.innerHTML = `Total <span class="font-semibold text-rose-600">${totalQ}</span> questions, estimated <span class="font-semibold text-rose-600">${estMinutes}</span> minutes`;
+          console.log('✅ 题目数量显示成功');
         }
       } else {
+        console.warn('⚠️ 题目数量为0');
         // API失败或没有题目时，显示错误信息
         if (infoLine) {
           infoLine.innerHTML = `<span class="text-red-500">Unable to load questions. Please refresh the page.</span>`;
         }
       }
     } catch (error) {
-      console.error('Failed to load questions:', error);
+      console.error('❌ 获取题目数量失败:', error);
       if (infoLine) {
         infoLine.innerHTML = `<span class="text-red-500">Unable to load questions. Please refresh the page.</span>`;
       }
