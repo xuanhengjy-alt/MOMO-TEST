@@ -4,33 +4,61 @@
     try {
       // 1) 优先从 pathname 解析
       const parts = location.pathname.split('/').filter(Boolean);
+      console.log('🔍 URL parts:', parts);
+      
       if (parts.length >= 2 && parts[parts.length-2] === 'test-detail.html') {
         const v = decodeURIComponent(parts[parts.length-1] || '');
+        console.log('✅ 从pathname解析到ID:', v);
         if (v) return v;
       }
+      
       // 2) 再从 href 正则解析（兼容某些代理重写场景）
       const m = /test-detail\.html\/(.+?)(?:[?#]|$)/i.exec(location.href);
-      if (m && m[1]) return decodeURIComponent(m[1]);
+      if (m && m[1]) {
+        const v = decodeURIComponent(m[1]);
+        console.log('✅ 从href正则解析到ID:', v);
+        return v;
+      }
+      
       // 3) 兼容旧链接 ?id=
       const params = new URLSearchParams(location.search);
       const q = params.get('id');
-      if (q) return q;
-    } catch(_) {}
+      if (q) {
+        console.log('✅ 从查询参数解析到ID:', q);
+        return q;
+      }
+      
+      // 4) 检查是否是直接访问test-detail.html的情况（没有项目ID）
+      if (parts.includes('test-detail.html') && parts.length === 1) {
+        console.log('❌ 直接访问test-detail.html，没有项目ID');
+        return null;
+      }
+      
+      console.log('❌ 没有找到项目ID');
+    } catch(error) {
+      console.error('❌ URL解析错误:', error);
+    }
     return '';
   }
   let id = extractIdFromUrl();
   if (!id) { 
-    // 如果没有项目ID，使用默认的MBTI项目
-    id = 'mbti';
-    console.log('No project ID in URL, using default: mbti');
+    // 如果没有项目ID，重定向到主页
+    console.log('No project ID in URL, redirecting to index');
+    location.replace('index.html');
+    return;
   }
 
   // 若 URL 传入的是 name_en 生成的 slug，需要映射回项目 id
   async function resolveProjectId(input){
-    // 先尝试直接按 id 取
+    console.log('🔍 解析项目ID:', input);
+    
+    // 先尝试直接按 id 取（处理直接使用项目ID的情况）
     try {
       const prj = await window.ApiService.getTestProject(input);
-      if (prj && prj.id) return prj.id;
+      if (prj && prj.id) {
+        console.log('✅ 直接找到项目:', prj.id);
+        return prj.id;
+      }
     } catch(_) {}
     
     // 拉取项目列表，根据 nameEn 规范化匹配
@@ -38,9 +66,15 @@
       const projects = await window.ApiService.getTestProjects();
       const sanitize = (s)=>String(s||'').toLowerCase().trim().replace(/[\s/_.,:：—-]+/g,'-').replace(/[^a-z0-9-]/g,'').replace(/-+/g,'-').slice(0,60);
       
-      // 先尝试精确匹配
-      let hit = (projects||[]).find(p => sanitize(p.nameEn||p.name) === input);
-      if (hit) return hit.id;
+      console.log('📋 项目列表:', projects.map(p => ({ id: p.id, nameEn: p.nameEn, slug: sanitize(p.nameEn||p.name) })));
+      
+      // 先尝试精确匹配slug
+      const inputSlug = sanitize(input);
+      let hit = (projects||[]).find(p => sanitize(p.nameEn||p.name) === inputSlug);
+      if (hit) {
+        console.log('✅ 精确匹配找到项目:', hit.id);
+        return hit.id;
+      }
       
       // 再尝试部分匹配（处理 social-test-anxiety-test -> social_anxiety_test 的情况）
       hit = (projects||[]).find(p => {
@@ -52,7 +86,10 @@
         return projectWords.some(word => inputWords.includes(word)) && 
                inputWords.some(word => projectWords.includes(word));
       });
-      if (hit) return hit.id;
+      if (hit) {
+        console.log('✅ 部分匹配找到项目:', hit.id);
+        return hit.id;
+      }
       
       // 最后尝试模糊匹配
       hit = (projects||[]).find(p => {
@@ -60,16 +97,30 @@
         const inputSlug = input.toLowerCase();
         return projectSlug.includes(inputSlug) || inputSlug.includes(projectSlug);
       });
-      if (hit) return hit.id;
+      if (hit) {
+        console.log('✅ 模糊匹配找到项目:', hit.id);
+        return hit.id;
+      }
       
-    } catch(_) {}
+    } catch(error) {
+      console.error('❌ 获取项目列表失败:', error);
+    }
     
-    // 如果都找不到，返回默认的mbti项目
-    console.warn(`Project not found: ${input}, using default: mbti`);
-    return 'mbti';
+    // 如果都找不到，返回null表示项目不存在
+    console.warn(`❌ Project not found: ${input}`);
+    return null;
   }
 
+  console.log('🔍 开始解析项目ID:', id);
   id = await resolveProjectId(id);
+  console.log('✅ 解析后的项目ID:', id);
+
+  // 检查是否找到了有效的项目ID
+  if (!id) {
+    console.error('❌ No valid project ID found, redirecting to index');
+    location.replace('index.html');
+    return;
+  }
 
   // 使用API服务获取项目数据
   let project;

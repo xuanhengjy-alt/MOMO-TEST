@@ -54,14 +54,18 @@ app.get('*', (req, res) => {
     return res.status(404).json({ error: 'API endpoint not found' });
   }
   
-  // 检查是否是HTML文件
-  if (req.path.endsWith('.html')) {
-    return res.sendFile(path.join(__dirname, req.path));
-  }
-  
   // 检查是否是静态资源
   if (req.path.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg)$/)) {
     return res.sendFile(path.join(__dirname, req.path));
+  }
+  
+  // 检查是否是HTML文件或HTML文件路径
+  if (req.path.endsWith('.html') || req.path.match(/^\/[^\/]+\.html\//)) {
+    // 提取HTML文件名
+    const htmlMatch = req.path.match(/^\/([^\/]+\.html)/);
+    if (htmlMatch) {
+      return res.sendFile(path.join(__dirname, htmlMatch[1]));
+    }
   }
   
   // 默认返回index.html
