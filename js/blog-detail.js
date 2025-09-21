@@ -25,90 +25,29 @@
     }
   }
   await ensureLibs();
-  const pathParts = location.pathname.split('/').filter(Boolean);
-  console.log('🔍 URL解析开始:');
-  console.log('Current URL:', location.href);
-  console.log('Path parts:', pathParts);
-  console.log('Search params:', location.search);
-  console.log('User Agent:', navigator.userAgent);
-  console.log('Is Vercel:', window.location.hostname.includes('vercel'));
-  console.log('Environment:', window.location.hostname);
-  
+  // 简化URL解析逻辑
   let slug = null;
   
-  // 修复URL解析逻辑，处理Vercel rewrite规则
-  if (pathParts.length >= 2 && pathParts[pathParts.length-2] === 'blog-detail.html') {
-    slug = decodeURIComponent(pathParts[pathParts.length-1] || '');
-    console.log('✅ 从URL路径提取slug:', slug);
-  } else if (pathParts.length >= 1 && pathParts[0] === 'blog-detail.html') {
-    // 处理直接访问blog-detail.html的情况
-    if (pathParts.length > 1) {
-      slug = decodeURIComponent(pathParts[1] || '');
-      console.log('✅ 从blog-detail.html后提取slug:', slug);
-    } else {
-      console.log('⚠️ 直接访问blog-detail.html，没有slug参数');
-    }
+  // 从URL路径中提取slug
+  const pathParts = location.pathname.split('/').filter(Boolean);
+  console.log('URL路径:', location.pathname);
+  console.log('路径部分:', pathParts);
+  
+  // 查找blog-detail.html后面的slug
+  const blogDetailIndex = pathParts.indexOf('blog-detail.html');
+  if (blogDetailIndex !== -1 && pathParts[blogDetailIndex + 1]) {
+    slug = decodeURIComponent(pathParts[blogDetailIndex + 1]);
+    console.log('✅ 提取到slug:', slug);
+  } else {
+    // 从查询参数获取
+    const params = new URLSearchParams(location.search);
+    slug = params.get('slug');
+    console.log('从查询参数获取slug:', slug);
   }
   
   if (!slug) {
-    const params = new URLSearchParams(location.search);
-    slug = params.get('slug');
-    console.log('🔍 从查询参数提取slug:', slug);
-  }
-  console.log('📋 最终提取的slug:', slug);
-  
-  if (!slug) { 
     console.log('❌ 没有找到slug，重定向到blog.html');
-    console.log('当前URL:', location.href);
-    console.log('路径部分:', pathParts);
-    
-    // 显示友好的错误信息
-    const titleEl = document.getElementById('blog-title');
-    const contentEl = document.getElementById('blog-content');
-    if (titleEl) titleEl.textContent = 'Blog Not Found';
-    if (contentEl) contentEl.innerHTML = '<p class="text-gray-500">Sorry, the blog post you are looking for could not be found.</p><p class="text-sm text-gray-400 mt-2">Please check the URL format: /blog-detail.html/[blog-slug]</p>';
-    
-    // 延迟重定向，让用户看到错误信息
-    setTimeout(() => {
-      location.replace('/blog.html');
-    }, 3000);
-    return; 
-  }
-  
-  // 检查slug是否有效（不应该是常见的文件名）
-  const invalidSlugs = ['blog.html', 'index.html', 'test-detail.html', 'blog-detail.html', 'css', 'js', 'assets', 'api'];
-  if (invalidSlugs.includes(slug)) {
-    console.log('❌ 检测到无效的slug:', slug);
-    console.log('当前URL:', location.href);
-    
-    // 显示友好的错误信息
-    const titleEl = document.getElementById('blog-title');
-    const contentEl = document.getElementById('blog-content');
-    if (titleEl) titleEl.textContent = 'Invalid Blog URL';
-    if (contentEl) contentEl.innerHTML = '<p class="text-gray-500">The blog URL format is incorrect.</p><p class="text-sm text-gray-400 mt-2">Please use: /blog-detail.html/[blog-slug]</p>';
-    
-    // 延迟重定向，让用户看到错误信息
-    setTimeout(() => {
-      location.replace('/blog.html');
-    }, 3000);
-    return;
-  }
-  
-  // 检查slug长度和格式
-  if (slug.length < 3 || slug.length > 200) {
-    console.log('❌ slug长度无效:', slug.length);
-    console.log('当前URL:', location.href);
-    
-    // 显示友好的错误信息
-    const titleEl = document.getElementById('blog-title');
-    const contentEl = document.getElementById('blog-content');
-    if (titleEl) titleEl.textContent = 'Invalid Blog Slug';
-    if (contentEl) contentEl.innerHTML = '<p class="text-gray-500">The blog slug is too short or too long.</p><p class="text-sm text-gray-400 mt-2">Please use a valid blog slug.</p>';
-    
-    // 延迟重定向，让用户看到错误信息
-    setTimeout(() => {
-      location.replace('/blog.html');
-    }, 3000);
+    location.replace('/blog.html');
     return;
   }
 
@@ -181,26 +120,18 @@
   }
 
   try {
-    console.log('Loading blog detail for slug:', slug);
-    console.log('API Service available:', !!window.ApiService);
-    console.log('getBlogDetail method available:', !!window.ApiService.getBlogDetail);
+    console.log('🔍 获取blog详情，slug:', slug);
     
-    // 测试API连接
-    console.log('🔍 测试API连接...');
-    try {
-      const testResponse = await fetch('/api/blogs');
-      console.log('API连接测试结果:', testResponse.status, testResponse.ok);
-      if (!testResponse.ok) {
-        console.error('API连接失败:', testResponse.status, testResponse.statusText);
-      }
-    } catch (apiError) {
-      console.error('API连接错误:', apiError);
+    // 直接调用API
+    const response = await fetch(`/api/blogs/${encodeURIComponent(slug)}`);
+    console.log('API响应状态:', response.status);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
     
-    const b = await window.ApiService.getBlogDetail(slug);
-    console.log('Blog data received:', b);
-    console.log('Blog title:', b.title);
-    console.log('Blog content_md length:', b.content_md ? b.content_md.length : 0);
+    const b = await response.json();
+    console.log('✅ 成功获取blog数据:', b);
     document.title = `${b.title} - MOMO TEST`;
     // 基础 SEO/OG 注入
     try {
@@ -359,42 +290,22 @@
       });
     }
   } catch (e) {
-    console.error('Failed to load blog detail', e);
-    console.error('Error details:', {
-      message: e.message,
-      status: e.status,
-      url: e.url || 'unknown'
-    });
+    console.error('❌ 加载blog详情失败:', e);
     
-    // 显示详细的错误信息给用户
+    // 显示简单错误信息
     const titleEl = document.getElementById('blog-title');
     const contentEl = document.getElementById('blog-content');
     
-    if (e.status === 404) {
-      if (titleEl) titleEl.textContent = 'Blog Not Found';
-      if (contentEl) contentEl.innerHTML = `
-        <p class="text-gray-500">Sorry, the blog post you are looking for could not be found.</p>
-        <p class="text-sm text-gray-400 mt-2">The blog slug "${slug}" does not exist in our database.</p>
-        <p class="text-sm text-gray-400 mt-1">Please check the URL or browse our <a href="/blog.html" class="text-blue-600 hover:underline">blog list</a>.</p>
-      `;
-    } else if (e.status >= 500) {
-      if (titleEl) titleEl.textContent = 'Server Error';
-      if (contentEl) contentEl.innerHTML = `
-        <p class="text-gray-500">Sorry, there was a server error while loading this blog post.</p>
-        <p class="text-sm text-gray-400 mt-2">Please try again later or contact support if the problem persists.</p>
-      `;
-    } else {
-      if (titleEl) titleEl.textContent = 'Loading Error';
-      if (contentEl) contentEl.innerHTML = `
-        <p class="text-gray-500">Sorry, there was an error while loading this blog post.</p>
-        <p class="text-sm text-gray-400 mt-2">Please try refreshing the page or check your internet connection.</p>
-      `;
-    }
+    if (titleEl) titleEl.textContent = 'Blog Not Found';
+    if (contentEl) contentEl.innerHTML = `
+      <p class="text-gray-500">Sorry, the blog post could not be found.</p>
+      <p class="text-sm text-gray-400 mt-2">Please check the URL or <a href="/blog.html" class="text-blue-600 hover:underline">browse our blog list</a>.</p>
+    `;
     
-    // 延迟重定向，让用户看到错误信息
+    // 3秒后重定向
     setTimeout(() => {
-      location.replace('blog.html');
-    }, 5000);
+      location.replace('/blog.html');
+    }, 3000);
   }
 })();
 
