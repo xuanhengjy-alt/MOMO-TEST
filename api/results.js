@@ -237,6 +237,17 @@ async function calculateTestResult(testType, answers, projectInternalId, project
         );
         const res = await TestLogic.calculateResult(keyForService, answers);
         if (res && res.summary) return res;
+
+        // 显式按 projectId/testType 兜底调用常见量表，避免键不匹配导致空返回
+        const k = keyForService;
+        if (k) {
+          if ((k === 'social_anxiety_test') && typeof TestLogic.scoreSocialAnxietyTest === 'function') {
+            return await TestLogic.scoreSocialAnxietyTest(answers);
+          }
+          if ((k === 'anxiety_depression_test' || k === 'anxiety_and_depression_test') && typeof TestLogic.scoreAnxietyDepressionTest === 'function') {
+            return await TestLogic.scoreAnxietyDepressionTest(answers);
+          }
+        }
       }
     } catch (_) {}
 
