@@ -31,7 +31,17 @@
 
   // 过滤项目
   console.log('🔍 过滤前项目数量:', projects.length);
-  const filteredProjects = Utils.filterVisibleProjects(projects);
+  console.log('🔍 Utils对象:', typeof Utils, Utils);
+  console.log('🔍 filterVisibleProjects方法:', typeof Utils?.filterVisibleProjects);
+  
+  let filteredProjects;
+  if (!Utils || !Utils.filterVisibleProjects) {
+    console.error('❌ Utils或filterVisibleProjects方法不存在，使用默认过滤');
+    // 临时回退：直接使用所有项目
+    filteredProjects = projects;
+  } else {
+    filteredProjects = Utils.filterVisibleProjects(projects);
+  }
   console.log('✅ 过滤后项目数量:', filteredProjects.length);
   console.log('📋 过滤后的项目:', filteredProjects.map(p => p.id));
 
@@ -104,13 +114,37 @@ function renderProjectsInBatches(projects, template, container) {
 
 // 渲染单个项目卡片
 function renderProjectCard(p, tpl, container, index) {
+  // 检查参数有效性
+  if (!p || !tpl || !container) {
+    console.error('❌ renderProjectCard: 无效参数', { p, tpl, container });
+    return;
+  }
+
   const node = tpl.content.cloneNode(true);
+  if (!node) {
+    console.error('❌ renderProjectCard: 无法克隆模板');
+    return;
+  }
+
   const img = node.querySelector('img');
   const title = node.querySelector('h3');
   const people = node.querySelector('.people');
   const btn = node.querySelector('.start-btn');
   const pricingLabel = node.querySelector('.pricing-label');
   const skeleton = node.querySelector('.skeleton');
+
+  // 检查关键DOM元素
+  if (!img || !title || !people || !btn || !skeleton) {
+    console.error('❌ renderProjectCard: DOM元素缺失', { 
+      img: !!img, 
+      title: !!title, 
+      people: !!people, 
+      btn: !!btn, 
+      skeleton: !!skeleton,
+      projectId: p.id 
+    });
+    return;
+  }
 
   // 图片路径映射
   const imageFallbacks = {
@@ -167,21 +201,28 @@ function renderProjectCard(p, tpl, container, index) {
   const likeKey = `likes_${p.id}`;
   // 显示测试人数
   if (p.testedCount) {
-    people.textContent = Utils.formatNumber(p.testedCount);
+    people.textContent = (Utils && Utils.formatNumber) ? Utils.formatNumber(p.testedCount) : p.testedCount;
   } else {
-    let tested = Utils.loadLocal(testedKey, null);
-    if (!tested) {
-      tested = Utils.getRandomTestedW();
-      Utils.saveLocal(testedKey, tested);
+    let tested;
+    if (Utils && Utils.loadLocal) {
+      tested = Utils.loadLocal(testedKey, null);
+      if (!tested && Utils.getRandomTestedW) {
+        tested = Utils.getRandomTestedW();
+        Utils.saveLocal(testedKey, tested);
+      }
+    } else {
+      tested = '1.1W+'; // 默认值
     }
     people.textContent = tested;
   }
 
   // 初始化点赞数
-  if (p.likes) {
-    Utils.saveLocal(likeKey, p.likes);
-  } else if (Utils.loadLocal(likeKey, null) == null) {
-    Utils.saveLocal(likeKey, Utils.getRandomLikes());
+  if (Utils && Utils.saveLocal) {
+    if (p.likes) {
+      Utils.saveLocal(likeKey, p.likes);
+    } else if (Utils.loadLocal && Utils.loadLocal(likeKey, null) == null && Utils.getRandomLikes) {
+      Utils.saveLocal(likeKey, Utils.getRandomLikes());
+    }
   }
 
   // 显示免费标签
@@ -195,8 +236,14 @@ function renderProjectCard(p, tpl, container, index) {
   });
 
   // 添加卡片到容器，使用淡入动画
-  node.classList.add('fade-in');
-  container.appendChild(node);
+  if (node && node.classList) {
+    node.classList.add('fade-in');
+  }
+  if (container) {
+    container.appendChild(node);
+  } else {
+    console.error('❌ renderProjectCard: 容器无效');
+  }
 }
 
 // 优化的图片加载函数
