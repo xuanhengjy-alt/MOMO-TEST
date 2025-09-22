@@ -14,6 +14,7 @@ module.exports = async function handler(req, res) {
 
   try {
     const url = new URL(req.url, `http://${req.headers.host}`);
+    const debugFlag = url.searchParams.get('debug') === '1';
     const pathParts = url.pathname.split('/').filter(Boolean);
     
     console.log('Results API request:', {
@@ -30,7 +31,7 @@ module.exports = async function handler(req, res) {
 
     // 处理路径：/api/results (提交测试结果)
     if (pathParts.length === 2 && pathParts[1] === 'results' && req.method === 'POST') {
-      return await handleSubmitResult(req, res);
+      return await handleSubmitResult(req, res, { debug: debugFlag });
     }
 
     // 如果没有匹配的路径，返回404
@@ -116,7 +117,8 @@ async function handleStatsRequest(req, res, projectId) {
 }
 
 // 处理提交测试结果请求
-async function handleSubmitResult(req, res) {
+async function handleSubmitResult(req, res, opts = {}) {
+  const debug = !!opts.debug;
   // 设置超时处理（放宽到30秒，适配冷启动与首次DB访问）
   const timeoutPromise = new Promise((_, reject) => {
     setTimeout(() => reject(new Error('Request timeout')), 30000);
@@ -137,6 +139,7 @@ async function handleSubmitResult(req, res) {
     });
 
     const { projectId, answers, sessionId, ipAddress, userAgent } = body;
+    const t0 = Date.now();
     
     console.log(`📝 提交测试结果，项目ID: ${projectId}`);
 
@@ -168,6 +171,7 @@ async function handleSubmitResult(req, res) {
     
     // 计算测试结果
     const result = await calculateTestResult(testType, answers, projectInternalId, projectId);
+    const t1 = Date.now();
     
     // 保存测试结果到数据库
     const resultId = await saveTestResult({
@@ -190,10 +194,16 @@ async function handleSubmitResult(req, res) {
     
       console.log(`✅ 测试结果提交成功，项目ID: ${projectId}，结果ID: ${resultId}`);
       
-      return {
+      const payload = {
         resultId: resultId,
         result: result
       };
+      if (debug) {
+        payload.debug = {
+          calcDurationMs: (t1 - t0)
+        };
+      }
+      return payload;
 
     } catch (error) {
       console.error('❌ 处理测试结果失败:', error.message);
@@ -206,7 +216,8 @@ async function handleSubmitResult(req, res) {
     res.status(200).json({
       success: true,
       resultId: result.resultId,
-      result: result.result
+      result: result.result,
+      ...(result.debug ? { debug: result.debug } : {})
     });
   } catch (error) {
     console.error('❌ 提交测试结果失败:', error);
