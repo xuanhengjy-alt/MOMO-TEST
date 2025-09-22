@@ -470,7 +470,8 @@ async function saveTestResult({ projectId, sessionId, answers, result, ipAddress
       JSON.stringify(answers),
       result.summary,
       result.analysis,
-      result.type,
+      // 兼容服务层返回的 resultType 字段
+      (result.type || result.resultType || ''),
       ipAddress,
       userAgent
     ]);
