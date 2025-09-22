@@ -764,7 +764,11 @@
           id: q.id || q.order || q.order_index || qi + 1,
           text: q.text || q.question_text || '',
           opts: (q.opts || q.options || []).map((opt, oi) => {
-            const sv = opt.score_value || opt.value || {};
+            // 统一解析 score_value / value：后端可能把 JSON 放到 value(字符串)
+            let sv = opt.score_value || opt.value || {};
+            if (typeof sv === 'string') {
+              try { sv = JSON.parse(sv); } catch(_) { sv = {}; }
+            }
             const rawNext = (opt.next != null ? opt.next : (sv && sv.next != null ? sv.next : null));
             const next = numFrom(rawNext);
             const resultCode = (opt.resultCode != null ? opt.resultCode : (sv && sv.resultCode != null ? sv.resultCode : null));
