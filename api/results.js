@@ -225,6 +225,40 @@ async function handleSubmitResult(req, res, opts = {}) {
             options: Number(oCount?.rows?.[0]?.c || 0),
             resultTypes: Number(rtCount?.rows?.[0]?.c || 0)
           };
+          // 进一步诊断：复现服务层主查询，抓取具体 SQL 错误
+          const diag = {};
+          try {
+            await query(`
+              SELECT 
+                COALESCE(
+                  q.question_number,
+                  q.order_index,
+                  ROW_NUMBER() OVER (ORDER BY COALESCE(q.order_index, q.id))
+                ) AS qn,
+                o.option_number,
+                o.score_value
+              FROM questions q
+              JOIN question_options o ON o.question_id = q.id
+              WHERE q.project_id = (SELECT id FROM test_projects WHERE project_id = 'social_anxiety_test')
+              ORDER BY qn ASC, o.option_number ASC
+            `);
+            diag.qres = 'ok';
+          } catch (e1) {
+            diag.qres = String(e1 && e1.message || e1);
+          }
+          try {
+            await query(`
+              SELECT description_en, analysis_en
+              FROM result_types rt
+              JOIN test_projects tp ON rt.project_id = tp.id
+              WHERE tp.project_id = 'social_anxiety_test' AND rt.type_code = 'SA_NONE'
+              LIMIT 1
+            `);
+            diag.rt = 'ok';
+          } catch (e2) {
+            diag.rt = String(e2 && e2.message || e2);
+          }
+          payload.debug.diag = diag;
         } catch (e) {
           payload.debug.probeError = String(e && e.message || e);
         }
