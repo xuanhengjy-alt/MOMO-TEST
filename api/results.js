@@ -117,9 +117,9 @@ async function handleStatsRequest(req, res, projectId) {
 
 // 处理提交测试结果请求
 async function handleSubmitResult(req, res) {
-  // 设置超时处理
+  // 设置超时处理（放宽到30秒，适配冷启动与首次DB访问）
   const timeoutPromise = new Promise((_, reject) => {
-    setTimeout(() => reject(new Error('Request timeout')), 15000); // 15秒超时，结果计算需要更多时间
+    setTimeout(() => reject(new Error('Request timeout')), 30000);
   });
 
   const handlerPromise = (async () => {

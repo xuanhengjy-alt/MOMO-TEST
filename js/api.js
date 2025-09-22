@@ -59,12 +59,13 @@ class ApiService {
     if (options.body && method !== 'GET' && method !== 'HEAD' && !headers['Content-Type']) {
       headers['Content-Type'] = 'application/json';
     }
+    const isSubmitResults = (method === 'POST' && endpoint === '/results');
+    const timeoutMs = isSubmitResults ? 30000 : 12000; // 提交结果放宽到30s，其它接口维持12s
     const config = { 
       ...options, 
       method, 
       headers,
-      // 设置12秒超时，给后端API充足的处理时间
-      signal: AbortSignal.timeout(12000)
+      signal: AbortSignal.timeout(timeoutMs)
     };
 
     console.log(`API Request: ${method} ${url}`, config);
