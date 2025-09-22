@@ -108,21 +108,47 @@
     return;
   }
 
-  // 使用API服务获取项目数据
+  // 并行获取项目数据和其他必要数据，提升加载速度
   let project;
   try {
-    console.log('🔍 尝试获取项目数据，项目ID:', id);
-    project = await window.ApiService.getTestProject(id);
-    console.log('✅ 从API获取项目数据成功:', project);
+    console.log('🔍 开始并行获取项目数据，项目ID:', id);
+    
+    // 并行请求：项目详情、题目数据、点赞状态
+    const [projectResult, questionsResult, likeStatusResult] = await Promise.allSettled([
+      window.ApiService.getTestProject(id),
+      window.ApiService.getQuestions(id).catch(() => null), // 题目数据可选
+      window.ApiService.checkLikeStatus(id).catch(() => ({ likes: 0, liked: false })) // 点赞状态可选
+    ]);
+    
+    // 处理项目数据
+    if (projectResult.status === 'fulfilled') {
+      project = projectResult.value;
+      console.log('✅ 项目数据获取成功');
+    } else {
+      throw new Error('项目数据获取失败');
+    }
+    
+    // 预缓存题目数据（如果获取成功）
+    if (questionsResult.status === 'fulfilled' && questionsResult.value) {
+      cachedQuestions = questionsResult.value;
+      console.log('✅ 题目数据预缓存成功');
+    }
+    
+    // 预设置点赞状态（如果获取成功）
+    if (likeStatusResult.status === 'fulfilled' && likeStatusResult.value) {
+      isLiked = likeStatusResult.value.liked || false;
+      console.log('✅ 点赞状态预设置成功');
+    }
+    
   } catch (e) {
-    console.warn('⚠️ 从API获取项目数据失败，尝试使用回退数据:', e);
-    // 回退到内置数据
+    console.warn('⚠️ 并行请求失败，回退到单个请求:', e);
+    // 回退到单个请求
     try {
+      project = await window.ApiService.getTestProject(id);
+    } catch (fallbackError) {
+      console.warn('⚠️ API失败，使用回退数据:', fallbackError);
       const fallbackProjects = window.ApiService.getFallbackProjects();
       project = fallbackProjects.find(p => p.id === id);
-      console.log('✅ 从回退数据获取项目数据:', project);
-    } catch (fallbackError) {
-      console.error('❌ 回退数据也失败:', fallbackError);
     }
   }
   
@@ -397,7 +423,23 @@
     var preferred = (project && project.id && map[project.id]) ? map[project.id] : '';
     var fallback = '/assets/images/logo.png';
     var src0 = preferred || project.image || fallback;
+    
+    // 优化图片加载体验
+    projectImage.style.opacity = '0';
+    projectImage.style.transition = 'opacity 0.3s ease-in-out';
+    
+    // 图片加载完成后淡入显示
+    projectImage.onload = () => {
+      projectImage.style.opacity = '1';
+    };
+    
+    // 设置图片源
     projectImage.src = src0.startsWith('/') ? src0 : ('/' + src0);
+    
+    // 如果图片已缓存，立即显示
+    if (projectImage.complete && projectImage.naturalHeight !== 0) {
+      projectImage.style.opacity = '1';
+    }
   })();
   
   // 显示免费标签
@@ -490,8 +532,10 @@
     }
   }
   
-  // 页面加载时检查点赞状态
-  checkLikeStatus();
+  // 页面加载时检查点赞状态（如果之前没有并行获取）
+  if (isLiked === undefined) {
+    checkLikeStatus();
+  }
 
   likeBtn.addEventListener('click', async () => {
     try {
@@ -639,8 +683,16 @@
   (async () => {
     try {
       console.log('🔍 开始获取题目数量...');
-      const questions = await getQList();
-      console.log('📋 获取到的题目:', questions);
+      
+      // 如果已经有缓存的题目数据，直接使用
+      let questions;
+      if (cachedQuestions && cachedQuestions.length > 0) {
+        questions = cachedQuestions;
+        console.log('✅ 使用预缓存的题目数据');
+      } else {
+        questions = await getQList();
+        console.log('📋 获取到的题目:', questions);
+      }
       
       const totalQ = questions ? questions.length : 0;
       console.log('📊 题目总数:', totalQ);
@@ -963,11 +1015,65 @@
     renderQuestion();
   });
 
-  // 初始显示
+  // 骨架屏显示函数
+  function showSkeletonScreen() {
+    const detailSection = document.getElementById('detail-section');
+    if (!detailSection) return;
+    
+    // 显示骨架屏内容
+    detailSection.innerHTML = `
+      <div class="max-w-4xl mx-auto px-4 py-8">
+        <!-- 项目标题骨架 -->
+        <div class="text-center mb-8">
+          <div class="skeleton-text mx-auto mb-4" style="width: 300px; height: 2rem;"></div>
+          <div class="skeleton-text mx-auto" style="width: 200px; height: 1.5rem;"></div>
+        </div>
+        
+        <!-- 项目图片骨架 -->
+        <div class="skeleton mb-8" style="width: 100%; height: 400px; border-radius: 1rem;"></div>
+        
+        <!-- 统计信息骨架 -->
+        <div class="flex justify-center gap-8 mb-8">
+          <div class="text-center">
+            <div class="skeleton-text mb-2" style="width: 80px; height: 1.5rem;"></div>
+            <div class="skeleton-text" style="width: 60px; height: 1rem;"></div>
+          </div>
+          <div class="text-center">
+            <div class="skeleton-text mb-2" style="width: 80px; height: 1.5rem;"></div>
+            <div class="skeleton-text" style="width: 60px; height: 1rem;"></div>
+          </div>
+          <div class="text-center">
+            <div class="skeleton-text mb-2" style="width: 80px; height: 1.5rem;"></div>
+            <div class="skeleton-text" style="width: 60px; height: 1rem;"></div>
+          </div>
+        </div>
+        
+        <!-- 开始按钮骨架 -->
+        <div class="text-center mb-8">
+          <div class="skeleton-button mx-auto" style="width: 200px; height: 3rem;"></div>
+        </div>
+        
+        <!-- 介绍内容骨架 -->
+        <div class="text-center">
+          <div class="skeleton-text mx-auto mb-4" style="width: 150px; height: 1.5rem;"></div>
+          <div class="skeleton-text mx-auto mb-2" style="width: 100%; height: 1rem;"></div>
+          <div class="skeleton-text mx-auto mb-2" style="width: 100%; height: 1rem;"></div>
+          <div class="skeleton-text mx-auto mb-2" style="width: 80%; height: 1rem;"></div>
+        </div>
+      </div>
+    `;
+  }
+
+  // 初始显示骨架屏，提升用户体验
   console.log('Initializing test page...');
-  show('detail');
-  renderProgress();
-  // 注意：不在这里调用 renderQuestion()，因为主逻辑会处理题目加载
+  showSkeletonScreen();
+  
+  // 异步加载完整内容
+  setTimeout(() => {
+    show('detail');
+    renderProgress();
+    // 注意：不在这里调用 renderQuestion()，因为主逻辑会处理题目加载
+  }, 100);
 })();
 
 
