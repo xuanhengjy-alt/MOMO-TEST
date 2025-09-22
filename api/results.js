@@ -552,8 +552,7 @@ async function calculateSocialAnxietyDirect(answers, projectInternalId) {
       SELECT 
         COALESCE(
           q.question_number,
-          q.order_index,
-          ROW_NUMBER() OVER (ORDER BY COALESCE(q.order_index, q.id))
+          ROW_NUMBER() OVER (ORDER BY q.id)
         ) AS qn,
         o.option_number,
         o.score_value
@@ -573,12 +572,18 @@ async function calculateSocialAnxietyDirect(answers, projectInternalId) {
         const optIdx = Number(row.option_number) - 1;
         let s = 0;
         try {
-          const v = row.score_value || {};
-          if (typeof v === 'object' && v !== null) {
+          const v = row.score_value;
+          let n = 0;
+          if (v && typeof v === 'object') {
             const raw = (v.score ?? v.value ?? 0);
-            const n = Number(raw) || 0;
-            s = n > 5 ? (n - 4) : n; // 归一化到1..5
+            n = Number(raw) || 0;
+          } else if (typeof v === 'string') {
+            const f = Number.parseFloat(v);
+            n = Number.isFinite(f) ? f : 0;
+          } else if (typeof v === 'number') {
+            n = Number.isFinite(v) ? v : 0;
           }
+          s = n > 5 ? (n - 4) : n; // 归一化到1..5
         } catch (_) { s = 0; }
         arr[optIdx] = s;
       }
