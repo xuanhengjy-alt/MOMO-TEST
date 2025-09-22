@@ -37,6 +37,14 @@
   .analysis-rich h4 { font-size: 1rem; }
 }
 
+/* Line clamp utility classes */
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 /* Footer Styles */
 .footer {
   background-color: #1f2937;

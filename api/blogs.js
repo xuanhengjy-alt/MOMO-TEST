@@ -114,7 +114,8 @@ async function handleBlogList(req, res) {
           id: row.id,
           slug: row.slug,
           title: row.title,
-          excerpt: row.summary,
+          summary: row.summary, // 保持与数据库字段一致
+          excerpt: row.summary, // 兼容字段名
           cover_image_url: row.cover_image_url, // 保持原始字段名
           imageUrl: row.cover_image_url, // 兼容字段名
           author: 'MOMO TEST', // 默认作者
