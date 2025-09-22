@@ -388,6 +388,9 @@
 
   // 动态计算中提示
   let calcNoticeEl = null;
+  let progressBar = null;
+  let progressInterval = null;
+  
   function showCalculatingNotice(show) {
     try {
       if (!calcNoticeEl) {
@@ -396,12 +399,13 @@
         calcNoticeEl.className = 'calculating-container';
         calcNoticeEl.innerHTML = `
           <div class="calculating-spinner"></div>
-          <div class="calculating-text">正在分析您的答案</div>
-          <div class="calculating-subtitle">AI正在为您计算个性化结果<span class="calculating-dots"></span></div>
+          <div class="calculating-text">Your answer is being analyzed.</div>
+          <div class="calculating-subtitle">Please wait for a moment<span class="calculating-dots"></span></div>
           <div class="calculating-progress">
             <div class="calculating-progress-bar"></div>
           </div>
         `;
+        progressBar = calcNoticeEl.querySelector('.calculating-progress-bar');
       }
       
       if (show) {
@@ -413,6 +417,11 @@
         calcNoticeEl.style.display = 'flex';
         calcNoticeEl.classList.remove('calculating-complete');
         
+        // 重置进度条
+        if (progressBar) {
+          progressBar.style.width = '0%';
+        }
+        
         // 添加淡入效果
         calcNoticeEl.style.opacity = '0';
         calcNoticeEl.style.transform = 'translateY(20px)';
@@ -421,24 +430,73 @@
         setTimeout(() => {
           calcNoticeEl.style.opacity = '1';
           calcNoticeEl.style.transform = 'translateY(0)';
+          
+          // 开始真实进度条动画
+          startProgressAnimation();
         }, 50);
         
       } else {
         if (calcNoticeEl && calcNoticeEl.parentElement) {
-          // 添加完成动画
-          calcNoticeEl.classList.add('calculating-complete');
+          // 停止进度条动画
+          if (progressInterval) {
+            clearInterval(progressInterval);
+            progressInterval = null;
+          }
           
-          // 动画完成后隐藏
+          // 确保进度条到达100%
+          if (progressBar) {
+            progressBar.style.width = '100%';
+          }
+          
+          // 延迟一下再隐藏，让用户看到进度条完成
           setTimeout(() => {
-            if (calcNoticeEl && calcNoticeEl.parentElement) {
-              calcNoticeEl.style.display = 'none';
-              calcNoticeEl.classList.remove('calculating-complete');
-            }
-          }, 600);
+            // 添加完成动画
+            calcNoticeEl.classList.add('calculating-complete');
+            
+            // 动画完成后隐藏
+            setTimeout(() => {
+              if (calcNoticeEl && calcNoticeEl.parentElement) {
+                calcNoticeEl.style.display = 'none';
+                calcNoticeEl.classList.remove('calculating-complete');
+              }
+            }, 600);
+          }, 300);
         }
       }
     } catch (e) {
       console.error('Error showing calculating notice:', e);
+    }
+  }
+  
+  // 真实进度条动画
+  function startProgressAnimation() {
+    if (!progressBar) return;
+    
+    let progress = 0;
+    const targetProgress = 90; // 最多到90%，等待API完成时到100%
+    
+    progressInterval = setInterval(() => {
+      progress += Math.random() * 15 + 5; // 每次增加5-20%
+      
+      if (progress >= targetProgress) {
+        progress = targetProgress;
+        clearInterval(progressInterval);
+        progressInterval = null;
+      }
+      
+      progressBar.style.width = progress + '%';
+    }, 200);
+  }
+  
+  // 完成进度条（API完成时调用）
+  function completeProgress() {
+    if (progressInterval) {
+      clearInterval(progressInterval);
+      progressInterval = null;
+    }
+    
+    if (progressBar) {
+      progressBar.style.width = '100%';
     }
   }
 
@@ -845,8 +903,11 @@
       // 先准备结果页面内容，但不立即显示
       console.log('🚀 开始准备结果页面内容...');
       
-      // 隐藏计算提示
-      showCalculatingNotice(false);
+      // 完成进度条并隐藏计算提示
+      completeProgress();
+      setTimeout(() => {
+        showCalculatingNotice(false);
+      }, 500);
       
       // 准备结果页面内容
       await prepareResultPage(finalResult);
@@ -891,8 +952,11 @@
               // 先准备结果页面内容，但不立即显示
               console.log('🚀 开始准备跳转型测试结果页面内容...');
               
-              // 隐藏计算提示
-              showCalculatingNotice(false);
+              // 完成进度条并隐藏计算提示
+              completeProgress();
+              setTimeout(() => {
+                showCalculatingNotice(false);
+              }, 500);
               
               // 准备结果页面内容
               await prepareResultPage(r);
