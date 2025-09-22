@@ -783,6 +783,9 @@
       show('result');
       showResultSkeleton();
       
+      // 预加载结果页面图片，提升视觉体验
+      preloadResultImage();
+      
       showCalculatingNotice(true);
       
       // 仅从后端获取结果，不再使用本地兜底
@@ -811,104 +814,12 @@
       console.log('API Result:', apiResult);
       console.log('Final Result:', finalResult);
       
-      resultTitle.textContent = project.name;
-      (function(){
-        var map = {
-          mbti: '/assets/images/mbti-career-personality-test.jpg',
-          disc40: '/assets/images/disc-personality-test.jpg',
-          introversion_en: '/assets/images/professional-test-for-introversion-extraversion-degree.jpg',
-          enneagram_en: '/assets/images/enneagram-personality-test.jpg',
-          eq_test_en: '/assets/images/international-standard-emotional-intelligence-test.jpg',
-          phil_test_en: '/assets/images/phil-personality-test.jpg',
-          four_colors_en: '/assets/images/four-colors-personality-analysis.jpg',
-          pdp_test_en: '/assets/images/professional-dyna-metric-program.jpg',
-          mental_age_test_en: '/assets/images/test-your-mental-age.jpg',
-          holland_test_en: '/assets/images/holland-occupational-interest-test.jpg',
-          kelsey_test_en: '/assets/images/kelsey-temperament-type-test.jpg',
-          temperament_type_test: '/assets/images/temperament-type-test.jpg',
-          social_anxiety_test: '/assets/images/social-anxiety-level-test.jpg',
-          personality_charm_1min: '/assets/images/find-out-your-personality-charm-level-in-just-1-minute.jpg',
-          violence_index: '/assets/images/find-out-how-many-stars-your-violence-index-has.jpg',
-          creativity_test: '/assets/images/test-your-creativity.jpg',
-          anxiety_depression_test: '/assets/images/anxiety-and-depression-level-test.jpg',
-          loneliness_1min: '/assets/images/find-out-just-how-lonely-your-heart-really-is.jpg'
-        };
-        var preferred = (project && project.id && map[project.id]) ? map[project.id] : '';
-        var fallback = '/assets/images/logo.png';
-        var src0 = preferred || project.image || fallback;
-        resultImage.src = src0.startsWith('/') ? src0 : ('/' + src0);
-      })();
-      try {
-        resultImage.onerror = function(){
-          resultImage.onerror = null;
-          resultImage.src = '/assets/images/logo.png';
-        };
-      } catch(_) {}
-      // 统一用后端（或本地评分）返回的 description_en/analysis 展示，保持从数据库获取
-      resultSummary.innerHTML = `<span class="font-semibold text-blue-700">${finalResult.description_en || finalResult.summary || ''}</span>`;
-      const rawAnalysis = finalResult.analysis || finalResult.analysisEn || '';
-      if (project.type === 'disc' || project.type === 'disc40') {
-        // 确保应用专用样式容器，与MBTI保持一致
-        try { resultAnalysis.classList.add('mbti-analysis'); } catch(_) {}
-        try { resultAnalysis.classList.add('analysis-rich'); } catch(_) {}
-        // 使用与MBTI相同的Markdown处理方式
-        try {
-          if (window.marked && window.DOMPurify) {
-            const enhanced = toMarkdownWithHeadings(normalizeStrong(rawAnalysis || ''));
-            const mdHtml = window.marked.parse(enhanced);
-            resultAnalysis.innerHTML = window.DOMPurify.sanitize(mdHtml);
-          } else {
-            // 回退到格式化函数
-            resultAnalysis.innerHTML = formatMbtiAnalysis(rawAnalysis, finalResult.summary);
-          }
-        } catch(_) {
-          resultAnalysis.innerHTML = formatMbtiAnalysis(rawAnalysis, finalResult.summary);
-        }
-      } else if (project.type === 'mbti') {
-        // 确保应用专用样式容器
-        try { resultAnalysis.classList.add('mbti-analysis'); } catch(_) {}
-        try { resultAnalysis.classList.add('analysis-rich'); } catch(_) {}
-        // 始终优先用 Markdown（若库已加载），在渲染前先进行“加标题”的粗加工
-        try {
-          if (window.marked && window.DOMPurify) {
-            const enhanced = toMarkdownWithHeadings(normalizeStrong(rawAnalysis || ''));
-            const mdHtml = window.marked.parse(enhanced);
-            resultAnalysis.innerHTML = window.DOMPurify.sanitize(mdHtml);
-          } else {
-            resultAnalysis.innerHTML = formatMbtiAnalysis(rawAnalysis, finalResult.summary);
-          }
-        } catch(_) {
-          resultAnalysis.innerHTML = formatMbtiAnalysis(rawAnalysis, finalResult.summary);
-        }
-      } else {
-        // 其他测试项目也使用统一的Markdown格式处理
-        try { resultAnalysis.classList.add('mbti-analysis'); } catch(_) {}
-        try { resultAnalysis.classList.add('analysis-rich'); } catch(_) {}
-        try {
-          if (window.marked && window.DOMPurify) {
-            // 所有测试类型都支持Markdown标题渲染
-            const enhanced = toMarkdownWithHeadings(normalizeStrong(rawAnalysis || ''));
-            const mdHtml = window.marked.parse(enhanced);
-            resultAnalysis.innerHTML = window.DOMPurify.sanitize(mdHtml);
-          } else {
-            resultAnalysis.innerHTML = formatMbtiAnalysis(rawAnalysis, finalResult.summary);
-          }
-        } catch(_) {
-          resultAnalysis.innerHTML = formatMbtiAnalysis(rawAnalysis, finalResult.summary);
-        }
-      }
+      // 使用分块渲染函数处理结果内容
       // 隐藏计算提示，显示最终结果
       showCalculatingNotice(false);
       
-      // 添加淡入效果
-      const resultSection = document.getElementById('result-section');
-      if (resultSection) {
-        resultSection.style.opacity = '0';
-        resultSection.style.transition = 'opacity 0.3s ease-in-out';
-        setTimeout(() => {
-          resultSection.style.opacity = '1';
-        }, 50);
-      }
+      // 分块渲染结果内容，提升性能
+      renderResultContent(finalResult);
       
       resultShown = true;
       isSubmitting = false;
@@ -937,6 +848,9 @@
               // 立即显示结果页面骨架屏
               show('result');
               showResultSkeleton();
+              
+              // 预加载结果页面图片
+              preloadResultImage();
               
               showCalculatingNotice(true);
               const sessionId = window.ApiService.generateSessionId();
@@ -984,15 +898,8 @@
               // 隐藏计算提示，显示最终结果
               showCalculatingNotice(false);
               
-              // 添加淡入效果
-              const resultSection = document.getElementById('result-section');
-              if (resultSection) {
-                resultSection.style.opacity = '0';
-                resultSection.style.transition = 'opacity 0.3s ease-in-out';
-                setTimeout(() => {
-                  resultSection.style.opacity = '1';
-                }, 50);
-              }
+              // 使用分块渲染函数处理结果内容
+              renderResultContent(r);
               
               resultShown = true;
               isSubmitting = false;
@@ -1065,6 +972,179 @@
     renderProgress();
     renderQuestion();
   });
+
+  // 分块渲染结果内容，提升性能
+  function renderResultContent(finalResult) {
+    const resultSection = document.getElementById('result-section');
+    if (!resultSection) return;
+    
+    // 第一阶段：立即显示标题和图片
+    resultTitle.textContent = project.name;
+    
+    // 设置结果图片
+    const imageMap = {
+      mbti: '/assets/images/mbti-career-personality-test.jpg',
+      disc40: '/assets/images/disc-personality-test.jpg',
+      introversion_en: '/assets/images/professional-test-for-introversion-extraversion-degree.jpg',
+      enneagram_en: '/assets/images/enneagram-personality-test.jpg',
+      eq_test_en: '/assets/images/international-standard-emotional-intelligence-test.jpg',
+      phil_test_en: '/assets/images/phil-personality-test.jpg',
+      four_colors_en: '/assets/images/four-colors-personality-analysis.jpg',
+      pdp_test_en: '/assets/images/professional-dyna-metric-program.jpg',
+      mental_age_test_en: '/assets/images/test-your-mental-age.jpg',
+      holland_test_en: '/assets/images/holland-occupational-interest-test.jpg',
+      kelsey_test_en: '/assets/images/kelsey-temperament-type-test.jpg',
+      temperament_type_test: '/assets/images/temperament-type-test.jpg',
+      social_anxiety_test: '/assets/images/social-anxiety-level-test.jpg',
+      personality_charm_1min: '/assets/images/find-out-your-personality-charm-level-in-just-1-minute.jpg',
+      violence_index: '/assets/images/find-out-how-many-stars-your-violence-index-has.jpg',
+      creativity_test: '/assets/images/test-your-creativity.jpg',
+      anxiety_depression_test: '/assets/images/anxiety-and-depression-level-test.jpg',
+      loneliness_1min: '/assets/images/find-out-just-how-lonely-your-heart-really-is.jpg'
+    };
+    
+    const preferred = (project && project.id && imageMap[project.id]) ? imageMap[project.id] : '';
+    const fallback = '/assets/images/logo.png';
+    const src0 = preferred || project.image || fallback;
+    
+    // 优化图片加载体验
+    resultImage.style.opacity = '0';
+    resultImage.style.transition = 'opacity 0.3s ease-in-out';
+    resultImage.onload = () => {
+      resultImage.style.opacity = '1';
+    };
+    resultImage.onerror = function(){
+      resultImage.onerror = null;
+      resultImage.src = '/assets/images/logo.png';
+      resultImage.style.opacity = '1';
+    };
+    resultImage.src = src0.startsWith('/') ? src0 : ('/' + src0);
+    
+    // 如果图片已缓存，立即显示
+    if (resultImage.complete && resultImage.naturalHeight !== 0) {
+      resultImage.style.opacity = '1';
+    }
+    
+    // 第二阶段：渲染结果摘要（立即显示）
+    setTimeout(() => {
+      resultSummary.innerHTML = `<span class="font-semibold text-blue-700">${finalResult.description_en || finalResult.summary || ''}</span>`;
+      resultSummary.style.opacity = '0';
+      resultSummary.style.transition = 'opacity 0.3s ease-in-out';
+      setTimeout(() => {
+        resultSummary.style.opacity = '1';
+      }, 50);
+    }, 100);
+    
+    // 第三阶段：渲染分析内容（延迟显示，避免阻塞）
+    setTimeout(() => {
+      const rawAnalysis = finalResult.analysis || finalResult.analysisEn || '';
+      if (project.type === 'disc' || project.type === 'disc40') {
+        // 确保应用专用样式容器，与MBTI保持一致
+        try { resultAnalysis.classList.add('mbti-analysis'); } catch(_) {}
+        try { resultAnalysis.classList.add('analysis-rich'); } catch(_) {}
+        // 使用与MBTI相同的Markdown处理方式
+        try {
+          if (window.marked && window.DOMPurify) {
+            const enhanced = toMarkdownWithHeadings(normalizeStrong(rawAnalysis || ''));
+            const mdHtml = window.marked.parse(enhanced);
+            resultAnalysis.innerHTML = window.DOMPurify.sanitize(mdHtml);
+          } else {
+            // 回退到格式化函数
+            resultAnalysis.innerHTML = formatMbtiAnalysis(rawAnalysis, finalResult.description_en || finalResult.summary);
+          }
+        } catch(_) {
+          resultAnalysis.innerHTML = formatMbtiAnalysis(rawAnalysis, finalResult.description_en || finalResult.summary);
+        }
+      } else if (project.type === 'mbti') {
+        // 确保应用专用样式容器
+        try { resultAnalysis.classList.add('mbti-analysis'); } catch(_) {}
+        try { resultAnalysis.classList.add('analysis-rich'); } catch(_) {}
+        try {
+          if (window.marked && window.DOMPurify) {
+            const enhanced = toMarkdownWithHeadings(normalizeStrong(rawAnalysis || ''));
+            const mdHtml = window.marked.parse(enhanced);
+            resultAnalysis.innerHTML = window.DOMPurify.sanitize(mdHtml);
+          } else {
+            resultAnalysis.innerHTML = formatMbtiAnalysis(rawAnalysis, finalResult.description_en || finalResult.summary);
+          }
+        } catch(_) {
+          resultAnalysis.innerHTML = formatMbtiAnalysis(rawAnalysis, finalResult.description_en || finalResult.summary);
+        }
+      } else {
+        // 其他测试项目也使用统一的Markdown格式处理
+        try { resultAnalysis.classList.add('mbti-analysis'); } catch(_) {}
+        try { resultAnalysis.classList.add('analysis-rich'); } catch(_) {}
+        try {
+          if (window.marked && window.DOMPurify) {
+            const enhanced = toMarkdownWithHeadings(normalizeStrong(rawAnalysis || ''));
+            const mdHtml = window.marked.parse(enhanced);
+            resultAnalysis.innerHTML = window.DOMPurify.sanitize(mdHtml);
+          } else {
+            resultAnalysis.innerHTML = formatMbtiAnalysis(rawAnalysis, finalResult.description_en || finalResult.summary);
+          }
+        } catch(_) {
+          resultAnalysis.innerHTML = formatMbtiAnalysis(rawAnalysis, finalResult.description_en || finalResult.summary);
+        }
+      }
+      
+      // 添加淡入效果
+      resultAnalysis.style.opacity = '0';
+      resultAnalysis.style.transition = 'opacity 0.3s ease-in-out';
+      setTimeout(() => {
+        resultAnalysis.style.opacity = '1';
+      }, 50);
+    }, 200);
+    
+    // 第四阶段：添加整体淡入效果
+    setTimeout(() => {
+      resultSection.style.opacity = '0';
+      resultSection.style.transition = 'opacity 0.3s ease-in-out';
+      setTimeout(() => {
+        resultSection.style.opacity = '1';
+      }, 50);
+    }, 300);
+  }
+
+  // 预加载结果页面图片
+  function preloadResultImage() {
+    const resultImage = document.getElementById('result-image');
+    if (!resultImage || !project) return;
+    
+    const imageMap = {
+      mbti: '/assets/images/mbti-career-personality-test.jpg',
+      disc40: '/assets/images/disc-personality-test.jpg',
+      introversion_en: '/assets/images/professional-test-for-introversion-extraversion-degree.jpg',
+      enneagram_en: '/assets/images/enneagram-personality-test.jpg',
+      eq_test_en: '/assets/images/international-standard-emotional-intelligence-test.jpg',
+      phil_test_en: '/assets/images/phil-personality-test.jpg',
+      four_colors_en: '/assets/images/four-colors-personality-analysis.jpg',
+      pdp_test_en: '/assets/images/professional-dyna-metric-program.jpg',
+      mental_age_test_en: '/assets/images/test-your-mental-age.jpg',
+      holland_test_en: '/assets/images/holland-occupational-interest-test.jpg',
+      kelsey_test_en: '/assets/images/kelsey-temperament-type-test.jpg',
+      temperament_type_test: '/assets/images/temperament-type-test.jpg',
+      social_anxiety_test: '/assets/images/social-anxiety-level-test.jpg',
+      personality_charm_1min: '/assets/images/find-out-your-personality-charm-level-in-just-1-minute.jpg',
+      violence_index: '/assets/images/find-out-how-many-stars-your-violence-index-has.jpg',
+      creativity_test: '/assets/images/test-your-creativity.jpg',
+      anxiety_depression_test: '/assets/images/anxiety-and-depression-level-test.jpg',
+      loneliness_1min: '/assets/images/find-out-just-how-lonely-your-heart-really-is.jpg'
+    };
+    
+    const preferred = (project && project.id && imageMap[project.id]) ? imageMap[project.id] : '';
+    const fallback = '/assets/images/logo.png';
+    const src0 = preferred || project.image || fallback;
+    
+    // 创建新的图片对象进行预加载
+    const img = new Image();
+    img.onload = () => {
+      console.log('✅ 结果页面图片预加载完成:', src0);
+    };
+    img.onerror = () => {
+      console.log('⚠️ 结果页面图片预加载失败，将使用默认图片');
+    };
+    img.src = src0.startsWith('/') ? src0 : ('/' + src0);
+  }
 
   // 结果页面骨架屏显示函数
   function showResultSkeleton() {

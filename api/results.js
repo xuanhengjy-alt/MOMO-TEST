@@ -283,7 +283,8 @@ async function calculateEqTestResult(answers, projectInternalId) {
     }
     
     return {
-      summary: resultType.type_name_en,
+      summary: resultType.description_en || resultType.type_name_en,
+      description_en: resultType.description_en,
       analysis: resultType.analysis_en || resultType.description_en,
       type: resultType.type_code,
       score: Math.round(percentage)
@@ -333,7 +334,8 @@ async function calculateMbtiResult(answers, projectInternalId) {
     if (resultType.rows.length > 0) {
       const row = resultType.rows[0];
       return {
-        summary: `${mbtiType} - ${row.type_name_en}`,
+        summary: row.description_en || `${mbtiType} - ${row.type_name_en}`,
+        description_en: row.description_en,
         analysis: row.analysis_en || row.description_en,
         type: mbtiType
       };
@@ -384,7 +386,8 @@ async function calculateEnneagramResult(answers, projectInternalId) {
     if (resultType.rows.length > 0) {
       const row = resultType.rows[0];
       return {
-        summary: `Type ${dominantType} - ${row.type_name_en}`,
+        summary: row.description_en || `Type ${dominantType} - ${row.type_name_en}`,
+        description_en: row.description_en,
         analysis: row.analysis_en || row.description_en,
         type: `type_${dominantType}`
       };
@@ -420,7 +423,8 @@ async function calculateDefaultResult(answers, projectInternalId) {
     if (resultType.rows.length > 0) {
       const row = resultType.rows[0];
       return {
-        summary: row.type_name_en,
+        summary: row.description_en || row.type_name_en,
+        description_en: row.description_en,
         analysis: row.analysis_en || row.description_en,
         type: row.type_code
       };
