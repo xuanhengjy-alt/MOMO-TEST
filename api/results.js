@@ -223,10 +223,19 @@ async function handleSubmitResult(req, res) {
   }
 }
 
-// 计算测试结果
+// 计算测试结果（统一委托 TestLogicService；个别特例仍可留在本文件）
 async function calculateTestResult(testType, answers, projectInternalId) {
   try {
-    // 根据测试类型计算结果
+    // 优先尝试通过服务层统一计算（覆盖大多数测试类型）
+    try {
+      const TestLogic = require('../backend/services/testLogic');
+      if (TestLogic && typeof TestLogic.calculateResult === 'function') {
+        const res = await TestLogic.calculateResult(testType, answers);
+        if (res && res.summary) return res;
+      }
+    } catch (_) {}
+
+    // 回退到本地实现的少数类型
     switch (testType) {
       case 'eq_test':
         return await calculateEqTestResult(answers, projectInternalId);
