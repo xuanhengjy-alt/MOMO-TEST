@@ -60,7 +60,7 @@ class ApiService {
       headers['Content-Type'] = 'application/json';
     }
     const isSubmitResults = (method === 'POST' && endpoint === '/results');
-    const timeoutMs = isSubmitResults ? 30000 : 12000; // 提交结果放宽到30s，其它接口维持12s
+    const timeoutMs = isSubmitResults ? 60000 : 12000; // 提交结果放宽到60s，其它接口维持12s
     const config = { 
       ...options, 
       method, 

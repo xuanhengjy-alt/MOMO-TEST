@@ -119,9 +119,9 @@ async function handleStatsRequest(req, res, projectId) {
 // 处理提交测试结果请求
 async function handleSubmitResult(req, res, opts = {}) {
   const debug = !!opts.debug;
-  // 设置超时处理（放宽到30秒，适配冷启动与首次DB访问）
+  // 设置超时处理（放宽到60秒，适配冷启动与首次DB访问）
   const timeoutPromise = new Promise((_, reject) => {
-    setTimeout(() => reject(new Error('Request timeout')), 30000);
+    setTimeout(() => reject(new Error('Request timeout')), 60000);
   });
 
   const handlerPromise = (async () => {
@@ -202,6 +202,32 @@ async function handleSubmitResult(req, res, opts = {}) {
         payload.debug = {
           calcDurationMs: (t1 - t0)
         };
+        try {
+          // 补充数据可用性探针（仅调试返回，不影响主流程）
+          const qCount = await query(`
+            SELECT COUNT(*) AS c
+            FROM questions WHERE project_id = $1
+          `, [projectInternalId]);
+          const oCount = await query(`
+            SELECT COUNT(*) AS c
+            FROM question_options o
+            JOIN questions q ON o.question_id = q.id
+            WHERE q.project_id = $1
+          `, [projectInternalId]);
+          const rtCount = await query(`
+            SELECT COUNT(*) AS c
+            FROM result_types WHERE project_id = $1
+          `, [projectInternalId]);
+          payload.debug.probe = {
+            projectInternalId,
+            testType,
+            questions: Number(qCount?.rows?.[0]?.c || 0),
+            options: Number(oCount?.rows?.[0]?.c || 0),
+            resultTypes: Number(rtCount?.rows?.[0]?.c || 0)
+          };
+        } catch (e) {
+          payload.debug.probeError = String(e && e.message || e);
+        }
       }
       return payload;
 
@@ -229,7 +255,8 @@ async function handleSubmitResult(req, res, opts = {}) {
         summary: 'Calculation Error',
         analysis: 'Unable to calculate test result. Please try again later.',
         type: 'error'
-      }
+      },
+      ...(debugFlag ? { debug: { error: String(error && error.message || error) } } : {})
     });
   }
 }
