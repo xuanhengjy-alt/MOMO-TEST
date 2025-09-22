@@ -388,7 +388,7 @@
 
   // 动态计算中提示
   let calcNoticeEl = null;
-  let progressBar = null;
+  let calcProgressBar = null;
   let progressInterval = null;
   
   function showCalculatingNotice(show) {
@@ -405,7 +405,7 @@
             <div class="calculating-progress-bar"></div>
           </div>
         `;
-        progressBar = calcNoticeEl.querySelector('.calculating-progress-bar');
+        calcProgressBar = calcNoticeEl.querySelector('.calculating-progress-bar');
       }
       
       if (show) {
@@ -418,8 +418,8 @@
         calcNoticeEl.classList.remove('calculating-complete');
         
         // 重置进度条
-        if (progressBar) {
-          progressBar.style.width = '0%';
+        if (calcProgressBar) {
+          calcProgressBar.style.width = '0%';
         }
         
         // 添加淡入效果
@@ -444,8 +444,8 @@
           }
           
           // 确保进度条到达100%
-          if (progressBar) {
-            progressBar.style.width = '100%';
+          if (calcProgressBar) {
+            calcProgressBar.style.width = '100%';
           }
           
           // 延迟一下再隐藏，让用户看到进度条完成
@@ -470,7 +470,7 @@
   
   // 真实进度条动画
   function startProgressAnimation() {
-    if (!progressBar) return;
+    if (!calcProgressBar) return;
     
     let progress = 0;
     const targetProgress = 90; // 最多到90%，等待API完成时到100%
@@ -484,7 +484,7 @@
         progressInterval = null;
       }
       
-      progressBar.style.width = progress + '%';
+      calcProgressBar.style.width = progress + '%';
     }, 200);
   }
   
@@ -495,8 +495,8 @@
       progressInterval = null;
     }
     
-    if (progressBar) {
-      progressBar.style.width = '100%';
+    if (calcProgressBar) {
+      calcProgressBar.style.width = '100%';
     }
   }
 
