@@ -51,15 +51,16 @@
   async function resolveProjectId(input){
     console.log('🔍 解析项目ID:', input);
     
-    // 简化逻辑：直接尝试使用输入作为项目ID
+    // 先尝试从回退数据中查找，避免不必要的API调用
     try {
-      const prj = await window.ApiService.getTestProject(input);
-      if (prj && prj.id) {
-        console.log('✅ 直接找到项目:', prj.id);
-        return prj.id;
+      const fallbackData = window.ApiService.fallbackData || [];
+      const hit = fallbackData.find(p => p.id === input);
+      if (hit) {
+        console.log('✅ 在回退数据中精确匹配找到项目:', hit.id);
+        return hit.id;
       }
     } catch(error) {
-      console.log('⚠️ 直接API调用失败:', error.message);
+      console.log('❌ 检查回退数据失败:', error);
     }
     
     // 如果直接调用失败，尝试从项目列表中查找

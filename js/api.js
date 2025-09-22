@@ -26,8 +26,8 @@ class ApiService {
       ...options, 
       method, 
       headers,
-      // 设置5秒超时，提高响应速度
-      signal: AbortSignal.timeout(5000)
+      // 设置12秒超时，给后端API充足的处理时间
+      signal: AbortSignal.timeout(12000)
     };
 
     console.log(`API Request: ${method} ${url}`, config);

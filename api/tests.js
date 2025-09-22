@@ -300,8 +300,18 @@ async function handleQuestionsRequest(req, res, projectId) {
 
 // 处理点赞状态请求
 async function handleLikeStatusRequest(req, res, projectId) {
-  try {
-    console.log(`🔍 检查点赞状态，项目ID: ${projectId}`);
+  // 设置超时处理
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => reject(new Error('Database query timeout')), 5000); // 5秒超时
+  });
+
+  const queryPromise = (async () => {
+    try {
+      console.log(`🔍 检查点赞状态，项目ID: ${projectId}`);
+      
+      // 先测试数据库连接
+      await query('SELECT 1 as test');
+      console.log('✅ 数据库连接正常');
 
     // 获取项目的内部ID
     const projectQuery = await query(
@@ -328,20 +338,32 @@ async function handleLikeStatusRequest(req, res, projectId) {
     
     const likes = statsQuery.rows.length > 0 ? statsQuery.rows[0].total_likes : 0;
     
-    console.log(`✅ 点赞状态，项目ID: ${projectId}，点赞数: ${likes}`);
-    
+      console.log(`✅ 点赞状态，项目ID: ${projectId}，点赞数: ${likes}`);
+      
+      return { likes };
+
+    } catch (error) {
+      console.error('❌ 数据库查询失败:', error.message);
+      throw error;
+    }
+  })();
+
+  try {
+    const result = await Promise.race([queryPromise, timeoutPromise]);
     res.status(200).json({
       success: true,
-      likes: likes,
+      likes: result.likes,
       liked: false // 简化处理，不跟踪个人点赞状态
     });
-    
   } catch (error) {
     console.error('❌ 检查点赞状态失败:', error);
-    res.status(500).json({ 
-      success: false,
-      error: 'Internal server error',
-      message: error.message 
+    // 返回默认状态而不是错误，避免影响页面功能
+    res.status(200).json({ 
+      success: true,
+      likes: 0,
+      liked: false,
+      fallback: true,
+      error: error.message
     });
   }
 }
