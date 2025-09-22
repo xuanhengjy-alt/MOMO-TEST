@@ -191,6 +191,16 @@
 
   const { $, $all, loadLocal, saveLocal, getRandomLikes } = window.Utils;
 
+  // 解析任意形式的数字（比如 '3'、'Q3'、'#3'、'to-3'）
+  function parseIntLoose(input) {
+    if (input === null || input === undefined) return null;
+    if (typeof input === 'number' && Number.isFinite(input)) return input;
+    const s = String(input).trim();
+    if (!s) return null;
+    const m = s.match(/(-?\d+)/);
+    return m ? parseInt(m[1], 10) : null;
+  }
+
   // MBTI分析格式化函数
   function formatMbtiAnalysis(rawAnalysis, mbtiType) {
     if (!rawAnalysis) return '<p class="text-gray-500">No analysis available.</p>';
@@ -1055,8 +1065,9 @@
             }
           }
           if (opt.next != null) {
-            // next 已在转换阶段解析为纯数字（题号），此处直接使用
-            const target = Number.isFinite(opt.next) ? (opt.next - 1) : (qIndex + 1);
+            // next 兜底解析，防止运行时被覆盖或为字符串
+            const nextParsed = parseIntLoose(opt.next);
+            const target = Number.isFinite(nextParsed) ? (nextParsed - 1) : (qIndex + 1);
             qIndex = Math.max(0, Math.min(target, qlist.length));
             renderProgress();
             renderQuestion();
