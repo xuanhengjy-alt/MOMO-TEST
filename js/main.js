@@ -82,29 +82,29 @@ function showSkeletonCards(container) {
 
 // 分批渲染项目
 function renderProjectsInBatches(projects, template, container) {
-  console.log('📦 开始分批渲染项目...');
-         const batchSize = 8; // 增加批次大小到8个项目，减少渲染轮次
+  // 开始分批渲染项目
+         const batchSize = 4; // 减少批次大小到4个项目，提高响应速度
   let currentIndex = 0;
   
   function renderBatch() {
     const endIndex = Math.min(currentIndex + batchSize, projects.length);
     const batch = projects.slice(currentIndex, endIndex);
     
-    console.log(`🎨 渲染第 ${Math.floor(currentIndex / batchSize) + 1} 批，项目 ${currentIndex + 1}-${endIndex}`);
+    // 减少日志输出，提升性能
     
          batch.forEach((project, index) => {
            setTimeout(() => {
              renderProjectCard(project, template, container, currentIndex + index);
-           }, index * 50); // 减少延迟到50ms，提高渲染速度
+           }, index * 20); // 大幅减少延迟到20ms，快速渲染
          });
     
     currentIndex = endIndex;
     
            // 如果还有更多项目，继续渲染下一批
            if (currentIndex < projects.length) {
-             setTimeout(renderBatch, 150); // 减少批次间延迟到150ms
+             setTimeout(renderBatch, 50); // 大幅减少批次间延迟到50ms
            } else {
-             console.log('✅ 所有项目渲染完成!');
+             // 渲染完成
            }
   }
   
@@ -256,9 +256,7 @@ function loadImageOptimized(img, imagePath, skeleton, projectId) {
   // 错误处理
   img.onerror = function() {
     if (isLoaded) return;
-    console.warn(`⚠️ 图片加载失败 ${projectId}:`, imagePath);
     img.onerror = null;
-    console.log(`🔄 使用logo作为回退图片 ${projectId}`);
     img.src = 'assets/images/logo.png';
   };
   
@@ -276,12 +274,12 @@ function loadImageOptimized(img, imagePath, skeleton, projectId) {
     return;
   }
   
-  // 更长的超时时间（8秒），避免过早强制显示
+  // 合理的超时时间（3秒），平衡加载速度和用户体验
   setTimeout(() => {
     if (!isLoaded) {
       showImage();
     }
-  }, 8000);
+  }, 3000);
 }
 
 // 懒加载设置 - 暂时禁用，改为立即加载
