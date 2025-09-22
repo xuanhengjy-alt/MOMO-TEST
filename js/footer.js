@@ -56,6 +56,38 @@ class Footer {
     
     // 根据当前页面确定链接路径
     const linkPrefix = isAbsolutePath ? '/' : '';
+
+    // 生成 slug 的工具与解析缓存中的项目 name_en
+    const toSlug = (s) => String(s || '')
+      .toLowerCase()
+      .trim()
+      .replace(/[\s/_.,:：—-]+/g, '-')
+      .replace(/[^a-z0-9-]/g, '')
+      .replace(/-+/g, '-');
+
+    const resolveSlugById = (id) => {
+      try {
+        const cached = (window.ApiService && window.ApiService.getFromCache)
+          ? window.ApiService.getFromCache('test_projects')
+          : null;
+        const source = (Array.isArray(cached) && cached.length)
+          ? cached
+          : (window.ApiService && Array.isArray(window.ApiService.fallbackData)
+            ? window.ApiService.fallbackData
+            : []);
+        const hit = source.find(p => p && p.id === id);
+        if (hit) {
+          const s = hit.nameEn || hit.name;
+          if (s) return toSlug(s);
+        }
+      } catch(_) {}
+      return null;
+    };
+
+    // 三个快捷链接的 slug（优先数据源，其次显式备选）
+    const mbtiSlug = resolveSlugById('mbti') || 'mbtionline-career-personality-test';
+    const discSlug = resolveSlugById('disc40') || 'disc-personality-test';
+    const enneagramSlug = resolveSlugById('enneagram_en') || 'enneagram-personality-test';
     
     return `
       <footer class="footer">
@@ -80,9 +112,9 @@ class Footer {
             <ul>
               <li><a href="${linkPrefix}index.html">${this.getText('testHome')}</a></li>
               <li><a href="${linkPrefix}blog.html">${this.getText('blog')}</a></li>
-              <li><a href="${linkPrefix}test-detail.html/mbti">${this.getText('mbtiTest')}</a></li>
-              <li><a href="${linkPrefix}test-detail.html/disc40">${this.getText('discTest')}</a></li>
-              <li><a href="${linkPrefix}test-detail.html/enneagram-en">${this.getText('enneagramTest')}</a></li>
+              <li><a href="${linkPrefix}test-detail.html/${mbtiSlug}">${this.getText('mbtiTest')}</a></li>
+              <li><a href="${linkPrefix}test-detail.html/${discSlug}">${this.getText('discTest')}</a></li>
+              <li><a href="${linkPrefix}test-detail.html/${enneagramSlug}">${this.getText('enneagramTest')}</a></li>
             </ul>
           </div>
         </div>
