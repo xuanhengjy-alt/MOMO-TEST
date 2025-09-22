@@ -423,8 +423,8 @@ class ApiService {
         type: 'kelsey_test',
         estimatedTime: 12,
         questionCount: 70,
-        testedCount: 0,
-        likes: 0
+        testedCount: 11000, // 设置合理的测试人数
+        likes: 4000 // 设置合理的点赞数
       },
       {
         id: 'temperament_type_test',

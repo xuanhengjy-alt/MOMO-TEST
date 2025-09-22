@@ -465,9 +465,9 @@
   const testedKey = `tested_${project.id}`;
   const likesKey = `likes_${project.id}`;
   
-  // 使用API数据或本地存储
-  const tested = project.testedCount || loadLocal(testedKey, '1.1W+');
-  let likes = project.likes || loadLocal(likesKey, getRandomLikes());
+  // 使用API数据或本地存储，但优先使用API数据（即使为0）
+  const tested = project.testedCount !== undefined ? project.testedCount : loadLocal(testedKey, '1.1W+');
+  let likes = project.likes !== undefined ? project.likes : loadLocal(likesKey, getRandomLikes());
   
   testedCount.textContent = formatNumber(tested);
   likeCount.textContent = formatNumber(likes);
@@ -595,7 +595,21 @@
       }
     } catch (error) {
       console.error('❌ 获取题目失败:', error);
-      // 抛出错误，让上层处理
+      
+      // 如果API失败，尝试使用项目配置中的题目数量作为回退
+      if (project && project.questionCount) {
+        console.log('🔄 使用项目配置的题目数量作为回退:', project.questionCount);
+        // 创建虚拟题目数据，仅用于显示题目数量
+        const fallbackQuestions = Array.from({ length: project.questionCount }, (_, i) => ({
+          id: i + 1,
+          text: `Question ${i + 1}`,
+          opts: []
+        }));
+        cachedQuestions = fallbackQuestions;
+        return fallbackQuestions;
+      }
+      
+      // 如果连项目配置都没有，抛出错误
       throw error;
     }
   }
