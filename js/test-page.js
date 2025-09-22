@@ -785,6 +785,8 @@
         // 自动侦测是否为跳转型测试（任一选项存在 next 或 resultCode）
         try {
           const hasJump = convertedQuestions.some(q => (q.opts || []).some(o => (o && (o.next != null && Number.isFinite(o.next)) || (o.resultCode != null && String(o.resultCode).trim() !== ''))));
+          // 暴露给 Console 以便排查
+          try { window.lastConvertedQuestions = convertedQuestions; } catch(_) {}
           if (hasJump) { project.isJumpType = true; }
         } catch(_) {}
         
