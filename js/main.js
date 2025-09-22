@@ -83,7 +83,7 @@ function showSkeletonCards(container) {
 // 分批渲染项目
 function renderProjectsInBatches(projects, template, container) {
   console.log('📦 开始分批渲染项目...');
-  const batchSize = 5; // 每批渲染5个项目
+         const batchSize = 8; // 增加批次大小到8个项目，减少渲染轮次
   let currentIndex = 0;
   
   function renderBatch() {
@@ -92,20 +92,20 @@ function renderProjectsInBatches(projects, template, container) {
     
     console.log(`🎨 渲染第 ${Math.floor(currentIndex / batchSize) + 1} 批，项目 ${currentIndex + 1}-${endIndex}`);
     
-    batch.forEach((project, index) => {
-      setTimeout(() => {
-        renderProjectCard(project, template, container, currentIndex + index);
-      }, index * 100); // 每个卡片延迟100ms渲染，创造流畅效果
-    });
+         batch.forEach((project, index) => {
+           setTimeout(() => {
+             renderProjectCard(project, template, container, currentIndex + index);
+           }, index * 50); // 减少延迟到50ms，提高渲染速度
+         });
     
     currentIndex = endIndex;
     
-    // 如果还有更多项目，继续渲染下一批
-    if (currentIndex < projects.length) {
-      setTimeout(renderBatch, 300); // 批次间延迟300ms
-    } else {
-      console.log('✅ 所有项目渲染完成!');
-    }
+           // 如果还有更多项目，继续渲染下一批
+           if (currentIndex < projects.length) {
+             setTimeout(renderBatch, 150); // 减少批次间延迟到150ms
+           } else {
+             console.log('✅ 所有项目渲染完成!');
+           }
   }
   
   // 开始渲染第一批
@@ -172,11 +172,6 @@ function renderProjectCard(p, tpl, container, index) {
 
   // 获取图片路径
   let imagePath = imageFallbacks[p.id];
-  console.log(`🔍 项目 ${p.id} 图片路径检查:`, {
-    fallback: imageFallbacks[p.id],
-    apiImage: p.image,
-    finalPath: imagePath
-  });
   
   if (!imagePath && p.image) {
     imagePath = p.image.replace(/\s+/g, '-');
@@ -187,11 +182,8 @@ function renderProjectCard(p, tpl, container, index) {
   if (!imagePath.startsWith('assets/')) {
     imagePath = 'assets/images/logo.png';
   }
-  
-  console.log(`📁 最终图片路径 ${p.id}:`, imagePath);
 
   // 简化图片加载：所有图片都立即加载，避免懒加载问题
-  console.log(`🖼️ 加载图片 ${p.id}:`, imagePath);
   loadImageOptimized(img, imagePath, skeleton, p.id);
   // 设置卡片内容
   title.textContent = p.nameEn;
@@ -246,14 +238,24 @@ function renderProjectCard(p, tpl, container, index) {
   }
 }
 
-// 优化的图片加载函数
+// 优化的图片加载函数 - 防止闪烁
 function loadImageOptimized(img, imagePath, skeleton, projectId) {
-  console.log(`🖼️ 开始加载图片 ${projectId}:`, imagePath);
-  
   img.alt = projectId;
+  let isLoaded = false; // 防止重复操作
   
-  // 快速错误处理
+  // 统一的显示函数
+  const showImage = () => {
+    if (isLoaded) return;
+    isLoaded = true;
+    if (skeleton) {
+      skeleton.classList.add('hidden');
+    }
+    img.classList.remove('hidden');
+  };
+  
+  // 错误处理
   img.onerror = function() {
+    if (isLoaded) return;
     console.warn(`⚠️ 图片加载失败 ${projectId}:`, imagePath);
     img.onerror = null;
     console.log(`🔄 使用logo作为回退图片 ${projectId}`);
@@ -262,11 +264,7 @@ function loadImageOptimized(img, imagePath, skeleton, projectId) {
   
   // 成功加载
   img.addEventListener('load', () => {
-    console.log(`✅ 图片加载成功 ${projectId}`);
-    if (skeleton) {
-      skeleton.classList.add('hidden');
-    }
-    img.classList.remove('hidden');
+    showImage();
   });
   
   // 设置图片源
@@ -274,22 +272,16 @@ function loadImageOptimized(img, imagePath, skeleton, projectId) {
   
   // 如果图片已经加载完成（从缓存），立即显示
   if (img.complete && img.naturalHeight !== 0) {
-    console.log(`🚀 图片已缓存 ${projectId}`);
-    if (skeleton) {
-      skeleton.classList.add('hidden');
-    }
-    img.classList.remove('hidden');
+    showImage();
     return;
   }
   
-  // 快速超时（2秒）
+  // 更长的超时时间（8秒），避免过早强制显示
   setTimeout(() => {
-    if (skeleton && !skeleton.classList.contains('hidden')) {
-      console.log(`⏰ 图片加载超时 ${projectId}，强制显示`);
-      skeleton.classList.add('hidden');
-      img.classList.remove('hidden');
+    if (!isLoaded) {
+      showImage();
     }
-  }, 2000);
+  }, 8000);
 }
 
 // 懒加载设置 - 暂时禁用，改为立即加载
