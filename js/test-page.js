@@ -131,7 +131,7 @@
   if (!project) {
     try {
       console.log('⚠️ 缓存无数据，发起API请求');
-      project = await window.ApiService.getTestProject(id);
+    project = await window.ApiService.getTestProject(id);
       console.log('✅ API请求获取项目数据成功');
     } catch (error) {
       console.warn('⚠️ API请求失败，使用回退数据:', error);
@@ -553,7 +553,7 @@
   
   // 页面加载时检查点赞状态（如果之前没有并行获取）
   if (isLiked === undefined) {
-    checkLikeStatus();
+  checkLikeStatus();
   }
 
   likeBtn.addEventListener('click', async () => {
@@ -708,7 +708,7 @@
         console.log('✅ 使用预缓存的题目数据，数量:', questions.length);
       } else {
         questions = await getQList();
-        console.log('📋 获取到的题目:', questions);
+      console.log('📋 获取到的题目:', questions);
       }
       
       const totalQ = questions ? questions.length : 0;
@@ -779,14 +779,11 @@
       if (resultShown || isSubmitting) { return; }
       isSubmitting = true;
       
-      // 立即显示结果页面骨架屏，提升用户体验
-      show('result');
-      showResultSkeleton();
+      // 先显示计算中状态，不立即跳转到结果页面
+      showCalculatingNotice(true);
       
       // 预加载结果页面图片，提升视觉体验
       preloadResultImage();
-      
-      showCalculatingNotice(true);
       
       // 仅从后端获取结果，不再使用本地兜底
       let apiResult = null;
@@ -814,12 +811,18 @@
       console.log('API Result:', apiResult);
       console.log('Final Result:', finalResult);
       
-      // 使用分块渲染函数处理结果内容
-      // 隐藏计算提示，显示最终结果
+      // 先准备结果页面内容，但不立即显示
+      console.log('🚀 开始准备结果页面内容...');
+      
+      // 隐藏计算提示
       showCalculatingNotice(false);
       
-      // 分块渲染结果内容，提升性能
-      renderResultContent(finalResult);
+      // 准备结果页面内容
+      await prepareResultPage(finalResult);
+      
+      // 内容准备完成后，再跳转到结果页面
+      console.log('✅ 结果页面内容准备完成，开始跳转...');
+      show('result');
       
       resultShown = true;
       isSubmitting = false;
@@ -845,61 +848,27 @@
               if (resultShown || isSubmitting) { return; }
               isSubmitting = true;
               
-              // 立即显示结果页面骨架屏
-              show('result');
-              showResultSkeleton();
+              // 先显示计算中状态，不立即跳转到结果页面
+              showCalculatingNotice(true);
               
               // 预加载结果页面图片
               preloadResultImage();
-              
-              showCalculatingNotice(true);
               const sessionId = window.ApiService.generateSessionId();
               const apiRes = await window.ApiService.submitTestResult(project.id, answers, sessionId);
               const r = (apiRes && apiRes.result) ? apiRes.result : {};
-              resultTitle.textContent = project.name;
-              (function(){
-                var map = {
-                mbti: '/assets/images/mbti-career-personality-test.jpg',
-                disc40: '/assets/images/disc-personality-test.jpg',
-                introversion_en: '/assets/images/professional-test-for-introversion-extraversion-degree.jpg',
-                enneagram_en: '/assets/images/enneagram-personality-test.jpg',
-                eq_test_en: '/assets/images/international-standard-emotional-intelligence-test.jpg',
-                phil_test_en: '/assets/images/phil-personality-test.jpg',
-                four_colors_en: '/assets/images/four-colors-personality-analysis.jpg',
-                pdp_test_en: '/assets/images/professional-dyna-metric-program.jpg',
-                mental_age_test_en: '/assets/images/test-your-mental-age.jpg',
-                holland_test_en: '/assets/images/holland-occupational-interest-test.jpg',
-                kelsey_test_en: '/assets/images/kelsey-temperament-type-test.jpg',
-                temperament_type_test: '/assets/images/temperament-type-test.jpg',
-                social_anxiety_test: '/assets/images/social-anxiety-level-test.jpg',
-                personality_charm_1min: '/assets/images/find-out-your-personality-charm-level-in-just-1-minute.jpg',
-                violence_index: '/assets/images/find-out-how-many-stars-your-violence-index-has.jpg',
-                creativity_test: '/assets/images/test-your-creativity.jpg',
-                anxiety_depression_test: '/assets/images/anxiety-and-depression-level-test.jpg',
-                loneliness_1min: '/assets/images/find-out-just-how-lonely-your-heart-really-is.jpg'
-                };
-                var preferred = (project && project.id && map[project.id]) ? map[project.id] : '';
-                var fallback = '/assets/images/logo.png';
-                var src0 = preferred || project.image || fallback;
-                resultImage.src = src0.startsWith('/') ? src0 : ('/' + src0);
-              })();
-              resultSummary.innerHTML = `<span class=\"font-semibold text-blue-700\">${r.description_en || r.summary || r.summaryEn || ''}</span>`;
-              try { resultAnalysis.classList.add('mbti-analysis'); resultAnalysis.classList.add('analysis-rich'); } catch(_) {}
-              const text = r.analysis || r.analysisEn || '';
-              try {
-                if (window.marked && window.DOMPurify) {
-                  const enhanced = toMarkdownWithHeadings(normalizeStrong(text));
-                  const mdHtml = window.marked.parse(enhanced);
-                  resultAnalysis.innerHTML = window.DOMPurify.sanitize(mdHtml);
-                } else {
-                  resultAnalysis.textContent = text;
-                }
-              } catch(_) { resultAnalysis.textContent = text; }
-              // 隐藏计算提示，显示最终结果
+              
+              // 先准备结果页面内容，但不立即显示
+              console.log('🚀 开始准备跳转型测试结果页面内容...');
+              
+              // 隐藏计算提示
               showCalculatingNotice(false);
               
-              // 使用分块渲染函数处理结果内容
-              renderResultContent(r);
+              // 准备结果页面内容
+              await prepareResultPage(r);
+              
+              // 内容准备完成后，再跳转到结果页面
+              console.log('✅ 跳转型测试结果页面内容准备完成，开始跳转...');
+              show('result');
               
               resultShown = true;
               isSubmitting = false;
@@ -973,35 +942,138 @@
     renderQuestion();
   });
 
+  // 准备结果页面内容（不立即显示）
+  async function prepareResultPage(finalResult) {
+    console.log('📋 准备结果页面内容...');
+    
+    // 第一阶段：准备标题和图片
+      resultTitle.textContent = project.name;
+    
+    // 设置结果图片
+    const imageMap = {
+          mbti: '/assets/images/mbti-career-personality-test.jpg',
+          disc40: '/assets/images/disc-personality-test.jpg',
+          introversion_en: '/assets/images/professional-test-for-introversion-extraversion-degree.jpg',
+          enneagram_en: '/assets/images/enneagram-personality-test.jpg',
+          eq_test_en: '/assets/images/international-standard-emotional-intelligence-test.jpg',
+          phil_test_en: '/assets/images/phil-personality-test.jpg',
+          four_colors_en: '/assets/images/four-colors-personality-analysis.jpg',
+          pdp_test_en: '/assets/images/professional-dyna-metric-program.jpg',
+          mental_age_test_en: '/assets/images/test-your-mental-age.jpg',
+          holland_test_en: '/assets/images/holland-occupational-interest-test.jpg',
+          kelsey_test_en: '/assets/images/kelsey-temperament-type-test.jpg',
+          temperament_type_test: '/assets/images/temperament-type-test.jpg',
+          social_anxiety_test: '/assets/images/social-anxiety-level-test.jpg',
+          personality_charm_1min: '/assets/images/find-out-your-personality-charm-level-in-just-1-minute.jpg',
+          violence_index: '/assets/images/find-out-how-many-stars-your-violence-index-has.jpg',
+          creativity_test: '/assets/images/test-your-creativity.jpg',
+          anxiety_depression_test: '/assets/images/anxiety-and-depression-level-test.jpg',
+          loneliness_1min: '/assets/images/find-out-just-how-lonely-your-heart-really-is.jpg'
+        };
+    
+    const preferred = (project && project.id && imageMap[project.id]) ? imageMap[project.id] : '';
+    const fallback = '/assets/images/logo.png';
+    const src0 = preferred || project.image || fallback;
+    
+    // 预加载图片并等待加载完成
+    await new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        console.log('✅ 结果页面图片预加载完成');
+        resultImage.src = src0.startsWith('/') ? src0 : ('/' + src0);
+        resultImage.style.opacity = '1';
+        resolve();
+      };
+      img.onerror = () => {
+        console.log('⚠️ 结果页面图片预加载失败，使用默认图片');
+          resultImage.src = '/assets/images/logo.png';
+        resultImage.style.opacity = '1';
+        resolve();
+      };
+      img.src = src0.startsWith('/') ? src0 : ('/' + src0);
+    });
+    
+    // 第二阶段：准备结果摘要
+    resultSummary.innerHTML = `<span class="font-semibold text-blue-700">${finalResult.description_en || finalResult.summary || ''}</span>`;
+    
+    // 第三阶段：准备分析内容
+      const rawAnalysis = finalResult.analysis || finalResult.analysisEn || '';
+      if (project.type === 'disc' || project.type === 'disc40') {
+        try { resultAnalysis.classList.add('mbti-analysis'); } catch(_) {}
+        try { resultAnalysis.classList.add('analysis-rich'); } catch(_) {}
+        try {
+          if (window.marked && window.DOMPurify) {
+            const enhanced = toMarkdownWithHeadings(normalizeStrong(rawAnalysis || ''));
+            const mdHtml = window.marked.parse(enhanced);
+            resultAnalysis.innerHTML = window.DOMPurify.sanitize(mdHtml);
+          } else {
+          resultAnalysis.innerHTML = formatMbtiAnalysis(rawAnalysis, finalResult.description_en || finalResult.summary);
+          }
+        } catch(_) {
+        resultAnalysis.innerHTML = formatMbtiAnalysis(rawAnalysis, finalResult.description_en || finalResult.summary);
+        }
+      } else if (project.type === 'mbti') {
+        try { resultAnalysis.classList.add('mbti-analysis'); } catch(_) {}
+        try { resultAnalysis.classList.add('analysis-rich'); } catch(_) {}
+        try {
+          if (window.marked && window.DOMPurify) {
+            const enhanced = toMarkdownWithHeadings(normalizeStrong(rawAnalysis || ''));
+            const mdHtml = window.marked.parse(enhanced);
+            resultAnalysis.innerHTML = window.DOMPurify.sanitize(mdHtml);
+          } else {
+          resultAnalysis.innerHTML = formatMbtiAnalysis(rawAnalysis, finalResult.description_en || finalResult.summary);
+          }
+        } catch(_) {
+        resultAnalysis.innerHTML = formatMbtiAnalysis(rawAnalysis, finalResult.description_en || finalResult.summary);
+        }
+      } else {
+        try { resultAnalysis.classList.add('mbti-analysis'); } catch(_) {}
+        try { resultAnalysis.classList.add('analysis-rich'); } catch(_) {}
+        try {
+          if (window.marked && window.DOMPurify) {
+            const enhanced = toMarkdownWithHeadings(normalizeStrong(rawAnalysis || ''));
+            const mdHtml = window.marked.parse(enhanced);
+            resultAnalysis.innerHTML = window.DOMPurify.sanitize(mdHtml);
+          } else {
+          resultAnalysis.innerHTML = formatMbtiAnalysis(rawAnalysis, finalResult.description_en || finalResult.summary);
+          }
+        } catch(_) {
+        resultAnalysis.innerHTML = formatMbtiAnalysis(rawAnalysis, finalResult.description_en || finalResult.summary);
+      }
+    }
+    
+    console.log('✅ 结果页面内容准备完成');
+  }
+
   // 分块渲染结果内容，提升性能
   function renderResultContent(finalResult) {
     const resultSection = document.getElementById('result-section');
     if (!resultSection) return;
     
     // 第一阶段：立即显示标题和图片
-    resultTitle.textContent = project.name;
+              resultTitle.textContent = project.name;
     
     // 设置结果图片
     const imageMap = {
-      mbti: '/assets/images/mbti-career-personality-test.jpg',
-      disc40: '/assets/images/disc-personality-test.jpg',
-      introversion_en: '/assets/images/professional-test-for-introversion-extraversion-degree.jpg',
-      enneagram_en: '/assets/images/enneagram-personality-test.jpg',
-      eq_test_en: '/assets/images/international-standard-emotional-intelligence-test.jpg',
-      phil_test_en: '/assets/images/phil-personality-test.jpg',
-      four_colors_en: '/assets/images/four-colors-personality-analysis.jpg',
-      pdp_test_en: '/assets/images/professional-dyna-metric-program.jpg',
-      mental_age_test_en: '/assets/images/test-your-mental-age.jpg',
-      holland_test_en: '/assets/images/holland-occupational-interest-test.jpg',
-      kelsey_test_en: '/assets/images/kelsey-temperament-type-test.jpg',
-      temperament_type_test: '/assets/images/temperament-type-test.jpg',
-      social_anxiety_test: '/assets/images/social-anxiety-level-test.jpg',
-      personality_charm_1min: '/assets/images/find-out-your-personality-charm-level-in-just-1-minute.jpg',
-      violence_index: '/assets/images/find-out-how-many-stars-your-violence-index-has.jpg',
-      creativity_test: '/assets/images/test-your-creativity.jpg',
-      anxiety_depression_test: '/assets/images/anxiety-and-depression-level-test.jpg',
-      loneliness_1min: '/assets/images/find-out-just-how-lonely-your-heart-really-is.jpg'
-    };
+                mbti: '/assets/images/mbti-career-personality-test.jpg',
+                disc40: '/assets/images/disc-personality-test.jpg',
+                introversion_en: '/assets/images/professional-test-for-introversion-extraversion-degree.jpg',
+                enneagram_en: '/assets/images/enneagram-personality-test.jpg',
+                eq_test_en: '/assets/images/international-standard-emotional-intelligence-test.jpg',
+                phil_test_en: '/assets/images/phil-personality-test.jpg',
+                four_colors_en: '/assets/images/four-colors-personality-analysis.jpg',
+                pdp_test_en: '/assets/images/professional-dyna-metric-program.jpg',
+                mental_age_test_en: '/assets/images/test-your-mental-age.jpg',
+                holland_test_en: '/assets/images/holland-occupational-interest-test.jpg',
+                kelsey_test_en: '/assets/images/kelsey-temperament-type-test.jpg',
+                temperament_type_test: '/assets/images/temperament-type-test.jpg',
+                social_anxiety_test: '/assets/images/social-anxiety-level-test.jpg',
+                personality_charm_1min: '/assets/images/find-out-your-personality-charm-level-in-just-1-minute.jpg',
+                violence_index: '/assets/images/find-out-how-many-stars-your-violence-index-has.jpg',
+                creativity_test: '/assets/images/test-your-creativity.jpg',
+                anxiety_depression_test: '/assets/images/anxiety-and-depression-level-test.jpg',
+                loneliness_1min: '/assets/images/find-out-just-how-lonely-your-heart-really-is.jpg'
+                };
     
     const preferred = (project && project.id && imageMap[project.id]) ? imageMap[project.id] : '';
     const fallback = '/assets/images/logo.png';
@@ -1018,7 +1090,7 @@
       resultImage.src = '/assets/images/logo.png';
       resultImage.style.opacity = '1';
     };
-    resultImage.src = src0.startsWith('/') ? src0 : ('/' + src0);
+                resultImage.src = src0.startsWith('/') ? src0 : ('/' + src0);
     
     // 如果图片已缓存，立即显示
     if (resultImage.complete && resultImage.naturalHeight !== 0) {
@@ -1043,12 +1115,12 @@
         try { resultAnalysis.classList.add('mbti-analysis'); } catch(_) {}
         try { resultAnalysis.classList.add('analysis-rich'); } catch(_) {}
         // 使用与MBTI相同的Markdown处理方式
-        try {
-          if (window.marked && window.DOMPurify) {
+              try {
+                if (window.marked && window.DOMPurify) {
             const enhanced = toMarkdownWithHeadings(normalizeStrong(rawAnalysis || ''));
-            const mdHtml = window.marked.parse(enhanced);
-            resultAnalysis.innerHTML = window.DOMPurify.sanitize(mdHtml);
-          } else {
+                  const mdHtml = window.marked.parse(enhanced);
+                  resultAnalysis.innerHTML = window.DOMPurify.sanitize(mdHtml);
+                } else {
             // 回退到格式化函数
             resultAnalysis.innerHTML = formatMbtiAnalysis(rawAnalysis, finalResult.description_en || finalResult.summary);
           }
@@ -1069,8 +1141,8 @@
           }
         } catch(_) {
           resultAnalysis.innerHTML = formatMbtiAnalysis(rawAnalysis, finalResult.description_en || finalResult.summary);
-        }
-      } else {
+          }
+        } else {
         // 其他测试项目也使用统一的Markdown格式处理
         try { resultAnalysis.classList.add('mbti-analysis'); } catch(_) {}
         try { resultAnalysis.classList.add('analysis-rich'); } catch(_) {}
@@ -1107,8 +1179,7 @@
 
   // 预加载结果页面图片
   function preloadResultImage() {
-    const resultImage = document.getElementById('result-image');
-    if (!resultImage || !project) return;
+    if (!project) return;
     
     const imageMap = {
       mbti: '/assets/images/mbti-career-personality-test.jpg',
