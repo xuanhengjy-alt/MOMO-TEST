@@ -2117,12 +2117,16 @@ class TestLogicService {
             const v = row.score_value;
             if (v && typeof v === 'object') {
               const raw = (v.score ?? v.value ?? 0);
-              s = Number(raw) || 0;
+              let n = Number(raw) || 0;
+              if (n > 5) n = n - 4; // 规范化到1..5（DB若存7/9等）
+              s = n;
             } else if (typeof v === 'string') {
               const n = Number.parseFloat(v);
-              s = Number.isFinite(n) ? n : 0;
+              const nn = Number.isFinite(n) ? n : 0;
+              s = nn > 5 ? (nn - 4) : nn;
             } else if (typeof v === 'number') {
-              s = Number.isFinite(v) ? v : 0;
+              const nn = Number.isFinite(v) ? v : 0;
+              s = nn > 5 ? (nn - 4) : nn;
             } else {
               s = 0;
             }
@@ -2133,13 +2137,9 @@ class TestLogicService {
         const reversedSet = new Set([3,6,10,15]);
         for (const [qn, arr] of scoreMap.entries()) {
           if (reversedSet.has(qn) && Array.isArray(arr) && arr.length >= 5) {
-            const a0 = Number(arr[0] || 0);
-            const a4 = Number(arr[4] || 0);
-            if (a0 <= a4) {
-              // 看起来是正向（A<=E），翻转为反向
-              arr.reverse();
-              scoreMap.set(qn, arr);
-            }
+            // 固定反向：3/6/10/15 题一律按反向处理
+            arr.reverse();
+            scoreMap.set(qn, arr);
           }
         }
         // 逐题累加得分

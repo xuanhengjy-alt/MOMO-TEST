@@ -591,12 +591,9 @@ async function calculateSocialAnxietyDirect(answers, projectInternalId) {
       const reversedSet = new Set([3,6,10,15]);
       for (const [qn, arr] of scoreMap.entries()) {
         if (reversedSet.has(qn) && Array.isArray(arr) && arr.length >= 5) {
-          const a0 = Number(arr[0] || 0);
-          const a4 = Number(arr[4] || 0);
-          if (a0 <= a4) {
-            arr.reverse();
-            scoreMap.set(qn, arr);
-          }
+          // 固定反向：3/6/10/15 一律反向
+          arr.reverse();
+          scoreMap.set(qn, arr);
         }
       }
 
