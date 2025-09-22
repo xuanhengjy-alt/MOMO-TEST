@@ -117,7 +117,13 @@ async function handleStatsRequest(req, res, projectId) {
 
 // 处理提交测试结果请求
 async function handleSubmitResult(req, res) {
-  try {
+  // 设置超时处理
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => reject(new Error('Request timeout')), 15000); // 15秒超时，结果计算需要更多时间
+  });
+
+  const handlerPromise = (async () => {
+    try {
     const body = await new Promise((resolve, reject) => {
       let data = '';
       req.on('data', chunk => data += chunk);
@@ -182,20 +188,37 @@ async function handleSubmitResult(req, res) {
         total_tests = test_statistics.total_tests + 1
     `, [projectInternalId]);
     
-    console.log(`✅ 测试结果提交成功，项目ID: ${projectId}，结果ID: ${resultId}`);
-    
+      console.log(`✅ 测试结果提交成功，项目ID: ${projectId}，结果ID: ${resultId}`);
+      
+      return {
+        resultId: resultId,
+        result: result
+      };
+
+    } catch (error) {
+      console.error('❌ 处理测试结果失败:', error.message);
+      throw error;
+    }
+  })();
+
+  try {
+    const result = await Promise.race([handlerPromise, timeoutPromise]);
     res.status(200).json({
       success: true,
-      resultId: resultId,
-      result: result
+      resultId: result.resultId,
+      result: result.result
     });
-    
   } catch (error) {
     console.error('❌ 提交测试结果失败:', error);
-    res.status(500).json({ 
+    // 返回错误结果而不是500错误，让前端显示错误信息
+    res.status(200).json({ 
       success: false,
-      error: 'Internal server error',
-      message: error.message 
+      error: 'Unable to calculate test result. Please try again later.',
+      result: {
+        summary: 'Calculation Error',
+        analysis: 'Unable to calculate test result. Please try again later.',
+        type: 'error'
+      }
     });
   }
 }
