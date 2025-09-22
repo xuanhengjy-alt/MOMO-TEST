@@ -749,15 +749,31 @@
       console.log('📋 API返回的题目数据:', questions);
       
       if (questions && questions.length > 0) {
-        // 转换API数据格式为前端期望的格式
-        const convertedQuestions = questions.map(q => ({
-          id: q.id || q.order || 0,
+        // 转换API数据格式为前端期望的格式（保留跳转信息 next / resultCode）
+        const convertedQuestions = questions.map((q, qi) => ({
+          id: q.id || q.order || q.order_index || qi + 1,
           text: q.text || q.question_text || '',
-          opts: (q.opts || q.options || []).map(opt => ({
-            text: opt.text || opt.option_text || '',
-            value: opt.value || opt.score_value || 0
-          }))
+          opts: (q.opts || q.options || []).map((opt, oi) => {
+            const sv = opt.score_value || opt.value || {};
+            const next = (opt.next != null ? opt.next : (sv && sv.next != null ? sv.next : null));
+            const resultCode = (opt.resultCode != null ? opt.resultCode : (sv && sv.resultCode != null ? sv.resultCode : null));
+            return {
+              text: opt.text || opt.option_text || '',
+              value: (typeof opt.value === 'number' ? opt.value : (typeof sv === 'object' && sv && typeof sv.score === 'number' ? sv.score : (typeof sv === 'number' ? sv : 0))),
+              next: next,
+              resultCode: resultCode,
+              n: opt.n || opt.option_number || (oi + 1)
+            };
+          })
         }));
+
+        // 自动侦测是否为跳转型测试（任一选项存在 next 或 resultCode）
+        try {
+          const hasJump = convertedQuestions.some(q => (q.opts || []).some(o => (o && (o.next != null || o.resultCode))));
+          if (hasJump) {
+            project.isJumpType = true;
+          }
+        } catch(_) {}
         
         console.log('✅ 转换后的题目数据:', convertedQuestions.slice(0, 2)); // 调试日志
         console.log('📊 题目总数:', convertedQuestions.length);
@@ -850,7 +866,7 @@
   })();
 
   async function renderProgress() {
-    // 跳转型测试不显示进度条
+    // 跳转型测试不显示进度条（支持运行时动态识别）
     if (project && project.isJumpType) {
       try {
         progressBar.parentElement.classList.add('hidden');
