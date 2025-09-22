@@ -119,6 +119,59 @@
       .slice(0, 60);
   }
 
+  // 异步加载推荐测试
+  async function loadRecommendedTest(testId) {
+    const sec = document.getElementById('test-card-sec');
+    const imgEl = document.getElementById('test-card-img');
+    const titleEl = document.getElementById('test-card-title');
+    const peopleEl = document.getElementById('test-card-people');
+    const btnEl = document.getElementById('test-card-btn');
+    
+    const map = {
+      mbti: '/assets/images/mbti-career-personality-test.jpg',
+      disc40: '/assets/images/disc-personality-test.jpg',
+      observation: '/assets/images/observation-ability-test.jpg'
+    };
+    
+    let project;
+    try { 
+      project = await window.ApiService.getTestProject(testId); 
+    } catch(_) {}
+    
+    if (!project) {
+      const list = await window.ApiService.getTestProjects();
+      project = (list || []).find(p => p.id === testId);
+    }
+    
+    if (project) {
+      titleEl.textContent = project.nameEn || project.name || testId;
+      // 格式化测试人数（与首页一致）
+      try {
+        const n = project.testedCount;
+        const formatted = window.Utils ? window.Utils.formatNumber(n) : (n || '');
+        if (formatted) {
+          peopleEl.innerHTML = `<span class="font-semibold text-amber-600">${formatted}</span> people tested`;
+        } else {
+          peopleEl.textContent = '';
+        }
+      } catch(_) { peopleEl.textContent = ''; }
+      
+      const img0 = map[project.id] || project.image || '/assets/images/logo.png';
+      imgEl.src = img0.startsWith('/') ? img0 : `/${img0}`;
+      btnEl.onclick = function(){ location.href = `/test-detail.html/${encodeURIComponent(project.id)}`; };
+      
+      // 免费标签显示
+      try {
+        const pricingEl = document.getElementById('test-card-pricing');
+        if (pricingEl && (project.pricingType === '免费' || project.pricingType === 'free')) {
+          pricingEl.classList.remove('hidden');
+        }
+      } catch(_) {}
+      
+      sec.classList.remove('hidden');
+    }
+  }
+
   try {
     console.log('🔍 获取blog详情，slug:', slug);
     
@@ -207,52 +260,12 @@
     renderMarkdown(b.content);
     try { if (window.Analytics) window.Analytics.logDetailRead(slug); } catch(_) {}
 
-    // Recommended test card
-    try {
-      const testId = b.test_project_id;
-      if (testId) {
-        const sec = document.getElementById('test-card-sec');
-        const imgEl = document.getElementById('test-card-img');
-        const titleEl = document.getElementById('test-card-title');
-        const peopleEl = document.getElementById('test-card-people');
-        const btnEl = document.getElementById('test-card-btn');
-        const map = {
-          mbti: '/assets/images/mbti-career-personality-test.jpg',
-          disc40: '/assets/images/disc-personality-test.jpg',
-          observation: '/assets/images/observation-ability-test.jpg'
-        };
-        let project;
-        try { project = await window.ApiService.getTestProject(testId); } catch(_) {}
-        if (!project) {
-          const list = await window.ApiService.getTestProjects();
-          project = (list || []).find(p => p.id === testId);
-        }
-        if (project) {
-          titleEl.textContent = project.nameEn || project.name || testId;
-          // 格式化测试人数（与首页一致）
-          try {
-            const n = project.testedCount;
-            const formatted = window.Utils ? window.Utils.formatNumber(n) : (n || '');
-            if (formatted) {
-              peopleEl.innerHTML = `<span class="font-semibold text-amber-600">${formatted}</span> people tested`;
-            } else {
-              peopleEl.textContent = '';
-            }
-          } catch(_) { peopleEl.textContent = ''; }
-          const img0 = map[project.id] || project.image || '/assets/images/logo.png';
-          imgEl.src = img0.startsWith('/') ? img0 : `/${img0}`;
-          btnEl.onclick = function(){ location.href = `/test-detail.html/${encodeURIComponent(project.id)}`; };
-          // 免费标签显示
-          try {
-            const pricingEl = document.getElementById('test-card-pricing');
-            if (pricingEl && (project.pricingType === '免费' || project.pricingType === 'free')) {
-              pricingEl.classList.remove('hidden');
-            }
-          } catch(_) {}
-          sec.classList.remove('hidden');
-        }
-      }
-    } catch(_) {}
+    // Recommended test card - 异步加载，不阻塞主要内容
+    const testId = b.test_project_id;
+    if (testId) {
+      // 异步加载推荐测试，不等待结果
+      loadRecommendedTest(testId).catch(e => console.log('推荐测试加载失败:', e));
+    }
 
     // 推荐（已经在上面并行加载了）
     try {

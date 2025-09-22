@@ -30,7 +30,7 @@ module.exports = async function handler(req, res) {
         id, slug, title, summary, cover_image_url, created_at
       FROM blogs 
       WHERE slug != $1 AND is_published = true
-      ORDER BY RANDOM()
+      ORDER BY created_at DESC
       LIMIT 6
     `, [slug]);
 
@@ -38,7 +38,8 @@ module.exports = async function handler(req, res) {
       id: row.id,
       slug: row.slug,
       title: row.title,
-      excerpt: row.summary,
+      summary: row.summary, // 保持与数据库字段一致
+      excerpt: row.summary, // 兼容字段名
       cover_image_url: row.cover_image_url,
       imageUrl: row.cover_image_url,
       author: 'MOMO TEST',
