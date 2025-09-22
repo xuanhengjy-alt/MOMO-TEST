@@ -172,6 +172,12 @@ function renderProjectCard(p, tpl, container, index) {
 
   // 获取图片路径
   let imagePath = imageFallbacks[p.id];
+  console.log(`🔍 项目 ${p.id} 图片路径检查:`, {
+    fallback: imageFallbacks[p.id],
+    apiImage: p.image,
+    finalPath: imagePath
+  });
+  
   if (!imagePath && p.image) {
     imagePath = p.image.replace(/\s+/g, '-');
   }
@@ -181,18 +187,12 @@ function renderProjectCard(p, tpl, container, index) {
   if (!imagePath.startsWith('assets/')) {
     imagePath = 'assets/images/logo.png';
   }
-
-  // 优化图片加载：前6个项目立即加载，其余延迟加载
-  const shouldLoadImmediately = index < 6;
   
-  if (shouldLoadImmediately) {
-    console.log(`🖼️ 立即加载图片 ${p.id}:`, imagePath);
-    loadImageOptimized(img, imagePath, skeleton, p.id);
-  } else {
-    console.log(`⏳ 延迟加载图片 ${p.id}:`, imagePath);
-    // 使用Intersection Observer实现懒加载
-    setupLazyLoading(img, imagePath, skeleton, p.id);
-  }
+  console.log(`📁 最终图片路径 ${p.id}:`, imagePath);
+
+  // 简化图片加载：所有图片都立即加载，避免懒加载问题
+  console.log(`🖼️ 加载图片 ${p.id}:`, imagePath);
+  loadImageOptimized(img, imagePath, skeleton, p.id);
   // 设置卡片内容
   title.textContent = p.nameEn;
 
@@ -248,49 +248,55 @@ function renderProjectCard(p, tpl, container, index) {
 
 // 优化的图片加载函数
 function loadImageOptimized(img, imagePath, skeleton, projectId) {
-  img.src = imagePath;
+  console.log(`🖼️ 开始加载图片 ${projectId}:`, imagePath);
+  
   img.alt = projectId;
   
   // 快速错误处理
   img.onerror = function() {
     console.warn(`⚠️ 图片加载失败 ${projectId}:`, imagePath);
     img.onerror = null;
+    console.log(`🔄 使用logo作为回退图片 ${projectId}`);
     img.src = 'assets/images/logo.png';
   };
   
   // 成功加载
   img.addEventListener('load', () => {
     console.log(`✅ 图片加载成功 ${projectId}`);
-    skeleton.classList.add('hidden');
+    if (skeleton) {
+      skeleton.classList.add('hidden');
+    }
     img.classList.remove('hidden');
   });
   
-  // 快速超时（1.5秒）
+  // 设置图片源
+  img.src = imagePath;
+  
+  // 如果图片已经加载完成（从缓存），立即显示
+  if (img.complete && img.naturalHeight !== 0) {
+    console.log(`🚀 图片已缓存 ${projectId}`);
+    if (skeleton) {
+      skeleton.classList.add('hidden');
+    }
+    img.classList.remove('hidden');
+    return;
+  }
+  
+  // 快速超时（2秒）
   setTimeout(() => {
     if (skeleton && !skeleton.classList.contains('hidden')) {
       console.log(`⏰ 图片加载超时 ${projectId}，强制显示`);
       skeleton.classList.add('hidden');
       img.classList.remove('hidden');
     }
-  }, 1500);
+  }, 2000);
 }
 
-// 懒加载设置
+// 懒加载设置 - 暂时禁用，改为立即加载
 function setupLazyLoading(img, imagePath, skeleton, projectId) {
-  // 使用Intersection Observer实现懒加载
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        console.log(`👁️ 图片进入视口，开始加载 ${projectId}`);
-        loadImageOptimized(img, imagePath, skeleton, projectId);
-        observer.unobserve(img);
-      }
-    });
-  }, {
-    rootMargin: '50px' // 提前50px开始加载
-  });
-  
-  observer.observe(img);
+  // 暂时禁用懒加载，直接加载图片
+  console.log(`🖼️ 直接加载图片 ${projectId}:`, imagePath);
+  loadImageOptimized(img, imagePath, skeleton, projectId);
 }
 
 
