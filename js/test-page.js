@@ -1000,7 +1000,7 @@
     // 进入开始页时再次刷新题量与预估
     await ensureTestLogicLoaded();
     try {
-      const qs = getQList();
+      const qs = await getQList(); // 添加await关键字，等待异步操作完成
       if (infoLine && qs && qs.length > 0) {
         const total = qs.length;
         const mins = Math.max(1, Math.round((total * 12) / 60));
