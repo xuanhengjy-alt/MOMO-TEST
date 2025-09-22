@@ -114,30 +114,45 @@
     console.log('🔍 开始并行获取项目数据，项目ID:', id);
     
     // 并行请求：项目详情、题目数据、点赞状态
+    // 为主要请求设置较短超时，避免阻塞
     const [projectResult, questionsResult, likeStatusResult] = await Promise.allSettled([
+      // 项目详情是最重要的，给它最多时间
       window.ApiService.getTestProject(id),
-      window.ApiService.getQuestions(id).catch(() => null), // 题目数据可选
-      window.ApiService.checkLikeStatus(id).catch(() => ({ likes: 0, liked: false })) // 点赞状态可选
+      // 题目数据可以稍后获取，设置较短超时
+      Promise.race([
+        window.ApiService.getTestQuestions(id),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Questions timeout')), 5000))
+      ]).catch(() => null),
+      // 点赞状态最不重要，设置最短超时
+      Promise.race([
+        window.ApiService.checkLikeStatus(id),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Like status timeout')), 3000))
+      ]).catch(() => ({ likes: 0, liked: false }))
     ]);
     
     // 处理项目数据
-    if (projectResult.status === 'fulfilled') {
+    if (projectResult.status === 'fulfilled' && projectResult.value) {
       project = projectResult.value;
       console.log('✅ 项目数据获取成功');
     } else {
+      console.warn('⚠️ 项目数据获取失败，将使用回退数据');
       throw new Error('项目数据获取失败');
     }
     
     // 预缓存题目数据（如果获取成功）
     if (questionsResult.status === 'fulfilled' && questionsResult.value) {
       cachedQuestions = questionsResult.value;
-      console.log('✅ 题目数据预缓存成功');
+      console.log('✅ 题目数据预缓存成功，数量:', questionsResult.value.length);
+    } else {
+      console.log('⚠️ 题目数据获取失败，将在需要时单独获取');
     }
     
     // 预设置点赞状态（如果获取成功）
     if (likeStatusResult.status === 'fulfilled' && likeStatusResult.value) {
       isLiked = likeStatusResult.value.liked || false;
       console.log('✅ 点赞状态预设置成功');
+    } else {
+      console.log('⚠️ 点赞状态获取失败，将在需要时单独获取');
     }
     
   } catch (e) {
@@ -145,10 +160,17 @@
     // 回退到单个请求
     try {
       project = await window.ApiService.getTestProject(id);
+      if (!project) {
+        throw new Error('API返回空数据');
+      }
+      console.log('✅ 单个请求获取项目数据成功');
     } catch (fallbackError) {
       console.warn('⚠️ API失败，使用回退数据:', fallbackError);
       const fallbackProjects = window.ApiService.getFallbackProjects();
       project = fallbackProjects.find(p => p.id === id);
+      if (project) {
+        console.log('✅ 回退数据获取项目成功');
+      }
     }
   }
   
@@ -688,7 +710,7 @@
       let questions;
       if (cachedQuestions && cachedQuestions.length > 0) {
         questions = cachedQuestions;
-        console.log('✅ 使用预缓存的题目数据');
+        console.log('✅ 使用预缓存的题目数据，数量:', questions.length);
       } else {
         questions = await getQList();
         console.log('📋 获取到的题目:', questions);
@@ -1068,12 +1090,12 @@
   console.log('Initializing test page...');
   showSkeletonScreen();
   
-  // 异步加载完整内容
+  // 异步加载完整内容，延迟更短以提升响应速度
   setTimeout(() => {
     show('detail');
     renderProgress();
     // 注意：不在这里调用 renderQuestion()，因为主逻辑会处理题目加载
-  }, 100);
+  }, 50); // 减少延迟到50ms
 })();
 
 
