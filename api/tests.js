@@ -40,11 +40,8 @@ module.exports = async function handler(req, res) {
       return await handleLikeRequest(req, res, projectId);
     }
 
-    // 处理路径：/api/tests/{id}
-    if (pathParts.length === 3 && pathParts[1] === 'tests') {
-      const projectId = pathParts[2];
-      return await handleSingleProjectRequest(req, res, projectId);
-    }
+    // 注意：单个项目请求由 api/tests/[id].js 处理
+    // 这里只处理子路径请求
 
     // 处理路径：/api/tests (获取所有项目)
     if (pathParts.length === 2 && pathParts[1] === 'tests') {
