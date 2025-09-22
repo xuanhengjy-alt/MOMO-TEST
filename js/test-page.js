@@ -749,6 +749,17 @@
       console.log('📋 API返回的题目数据:', questions);
       
       if (questions && questions.length > 0) {
+        // 原始数据层面粗判是否为跳转型（即使后续解析失败也能识别）
+        try {
+          const rawJump = questions.some(q => (q.opts || q.options || []).some(opt => {
+            const v = (opt && (opt.score_value != null ? opt.score_value : opt.value));
+            if (v == null) return false;
+            if (typeof v === 'string') return /"next"|"resultCode"/i.test(v);
+            if (typeof v === 'object') return (v.next != null || (v.resultCode != null && String(v.resultCode).trim() !== ''));
+            return false;
+          }));
+          if (rawJump) { project.isJumpType = true; }
+        } catch(_) {}
         // 转换API数据格式为前端期望的格式（保留跳转信息 next / resultCode）
         const numFrom = (v) => {
           if (v === null || v === undefined) return null;
@@ -893,12 +904,22 @@
       try {
         progressBar.parentElement.classList.add('hidden');
         progressText.classList.add('hidden');
+        // 兜底：直接 display:none，避免某些主题对 .hidden 覆盖
+        progressBar.parentElement.style.display = 'none';
+        progressText.style.display = 'none';
+        const maybeWrappers = [
+          document.getElementById('progress-wrapper'),
+          progressBar.parentElement?.parentElement
+        ].filter(Boolean);
+        maybeWrappers.forEach(el => { try { el.style.display = 'none'; el.classList.add('hidden'); } catch(_) {} });
       } catch(_) {}
       return;
     } else {
       try {
         progressBar.parentElement.classList.remove('hidden');
         progressText.classList.remove('hidden');
+        progressBar.parentElement.style.display = '';
+        progressText.style.display = '';
       } catch(_) {}
     }
     const total = totalList.length;
