@@ -282,16 +282,22 @@ async function handleSubmitResult(req, res, opts = {}) {
   } catch (error) {
     console.error('❌ 提交测试结果失败:', error);
     // 返回错误结果而不是500错误，让前端显示错误信息
-    res.status(200).json({ 
+    const errorResponse = { 
       success: false,
       error: 'Unable to calculate test result. Please try again later.',
       result: {
         summary: 'Calculation Error',
         analysis: 'Unable to calculate test result. Please try again later.',
         type: 'error'
-      },
-      ...(debugFlag ? { debug: { error: String(error && error.message || error) } } : {})
-    });
+      }
+    };
+    
+    // 只有在debug模式下才添加debug信息
+    if (opts && opts.debug) {
+      errorResponse.debug = { error: String(error && error.message || error) };
+    }
+    
+    res.status(200).json(errorResponse);
   }
 }
 
@@ -323,19 +329,36 @@ async function calculateTestResult(testType, answers, projectInternalId, project
       }
     } catch (_) {}
 
-    // 回退到本地实现的少数类型
-    switch (testType) {
-      case 'social_anxiety_test':
-        return await calculateSocialAnxietyDirect(answers, projectInternalId);
-      case 'eq_test':
-        return await calculateEqTestResult(answers, projectInternalId);
-      case 'mbti':
-        return await calculateMbtiResult(answers, projectInternalId);
-      case 'enneagram':
-        return await calculateEnneagramResult(answers, projectInternalId);
-      default:
-        return await calculateDefaultResult(answers, projectInternalId);
+    // 定义需要数据库驱动计算的测试类型
+    const dbDrivenTests = ['social_anxiety_test', 'anxiety_depression_test'];
+    
+    // 定义已有专门计算逻辑的测试类型
+    const specializedTests = ['eq_test', 'mbti', 'enneagram'];
+    
+    const keyForService = (testType || '').toLowerCase() || (projectIdKey || '').toLowerCase();
+    
+    // 1. 优先尝试数据库驱动计算（适用于需要从DB读取score_value的测试）
+    if (dbDrivenTests.includes(keyForService)) {
+      console.log(`📊 使用数据库驱动计算: ${keyForService}`);
+      return await calculateDbDrivenResult(answers, projectInternalId, keyForService);
     }
+    
+    // 2. 回退到本地专门实现（适用于有特殊逻辑的测试）
+    if (specializedTests.includes(keyForService)) {
+      console.log(`🔧 使用本地专门实现: ${keyForService}`);
+      switch (keyForService) {
+        case 'eq_test':
+          return await calculateEqTestResult(answers, projectInternalId);
+        case 'mbti':
+          return await calculateMbtiResult(answers, projectInternalId);
+        case 'enneagram':
+          return await calculateEnneagramResult(answers, projectInternalId);
+      }
+    }
+
+    // 3. 最后兜底：默认计算逻辑（适用于简单累加型测试）
+    console.log(`🔄 使用默认计算逻辑: ${keyForService}`);
+    return await calculateDefaultResult(answers, projectInternalId);
   } catch (error) {
     console.error('❌ 计算结果失败:', error);
     return {
@@ -541,6 +564,141 @@ async function calculateDefaultResult(answers, projectInternalId) {
       summary: 'Test Completed',
       analysis: 'You have completed the test successfully.',
       type: 'default'
+    };
+  }
+}
+
+// 通用数据库驱动计分函数（适用于需要从DB读取score_value的测试）
+async function calculateDbDrivenResult(answers, projectInternalId, testType) {
+  try {
+    console.log(`🔍 开始数据库驱动计分: ${testType}`);
+    
+    // 获取题目和选项的分数配置
+    const qres = await query(`
+      SELECT 
+        COALESCE(
+          q.question_number,
+          ROW_NUMBER() OVER (ORDER BY q.id)
+        ) AS qn,
+        o.option_number,
+        o.score_value
+      FROM questions q
+      JOIN question_options o ON o.question_id = q.id
+      WHERE q.project_id = $1
+      ORDER BY qn ASC, o.option_number ASC
+    `, [projectInternalId]);
+
+    let totalScore = 0;
+    let hasDbConfig = false;
+    
+    if (qres.rows.length > 0) {
+      hasDbConfig = true;
+      const scoreMap = new Map();
+      
+      // 构建分数映射
+      for (const row of qres.rows) {
+        const qn = Number(row.qn);
+        if (!scoreMap.has(qn)) scoreMap.set(qn, []);
+        const arr = scoreMap.get(qn);
+        const optIdx = Number(row.option_number) - 1;
+        let s = 0;
+        
+        try {
+          const v = row.score_value;
+          let n = 0;
+          if (v && typeof v === 'object') {
+            const raw = (v.score ?? v.value ?? 0);
+            n = Number(raw) || 0;
+          } else if (typeof v === 'string') {
+            const f = Number.parseFloat(v);
+            n = Number.isFinite(f) ? f : 0;
+          } else if (typeof v === 'number') {
+            n = Number.isFinite(v) ? v : 0;
+          }
+          s = n > 5 ? (n - 4) : n; // 归一化到1..5
+        } catch (_) { s = 0; }
+        arr[optIdx] = s;
+      }
+      
+      // 特殊处理：社交焦虑测试的反向题
+      if (testType === 'social_anxiety_test') {
+        const reversedSet = new Set([3,6,10,15]);
+        for (const [qn, arr] of scoreMap.entries()) {
+          if (reversedSet.has(qn) && Array.isArray(arr) && arr.length >= 5) {
+            arr.reverse();
+            scoreMap.set(qn, arr);
+          }
+        }
+      }
+
+      // 计算总分
+      for (let i = 0; i < answers.length; i++) {
+        const qn = i + 1;
+        const optIndex = Number(answers[i]);
+        const arr = scoreMap.get(qn) || [];
+        if (optIndex >= 0 && optIndex < arr.length) totalScore += (arr[optIndex] || 0);
+      }
+    }
+
+    // 如果没有数据库配置，使用默认计分规则
+    if (!hasDbConfig) {
+      console.log(`⚠️ 测试 ${testType} 无数据库配置，使用默认计分规则`);
+      
+      if (testType === 'social_anxiety_test') {
+        // 社交焦虑测试默认规则：3/6/10/15反向
+        const reversed = new Set([3,6,10,15]);
+        for (let i = 0; i < answers.length && i < 15; i++) {
+          const qi = i + 1;
+          const optIndex = Number(answers[i]);
+          if (optIndex < 0 || optIndex > 4 || Number.isNaN(optIndex)) continue;
+          const score = reversed.has(qi) ? (5 - optIndex) : (optIndex + 1);
+          totalScore += score;
+        }
+      } else {
+        // 其他测试的默认规则：简单累加
+        for (let i = 0; i < answers.length; i++) {
+          const optIndex = Number(answers[i]);
+          if (optIndex >= 0 && optIndex <= 4) {
+            totalScore += (optIndex + 1);
+          }
+        }
+      }
+    }
+
+    // 根据测试类型确定结果类型
+    let resultType = 'DEFAULT';
+    if (testType === 'social_anxiety_test') {
+      resultType = totalScore >= 61 ? 'SA_SEVERE' : (totalScore >= 41 ? 'SA_MILD' : 'SA_NONE');
+    } else if (testType === 'anxiety_depression_test') {
+      // 焦虑抑郁测试的阈值（需要根据实际情况调整）
+      resultType = totalScore >= 40 ? 'AD_HIGH' : (totalScore >= 25 ? 'AD_MODERATE' : 'AD_LOW');
+    }
+
+    // 从数据库获取结果描述
+    const r = await query(`
+      SELECT description_en, analysis_en
+      FROM result_types WHERE project_id = $1 AND type_code = $2
+      LIMIT 1
+    `, [projectInternalId, resultType]);
+    
+    const row = r.rows[0] || {};
+    console.log(`✅ 数据库驱动计分完成: ${testType}, 总分: ${totalScore}, 结果类型: ${resultType}`);
+    
+    return {
+      summary: row.description_en || `${testType} result (Score: ${totalScore})`,
+      analysis: row.analysis_en || `Your total score is ${totalScore}.`,
+      resultType,
+      totalScore,
+      description_en: row.description_en,
+      analysis_en: row.analysis_en
+    };
+  } catch (e) {
+    console.error(`❌ 数据库驱动计分失败 ${testType}:`, e.message);
+    return {
+      summary: 'Calculation Error',
+      analysis: 'Unable to calculate test result. Please try again.',
+      type: 'error',
+      error: e.message
     };
   }
 }
