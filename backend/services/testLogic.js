@@ -2114,7 +2114,12 @@ class TestLogicService {
         let s = 0;
         try {
           const v = row.score_value || {};
-          s = typeof v === 'object' && v !== null ? (v.score ?? 0) : 0;
+          if (typeof v === 'object' && v !== null) {
+            const raw = (v.score ?? v.value ?? 0);
+            s = Number(raw) || 0;
+          } else {
+            s = 0;
+          }
         } catch (_) { s = 0; }
         arr[optIdx] = s;
       }
