@@ -8,9 +8,38 @@ class ApiService {
   constructor() {
     this.baseURL = API_BASE_URL;
     this.isVercel = window.location.hostname.includes('vercel.app');
+    
+    // 添加缓存机制
+    this.cache = new Map();
+    this.cacheTimeout = 5 * 60 * 1000; // 5分钟缓存
+    
     console.log('🌐 API Base URL:', this.baseURL);
     console.log('🌐 Is Vercel:', this.isVercel);
     console.log('🌐 Hostname:', window.location.hostname);
+    console.log('🚀 API缓存已启用，缓存时间:', this.cacheTimeout / 1000, '秒');
+  }
+
+  // 缓存检查方法
+  getFromCache(key) {
+    const cached = this.cache.get(key);
+    if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
+      console.log('📦 从缓存获取数据:', key);
+      return cached.data;
+    }
+    if (cached) {
+      console.log('🗑️ 缓存已过期，清除:', key);
+      this.cache.delete(key);
+    }
+    return null;
+  }
+
+  // 设置缓存
+  setCache(key, data) {
+    this.cache.set(key, {
+      data: data,
+      timestamp: Date.now()
+    });
+    console.log('💾 数据已缓存:', key);
   }
 
   // 通用请求方法
@@ -64,8 +93,16 @@ class ApiService {
     }
   }
 
-  // 获取所有测试项目
+  // 获取所有测试项目（带缓存）
   async getTestProjects() {
+    const cacheKey = 'test_projects';
+    
+    // 先检查缓存
+    const cachedData = this.getFromCache(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
+    
     try {
       console.log('🔍 尝试从API获取测试项目...');
       const data = await this.request('/tests');
@@ -74,6 +111,8 @@ class ApiService {
       // 检查响应格式
       if (data && data.projects && Array.isArray(data.projects)) {
         console.log('✅ 成功从API获取项目:', data.projects.length);
+        // 缓存数据
+        this.setCache(cacheKey, data.projects);
         return data.projects;
       } else {
         throw new Error('Invalid response format from API');
