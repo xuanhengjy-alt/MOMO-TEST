@@ -2090,17 +2090,24 @@ class TestLogicService {
     try {
       // 读取数据库里该项目所有题目的选项分值（按题号、选项序）
       const qres = await query(`
-        SELECT q.question_number, o.option_number, o.score_value
+        SELECT 
+          COALESCE(
+            q.question_number,
+            q.order_index,
+            ROW_NUMBER() OVER (ORDER BY COALESCE(q.order_index, q.id))
+          ) AS qn,
+          o.option_number,
+          o.score_value
         FROM questions q
         JOIN question_options o ON o.question_id = q.id
         WHERE q.project_id = (SELECT id FROM test_projects WHERE project_id = 'social_anxiety_test')
-        ORDER BY q.question_number ASC, o.option_number ASC
+        ORDER BY qn ASC, o.option_number ASC
       `);
 
       // 构建 question_number -> [scores per option_index(0-based)]
       const scoreMap = new Map();
       for (const row of qres.rows) {
-        const qn = Number(row.question_number);
+        const qn = Number(row.qn);
         if (!scoreMap.has(qn)) scoreMap.set(qn, []);
         const arr = scoreMap.get(qn);
         const optIdx = Number(row.option_number) - 1; // DB从1开始，前端answers从0开始
