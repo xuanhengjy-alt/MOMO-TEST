@@ -2129,6 +2129,19 @@ class TestLogicService {
           } catch (_) { s = 0; }
           arr[optIdx] = s;
         }
+        // 标准化反向题（若DB未反向，则对 3/6/10/15 题将分值数组反转，使 A..E 从大到小）
+        const reversedSet = new Set([3,6,10,15]);
+        for (const [qn, arr] of scoreMap.entries()) {
+          if (reversedSet.has(qn) && Array.isArray(arr) && arr.length >= 5) {
+            const a0 = Number(arr[0] || 0);
+            const a4 = Number(arr[4] || 0);
+            if (a0 <= a4) {
+              // 看起来是正向（A<=E），翻转为反向
+              arr.reverse();
+              scoreMap.set(qn, arr);
+            }
+          }
+        }
         // 逐题累加得分
         for (let i = 0; i < answers.length && i < 50; i++) {
           const qn = i + 1;

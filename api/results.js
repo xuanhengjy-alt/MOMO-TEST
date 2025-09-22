@@ -587,6 +587,19 @@ async function calculateSocialAnxietyDirect(answers, projectInternalId) {
         } catch (_) { s = 0; }
         arr[optIdx] = s;
       }
+      // 反向题规范化（若DB未反向，统一让 3/6/10/15 的 A..E 分数从大到小）
+      const reversedSet = new Set([3,6,10,15]);
+      for (const [qn, arr] of scoreMap.entries()) {
+        if (reversedSet.has(qn) && Array.isArray(arr) && arr.length >= 5) {
+          const a0 = Number(arr[0] || 0);
+          const a4 = Number(arr[4] || 0);
+          if (a0 <= a4) {
+            arr.reverse();
+            scoreMap.set(qn, arr);
+          }
+        }
+      }
+
       for (let i = 0; i < answers.length; i++) {
         const qn = i + 1;
         const optIndex = Number(answers[i]);
