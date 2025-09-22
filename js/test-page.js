@@ -386,29 +386,60 @@
   const resultRestart = document.getElementById('result-restart');
   const infoLine = document.getElementById('info-line');
 
-  // 计算中提示（绿色、底部、居中）
+  // 动态计算中提示
   let calcNoticeEl = null;
   function showCalculatingNotice(show) {
     try {
       if (!calcNoticeEl) {
         calcNoticeEl = document.createElement('div');
         calcNoticeEl.id = 'calc-notice';
-        calcNoticeEl.style.textAlign = 'center';
-        calcNoticeEl.style.color = '#16a34a'; // green-600
-        calcNoticeEl.style.marginTop = '12px';
-        calcNoticeEl.style.fontWeight = '600';
-        calcNoticeEl.textContent = 'The result is being calculated. Please wait a moment......';
+        calcNoticeEl.className = 'calculating-container';
+        calcNoticeEl.innerHTML = `
+          <div class="calculating-spinner"></div>
+          <div class="calculating-text">正在分析您的答案</div>
+          <div class="calculating-subtitle">AI正在为您计算个性化结果<span class="calculating-dots"></span></div>
+          <div class="calculating-progress">
+            <div class="calculating-progress-bar"></div>
+          </div>
+        `;
       }
+      
       if (show) {
         if (!calcNoticeEl.parentElement) {
           // 插入到选项区域下方（题目框底部）
-          (options && options.parentElement ? options.parentElement : document.body).appendChild(calcNoticeEl);
+          const insertTarget = options && options.parentElement ? options.parentElement : document.body;
+          insertTarget.appendChild(calcNoticeEl);
         }
-        calcNoticeEl.classList.remove('hidden');
+        calcNoticeEl.style.display = 'flex';
+        calcNoticeEl.classList.remove('calculating-complete');
+        
+        // 添加淡入效果
+        calcNoticeEl.style.opacity = '0';
+        calcNoticeEl.style.transform = 'translateY(20px)';
+        calcNoticeEl.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out';
+        
+        setTimeout(() => {
+          calcNoticeEl.style.opacity = '1';
+          calcNoticeEl.style.transform = 'translateY(0)';
+        }, 50);
+        
       } else {
-        calcNoticeEl.classList.add('hidden');
+        if (calcNoticeEl && calcNoticeEl.parentElement) {
+          // 添加完成动画
+          calcNoticeEl.classList.add('calculating-complete');
+          
+          // 动画完成后隐藏
+          setTimeout(() => {
+            if (calcNoticeEl && calcNoticeEl.parentElement) {
+              calcNoticeEl.style.display = 'none';
+              calcNoticeEl.classList.remove('calculating-complete');
+            }
+          }, 600);
+        }
       }
-    } catch (_) {}
+    } catch (e) {
+      console.error('Error showing calculating notice:', e);
+    }
   }
 
   // 初始化项目信息（先隐藏面包屑，等数据就绪后再填充与显示，避免闪现默认文案）
