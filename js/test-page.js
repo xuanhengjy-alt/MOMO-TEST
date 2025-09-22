@@ -778,15 +778,22 @@
       // 非跳转型：答完题，开始计算（防重复提交）
       if (resultShown || isSubmitting) { return; }
       isSubmitting = true;
+      
+      // 立即显示结果页面骨架屏，提升用户体验
+      show('result');
+      showResultSkeleton();
+      
       showCalculatingNotice(true);
+      
       // 仅从后端获取结果，不再使用本地兜底
       let apiResult = null;
       try {
         const sessionId = window.ApiService.generateSessionId();
+        console.log('🚀 开始提交测试结果...');
         apiResult = await window.ApiService.submitTestResult(project.id, answers, sessionId);
-        console.log('Test result submitted to API successfully');
+        console.log('✅ 测试结果提交成功');
       } catch (error) {
-        console.error('Failed to submit test result to API (no fallback):', error);
+        console.error('❌ 测试结果提交失败:', error);
       }
 
       if (!apiResult || !apiResult.result) {
@@ -837,8 +844,8 @@
           resultImage.src = '/assets/images/logo.png';
         };
       } catch(_) {}
-      // 统一用后端（或本地评分）返回的 summary/analysis 展示，保持从数据库获取
-      resultSummary.innerHTML = `<span class="font-semibold text-blue-700">${finalResult.summary || ''}</span>`;
+      // 统一用后端（或本地评分）返回的 description_en/analysis 展示，保持从数据库获取
+      resultSummary.innerHTML = `<span class="font-semibold text-blue-700">${finalResult.description_en || finalResult.summary || ''}</span>`;
       const rawAnalysis = finalResult.analysis || finalResult.analysisEn || '';
       if (project.type === 'disc' || project.type === 'disc40') {
         // 确保应用专用样式容器，与MBTI保持一致
@@ -890,9 +897,20 @@
           resultAnalysis.innerHTML = formatMbtiAnalysis(rawAnalysis, finalResult.summary);
         }
       }
-      show('result');
-      resultShown = true;
+      // 隐藏计算提示，显示最终结果
       showCalculatingNotice(false);
+      
+      // 添加淡入效果
+      const resultSection = document.getElementById('result-section');
+      if (resultSection) {
+        resultSection.style.opacity = '0';
+        resultSection.style.transition = 'opacity 0.3s ease-in-out';
+        setTimeout(() => {
+          resultSection.style.opacity = '1';
+        }, 50);
+      }
+      
+      resultShown = true;
       isSubmitting = false;
       return;
     }
@@ -910,11 +928,16 @@
           var ans = (opt && typeof opt.n === 'number') ? (opt.n - 1) : idx;
           answers.push(ans);
           if (opt.resultCode) {
-            // 直接出结果：调用后端，前端只显示后端返回的 summary/analysis（对应 description_en/analysis_en）
+            // 直接出结果：调用后端，前端只显示后端返回的 description_en/analysis
             try {
               // 跳转型：命中结果码，开始计算（防重复提交）
               if (resultShown || isSubmitting) { return; }
               isSubmitting = true;
+              
+              // 立即显示结果页面骨架屏
+              show('result');
+              showResultSkeleton();
+              
               showCalculatingNotice(true);
               const sessionId = window.ApiService.generateSessionId();
               const apiRes = await window.ApiService.submitTestResult(project.id, answers, sessionId);
@@ -946,7 +969,7 @@
                 var src0 = preferred || project.image || fallback;
                 resultImage.src = src0.startsWith('/') ? src0 : ('/' + src0);
               })();
-              resultSummary.innerHTML = `<span class=\"font-semibold text-blue-700\">${r.summary || r.summaryEn || ''}</span>`;
+              resultSummary.innerHTML = `<span class=\"font-semibold text-blue-700\">${r.description_en || r.summary || r.summaryEn || ''}</span>`;
               try { resultAnalysis.classList.add('mbti-analysis'); resultAnalysis.classList.add('analysis-rich'); } catch(_) {}
               const text = r.analysis || r.analysisEn || '';
               try {
@@ -958,9 +981,20 @@
                   resultAnalysis.textContent = text;
                 }
               } catch(_) { resultAnalysis.textContent = text; }
-              show('result');
-              resultShown = true;
+              // 隐藏计算提示，显示最终结果
               showCalculatingNotice(false);
+              
+              // 添加淡入效果
+              const resultSection = document.getElementById('result-section');
+              if (resultSection) {
+                resultSection.style.opacity = '0';
+                resultSection.style.transition = 'opacity 0.3s ease-in-out';
+                setTimeout(() => {
+                  resultSection.style.opacity = '1';
+                }, 50);
+              }
+              
+              resultShown = true;
               isSubmitting = false;
               return;
             } catch (e) {
@@ -1031,6 +1065,42 @@
     renderProgress();
     renderQuestion();
   });
+
+  // 结果页面骨架屏显示函数
+  function showResultSkeleton() {
+    const resultSection = document.getElementById('result-section');
+    if (!resultSection) return;
+    
+    // 显示结果页面骨架屏内容
+    resultSection.innerHTML = `
+      <div class="max-w-4xl mx-auto px-4 py-8">
+        <!-- 项目标题骨架 -->
+        <div class="text-center mb-8">
+          <div class="skeleton-text mx-auto mb-4" style="width: 300px; height: 2rem;"></div>
+        </div>
+        
+        <!-- 项目图片骨架 -->
+        <div class="skeleton mb-8" style="width: 100%; height: 300px; border-radius: 1rem;"></div>
+        
+        <!-- 结果内容骨架 -->
+        <div class="text-center mb-8">
+          <div class="skeleton-text mx-auto mb-4" style="width: 200px; height: 1.5rem;"></div>
+          <div class="skeleton-text mx-auto mb-2" style="width: 100%; height: 1rem;"></div>
+          <div class="skeleton-text mx-auto mb-2" style="width: 90%; height: 1rem;"></div>
+          <div class="skeleton-text mx-auto mb-2" style="width: 80%; height: 1rem;"></div>
+        </div>
+        
+        <!-- 分析内容骨架 -->
+        <div class="text-center">
+          <div class="skeleton-text mx-auto mb-4" style="width: 150px; height: 1.5rem;"></div>
+          <div class="skeleton-text mx-auto mb-2" style="width: 100%; height: 1rem;"></div>
+          <div class="skeleton-text mx-auto mb-2" style="width: 100%; height: 1rem;"></div>
+          <div class="skeleton-text mx-auto mb-2" style="width: 95%; height: 1rem;"></div>
+          <div class="skeleton-text mx-auto mb-2" style="width: 85%; height: 1rem;"></div>
+        </div>
+      </div>
+    `;
+  }
 
   // 骨架屏显示函数
   function showSkeletonScreen() {
