@@ -141,55 +141,38 @@
     
     console.log(`🔍 开始加载推荐测试项目: ${testId}`);
     
-    // 并行尝试多种数据源
-    const promises = [
-      // 1. 尝试从API获取单个项目
-      window.ApiService.getTestProject(testId).catch(e => {
-        console.log(`⚠️ API获取单个项目失败: ${e.message}`);
-        return null;
-      }),
-      
-      // 2. 尝试从API获取所有项目列表
-      window.ApiService.getTestProjects().catch(e => {
-        console.log(`⚠️ API获取项目列表失败: ${e.message}`);
-        return [];
-      })
-    ];
+    // 优先从项目列表获取真实数据（避免单个项目API的fallback问题）
+    console.log(`🔍 优先从项目列表获取真实数据: ${testId}`);
     
     try {
-      const [projectResult, projectsList] = await Promise.allSettled(promises);
+      const projectsList = await window.ApiService.getTestProjects();
       
       let project = null;
       
-      // 优先使用单个项目API的结果
-      if (projectResult.status === 'fulfilled' && projectResult.value && !projectResult.value.fallback) {
-        project = projectResult.value;
-        console.log(`✅ 从单个项目API获取到数据: ${testId}`);
-      }
-      // 如果单个项目API失败或返回fallback，从项目列表中查找
-      else if (projectsList.status === 'fulfilled' && Array.isArray(projectsList.value)) {
-        project = projectsList.value.find(p => p.id === testId);
+      // 从项目列表中查找真实数据
+      if (Array.isArray(projectsList)) {
+        project = projectsList.find(p => p.id === testId);
         if (project) {
-          console.log(`✅ 从项目列表中找到项目: ${testId}`);
+          console.log(`✅ 从项目列表中找到真实项目: ${testId}`);
+          console.log(`📊 项目数据:`, {
+            name: project.name,
+            nameEn: project.nameEn,
+            testedCount: project.testedCount,
+            pricingType: project.pricingType
+          });
+        } else {
+          console.log(`❌ 项目列表中未找到项目: ${testId}`);
         }
+      } else {
+        console.log(`❌ 项目列表数据格式错误: ${testId}`);
       }
       
-      // 如果还是没有找到，使用fallback数据
+      // 如果还是没有找到真实数据，不显示推荐测试项目
       if (!project) {
-        console.log(`⚠️ 未找到项目数据，使用fallback: ${testId}`);
-        project = {
-          id: testId,
-          name: testId === 'mbti' ? 'MBTI Personality Test' : 'Test Project',
-          nameEn: testId === 'mbti' ? 'MBTI Personality Test' : 'Test Project',
-          description: testId === 'mbti' ? 'Discover your personality type with the MBTI test' : 'Test project description',
-          descriptionEn: testId === 'mbti' ? 'Discover your personality type with the MBTI test' : 'Test project description',
-          testedCount: testId === 'mbti' ? 12500 : 0,
-          totalTests: testId === 'mbti' ? 12500 : 0,
-          image: map[testId] || '/assets/images/logo.png',
-          pricingType: '免费',
-          estimatedTime: testId === 'mbti' ? 15 : 10,
-          questionCount: testId === 'mbti' ? 93 : 10
-        };
+        console.log(`❌ 未找到真实项目数据，隐藏推荐测试项目: ${testId}`);
+        // 隐藏推荐测试项目卡片
+        sec.classList.add('hidden');
+        return; // 直接返回，不显示任何内容
       }
       
       // 渲染项目信息
@@ -234,14 +217,9 @@
     } catch (error) {
       console.error(`❌ 加载推荐测试项目失败: ${testId}`, error);
       
-      // 即使失败也显示fallback卡片
-      titleEl.textContent = testId === 'mbti' ? 'MBTI Personality Test' : 'Test Project';
-      peopleEl.textContent = '';
-      imgEl.src = map[testId] || '/assets/images/logo.png';
-      btnEl.onclick = function(){ 
-        location.href = `/test-detail.html/${encodeURIComponent(testId)}`; 
-      };
-      sec.classList.remove('hidden');
+      // 如果加载失败，隐藏推荐测试项目卡片
+      console.log(`❌ 推荐测试项目加载失败，隐藏卡片: ${testId}`);
+      sec.classList.add('hidden');
     }
   }
 
