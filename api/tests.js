@@ -76,7 +76,8 @@ async function handleSingleProjectRequest(req, res, projectId) {
       SELECT
         tp.project_id, tp.name, tp.name_en, tp.image_url, tp.intro, tp.intro_en,
         tp.test_type, tp.pricing_type, tp.estimated_time, tp.question_count,
-        ts.total_tests, ts.total_likes
+        COALESCE(ts.total_tests, 0) as total_tests, 
+        COALESCE(ts.total_likes, 0) as total_likes
       FROM test_projects tp
       LEFT JOIN test_statistics ts ON tp.id = ts.project_id
       WHERE tp.project_id = $1 AND tp.is_active = true
@@ -96,15 +97,16 @@ async function handleSingleProjectRequest(req, res, projectId) {
       id: row.project_id,
       name: row.name,
       nameEn: row.name_en,
-      image: row.image_url,
+      image: row.image_url, // 兼容字段
+      imageUrl: row.image_url,
       intro: row.intro,
       introEn: row.intro_en || row.intro,
       type: row.test_type,
-      pricingType: row.pricing_type,
-      estimatedTime: row.estimated_time,
-      questionCount: row.question_count,
-      testedCount: row.total_tests || 0,
-      likes: row.total_likes || 0
+      pricingType: row.pricing_type || '免费', // 默认免费
+      estimatedTime: row.estimated_time || 10, // 默认10分钟
+      questionCount: row.question_count || 10, // 默认10题
+      testedCount: parseInt(row.total_tests) || 0,
+      likes: parseInt(row.total_likes) || 0
     };
 
     console.log(`✅ 成功获取项目: ${projectId}`);
@@ -131,7 +133,9 @@ async function handleAllProjectsRequest(req, res) {
     const result = await query(`
       SELECT
         tp.project_id, tp.name, tp.name_en, tp.image_url, tp.intro, tp.intro_en,
-        tp.test_type, tp.pricing_type, ts.total_tests, ts.total_likes
+        tp.test_type, tp.pricing_type, tp.estimated_time, tp.question_count,
+        COALESCE(ts.total_tests, 0) as total_tests, 
+        COALESCE(ts.total_likes, 0) as total_likes
       FROM test_projects tp
       LEFT JOIN test_statistics ts ON tp.id = ts.project_id
       WHERE tp.is_active = true
@@ -142,13 +146,16 @@ async function handleAllProjectsRequest(req, res) {
       id: row.project_id,
       name: row.name,
       nameEn: row.name_en,
+      image: row.image_url, // 兼容字段
       imageUrl: row.image_url,
       intro: row.intro,
       introEn: row.intro_en || row.intro,
       testType: row.test_type,
-      pricingType: row.pricing_type,
-      testedCount: row.total_tests || 0,
-      likes: row.total_likes || 0
+      pricingType: row.pricing_type || '免费', // 默认免费
+      estimatedTime: row.estimated_time || 10, // 默认10分钟
+      questionCount: row.question_count || 10, // 默认10题
+      testedCount: parseInt(row.total_tests) || 0,
+      likes: parseInt(row.total_likes) || 0
     }));
 
     console.log(`✅ 成功获取 ${projects.length} 个测试项目`);
@@ -215,6 +222,7 @@ async function handleQuestionsRequest(req, res, projectId) {
     const questions = questionsQuery.rows.map(row => ({
       id: row.id,
       text: row.question_text,
+      order_index: row.order_index,
       opts: row.options || []
     }));
     

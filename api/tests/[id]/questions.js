@@ -66,6 +66,7 @@ module.exports = async function handler(req, res) {
     const questions = questionsQuery.rows.map(row => ({
       id: row.id,
       text: row.question_text,
+      order_index: row.order_index,
       opts: row.options || []
     }));
     

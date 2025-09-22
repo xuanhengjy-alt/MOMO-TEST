@@ -12,7 +12,13 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  try {
+  // 设置超时处理
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => reject(new Error('Request timeout')), 8000); // 8秒超时
+  });
+
+  const handlerPromise = (async () => {
+    try {
     const { id } = req.query;
     
     if (!id) {
@@ -61,10 +67,17 @@ module.exports = async function handler(req, res) {
       description: project.description || project.description_en,
       descriptionEn: project.description_en,
       introEn: project.intro_en,
+      intro: project.intro_en || project.description_en, // 兼容字段
+      image: project.image_url, // 兼容字段
       imageUrl: project.image_url,
+      testedCount: parseInt(project.total_tests) || 0, // 兼容字段
       totalTests: parseInt(project.total_tests) || 0,
       isActive: project.is_active,
-      createdAt: project.created_at
+      createdAt: project.created_at,
+      // 添加默认值以确保前端显示正常
+      pricingType: '免费', // 默认免费
+      estimatedTime: 10, // 默认10分钟
+      questionCount: 10 // 默认10题
     };
 
     res.status(200).json({
@@ -72,12 +85,26 @@ module.exports = async function handler(req, res) {
       project: projectData
     });
 
+    } catch (error) {
+      console.error('❌ 获取项目失败:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+        message: error.message
+      });
+    }
+  })();
+
+  try {
+    await Promise.race([handlerPromise, timeoutPromise]);
   } catch (error) {
-    console.error('❌ 获取项目失败:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error',
-      message: error.message
-    });
+    console.error('❌ API超时或失败:', error);
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        error: 'Request timeout or server error',
+        message: error.message
+      });
+    }
   }
 };
