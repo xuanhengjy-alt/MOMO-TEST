@@ -108,35 +108,49 @@
     return;
   }
 
-  // 并行获取项目数据和其他必要数据，提升加载速度
+  // 优化API请求策略：优先使用缓存，并行请求非关键数据
   let project;
   try {
-    console.log('🔍 开始并行获取项目数据，项目ID:', id);
+    console.log('🔍 开始优化API请求策略，项目ID:', id);
     
-    // 并行请求：项目详情、题目数据、点赞状态
-    // 为主要请求设置较短超时，避免阻塞
-    const [projectResult, questionsResult, likeStatusResult] = await Promise.allSettled([
-      // 项目详情是最重要的，给它最多时间
-      window.ApiService.getTestProject(id),
-      // 题目数据可以稍后获取，设置较短超时
+    // 第一步：优先从已缓存的项目列表中获取基础数据
+    const cachedProjects = window.ApiService.getFromCache('test_projects');
+    if (cachedProjects && cachedProjects.length > 0) {
+      const cachedProject = cachedProjects.find(p => p.id === id);
+      if (cachedProject) {
+        console.log('✅ 从缓存获取项目基础数据');
+        project = cachedProject;
+      }
+    }
+    
+    // 第二步：并行请求详细数据和补充信息（不阻塞主要显示）
+    const [projectDetailResult, questionsResult, likeStatusResult] = await Promise.allSettled([
+      // 项目详细信息（如果缓存数据不完整）
+      project ? Promise.resolve(project) : window.ApiService.getTestProject(id),
+      // 题目数据（后台获取，不阻塞显示）
       Promise.race([
         window.ApiService.getTestQuestions(id),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Questions timeout')), 5000))
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Questions timeout')), 8000))
       ]).catch(() => null),
-      // 点赞状态最不重要，设置最短超时
+      // 点赞状态（后台获取，不阻塞显示）
       Promise.race([
         window.ApiService.checkLikeStatus(id),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Like status timeout')), 3000))
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Like status timeout')), 5000))
       ]).catch(() => ({ likes: 0, liked: false }))
     ]);
     
     // 处理项目数据
-    if (projectResult.status === 'fulfilled' && projectResult.value) {
-      project = projectResult.value;
-      console.log('✅ 项目数据获取成功');
+    if (projectDetailResult.status === 'fulfilled' && projectDetailResult.value) {
+      // 如果从缓存获取了基础数据，合并详细信息
+      if (project && projectDetailResult.value !== project) {
+        project = { ...project, ...projectDetailResult.value };
+        console.log('✅ 合并缓存和详细项目数据');
+      } else if (!project) {
+        project = projectDetailResult.value;
+        console.log('✅ 从API获取项目详细信息');
+      }
     } else {
-      console.warn('⚠️ 项目数据获取失败，将使用回退数据');
-      throw new Error('项目数据获取失败');
+      console.warn('⚠️ 项目详细信息获取失败，使用缓存数据');
     }
     
     // 预缓存题目数据（如果获取成功）
@@ -184,6 +198,9 @@
   console.log('Project ID:', project.id);
   console.log('Project introEn:', project.introEn);
   console.log('Project intro:', project.intro);
+  
+  // 立即开始渲染，不等待其他数据
+  console.log('🚀 开始立即渲染项目内容...');
   
   // 检查是否为隐藏的测试项目
   if (Utils.isProjectHidden(project.id)) {
@@ -1086,16 +1103,13 @@
     `;
   }
 
-  // 初始显示骨架屏，提升用户体验
+  // 立即显示骨架屏，提升用户体验
   console.log('Initializing test page...');
   showSkeletonScreen();
   
-  // 异步加载完整内容，延迟更短以提升响应速度
-  setTimeout(() => {
-    show('detail');
-    renderProgress();
-    // 注意：不在这里调用 renderQuestion()，因为主逻辑会处理题目加载
-  }, 50); // 减少延迟到50ms
+  // 立即开始渲染内容，不等待
+  show('detail');
+  renderProgress();
 })();
 
 

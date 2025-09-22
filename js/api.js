@@ -33,6 +33,14 @@ class ApiService {
     return null;
   }
 
+  // 静态方法：从全局ApiService实例获取缓存
+  static getFromCache(key) {
+    if (window.apiServiceInstance && window.apiServiceInstance.getFromCache) {
+      return window.apiServiceInstance.getFromCache(key);
+    }
+    return null;
+  }
+
   // 设置缓存
   setCache(key, data) {
     this.cache.set(key, {
@@ -513,3 +521,4 @@ class ApiService {
 
 // 创建全局API服务实例
 window.ApiService = new ApiService();
+window.apiServiceInstance = window.ApiService; // 为静态方法提供访问
