@@ -556,11 +556,20 @@
 
   // 测试进程（优先从API获取，回退到本地逻辑）
   let cachedQuestions = null;
+  let isLoadingQuestions = false; // 防止重复加载
   
   async function getQList() {
     if (cachedQuestions) return cachedQuestions;
+    if (isLoadingQuestions) {
+      // 如果正在加载，等待加载完成
+      while (isLoadingQuestions) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      return cachedQuestions;
+    }
     
     try {
+      isLoadingQuestions = true; // 标记开始加载
       // 尝试从API获取题目
       console.log('🔍 正在获取题目，项目ID:', project.id);
       const questions = await window.ApiService.getTestQuestions(project.id);
@@ -589,6 +598,7 @@
           }
         }
         cachedQuestions = convertedQuestions;
+        isLoadingQuestions = false; // 标记加载完成
         return convertedQuestions;
       } else {
         console.warn('⚠️ API返回的题目数据为空或无效');
@@ -612,6 +622,8 @@
       
       // 如果连项目配置都没有，抛出错误
       throw error;
+    } finally {
+      isLoadingQuestions = false; // 确保在任何情况下都标记加载完成
     }
   }
   let qIndex = 0;
@@ -955,8 +967,7 @@
   console.log('Initializing test page...');
   show('detail');
   renderProgress();
-  console.log('About to call renderQuestion...');
-  renderQuestion();
+  // 注意：不在这里调用 renderQuestion()，因为主逻辑会处理题目加载
 })();
 
 
