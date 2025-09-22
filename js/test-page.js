@@ -750,12 +750,23 @@
       
       if (questions && questions.length > 0) {
         // 转换API数据格式为前端期望的格式（保留跳转信息 next / resultCode）
+        const numFrom = (v) => {
+          if (v === null || v === undefined) return null;
+          if (typeof v === 'number' && Number.isFinite(v)) return v;
+          const s = String(v).trim();
+          if (!s) return null;
+          // 提取形如 '3' / 'Q3' / 'q3' / '#3' / 'to-3' 的数字
+          const m = s.match(/(-?\d+)/);
+          return m ? parseInt(m[1], 10) : null;
+        };
+
         const convertedQuestions = questions.map((q, qi) => ({
           id: q.id || q.order || q.order_index || qi + 1,
           text: q.text || q.question_text || '',
           opts: (q.opts || q.options || []).map((opt, oi) => {
             const sv = opt.score_value || opt.value || {};
-            const next = (opt.next != null ? opt.next : (sv && sv.next != null ? sv.next : null));
+            const rawNext = (opt.next != null ? opt.next : (sv && sv.next != null ? sv.next : null));
+            const next = numFrom(rawNext);
             const resultCode = (opt.resultCode != null ? opt.resultCode : (sv && sv.resultCode != null ? sv.resultCode : null));
             return {
               text: opt.text || opt.option_text || '',
@@ -769,7 +780,7 @@
 
         // 自动侦测是否为跳转型测试（任一选项存在 next 或 resultCode）
         try {
-          const hasJump = convertedQuestions.some(q => (q.opts || []).some(o => (o && (o.next != null && String(o.next).trim() !== '') || (o.resultCode != null && String(o.resultCode).trim() !== ''))));
+          const hasJump = convertedQuestions.some(q => (q.opts || []).some(o => (o && (o.next != null && Number.isFinite(o.next)) || (o.resultCode != null && String(o.resultCode).trim() !== ''))));
           if (hasJump) { project.isJumpType = true; }
         } catch(_) {}
         
@@ -1017,9 +1028,8 @@
             }
           }
           if (opt.next != null) {
-            // next 可能为字符串数字或真实数字
-            const nextNum = Number(opt.next);
-            const target = Number.isFinite(nextNum) ? (nextNum - 1) : (qIndex + 1);
+            // next 已在转换阶段解析为纯数字（题号），此处直接使用
+            const target = Number.isFinite(opt.next) ? (opt.next - 1) : (qIndex + 1);
             qIndex = Math.max(0, Math.min(target, qlist.length));
             renderProgress();
             renderQuestion();
