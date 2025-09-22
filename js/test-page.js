@@ -769,10 +769,8 @@
 
         // 自动侦测是否为跳转型测试（任一选项存在 next 或 resultCode）
         try {
-          const hasJump = convertedQuestions.some(q => (q.opts || []).some(o => (o && (o.next != null || o.resultCode))));
-          if (hasJump) {
-            project.isJumpType = true;
-          }
+          const hasJump = convertedQuestions.some(q => (q.opts || []).some(o => (o && (o.next != null && String(o.next).trim() !== '') || (o.resultCode != null && String(o.resultCode).trim() !== ''))));
+          if (hasJump) { project.isJumpType = true; }
         } catch(_) {}
         
         console.log('✅ 转换后的题目数据:', convertedQuestions.slice(0, 2)); // 调试日志
