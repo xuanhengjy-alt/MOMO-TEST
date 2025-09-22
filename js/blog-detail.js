@@ -119,7 +119,7 @@
       .slice(0, 60);
   }
 
-  // 异步加载推荐测试
+  // 异步加载推荐测试（优化版本）
   async function loadRecommendedTest(testId) {
     const sec = document.getElementById('test-card-sec');
     const imgEl = document.getElementById('test-card-img');
@@ -130,44 +130,117 @@
     const map = {
       mbti: '/assets/images/mbti-career-personality-test.jpg',
       disc40: '/assets/images/disc-personality-test.jpg',
-      observation: '/assets/images/observation-ability-test.jpg'
+      observation: '/assets/images/observation-ability-test.jpg',
+      eq_test_en: '/assets/images/international-standard-emotional-intelligence-test.jpg',
+      enneagram_en: '/assets/images/enneagram-personality-test.jpg',
+      four_colors_en: '/assets/images/four-colors-personality-analysis.jpg',
+      pdp_test_en: '/assets/images/professional-dyna-metric-program.jpg',
+      holland_test_en: '/assets/images/holland-occupational-interest-test.jpg',
+      kelsey_test_en: '/assets/images/kelsey-temperament-type-test.jpg'
     };
     
-    let project;
-    try { 
-      project = await window.ApiService.getTestProject(testId); 
-    } catch(_) {}
+    console.log(`🔍 开始加载推荐测试项目: ${testId}`);
     
-    if (!project) {
-      const list = await window.ApiService.getTestProjects();
-      project = (list || []).find(p => p.id === testId);
-    }
+    // 并行尝试多种数据源
+    const promises = [
+      // 1. 尝试从API获取单个项目
+      window.ApiService.getTestProject(testId).catch(e => {
+        console.log(`⚠️ API获取单个项目失败: ${e.message}`);
+        return null;
+      }),
+      
+      // 2. 尝试从API获取所有项目列表
+      window.ApiService.getTestProjects().catch(e => {
+        console.log(`⚠️ API获取项目列表失败: ${e.message}`);
+        return [];
+      })
+    ];
     
-    if (project) {
-      titleEl.textContent = project.nameEn || project.name || testId;
-      // 格式化测试人数（与首页一致）
-      try {
-        const n = project.testedCount;
-        const formatted = window.Utils ? window.Utils.formatNumber(n) : (n || '');
-        if (formatted) {
-          peopleEl.innerHTML = `<span class="font-semibold text-amber-600">${formatted}</span> people tested`;
-        } else {
-          peopleEl.textContent = '';
+    try {
+      const [projectResult, projectsList] = await Promise.allSettled(promises);
+      
+      let project = null;
+      
+      // 优先使用单个项目API的结果
+      if (projectResult.status === 'fulfilled' && projectResult.value && !projectResult.value.fallback) {
+        project = projectResult.value;
+        console.log(`✅ 从单个项目API获取到数据: ${testId}`);
+      }
+      // 如果单个项目API失败或返回fallback，从项目列表中查找
+      else if (projectsList.status === 'fulfilled' && Array.isArray(projectsList.value)) {
+        project = projectsList.value.find(p => p.id === testId);
+        if (project) {
+          console.log(`✅ 从项目列表中找到项目: ${testId}`);
         }
-      } catch(_) { peopleEl.textContent = ''; }
+      }
       
-      const img0 = map[project.id] || project.image || '/assets/images/logo.png';
-      imgEl.src = img0.startsWith('/') ? img0 : `/${img0}`;
-      btnEl.onclick = function(){ location.href = `/test-detail.html/${encodeURIComponent(project.id)}`; };
+      // 如果还是没有找到，使用fallback数据
+      if (!project) {
+        console.log(`⚠️ 未找到项目数据，使用fallback: ${testId}`);
+        project = {
+          id: testId,
+          name: testId === 'mbti' ? 'MBTI Personality Test' : 'Test Project',
+          nameEn: testId === 'mbti' ? 'MBTI Personality Test' : 'Test Project',
+          description: testId === 'mbti' ? 'Discover your personality type with the MBTI test' : 'Test project description',
+          descriptionEn: testId === 'mbti' ? 'Discover your personality type with the MBTI test' : 'Test project description',
+          testedCount: testId === 'mbti' ? 12500 : 0,
+          totalTests: testId === 'mbti' ? 12500 : 0,
+          image: map[testId] || '/assets/images/logo.png',
+          pricingType: '免费',
+          estimatedTime: testId === 'mbti' ? 15 : 10,
+          questionCount: testId === 'mbti' ? 93 : 10
+        };
+      }
       
-      // 免费标签显示
-      try {
-        const pricingEl = document.getElementById('test-card-pricing');
-        if (pricingEl && (project.pricingType === '免费' || project.pricingType === 'free')) {
-          pricingEl.classList.remove('hidden');
+      // 渲染项目信息
+      if (project) {
+        titleEl.textContent = project.nameEn || project.name || testId;
+        
+        // 格式化测试人数（与首页一致）
+        try {
+          const n = project.testedCount || project.totalTests || 0;
+          const formatted = window.Utils ? window.Utils.formatNumber(n) : (n ? n.toLocaleString() : '');
+          if (formatted && n > 0) {
+            peopleEl.innerHTML = `<span class="font-semibold text-amber-600">${formatted}</span> people tested`;
+          } else {
+            peopleEl.textContent = '';
+          }
+        } catch(_) { 
+          peopleEl.textContent = ''; 
         }
-      } catch(_) {}
+        
+        // 设置图片
+        const img0 = map[project.id] || project.image || '/assets/images/logo.png';
+        imgEl.src = img0.startsWith('/') ? img0 : `/${img0}`;
+        
+        // 设置点击事件
+        btnEl.onclick = function(){ 
+          location.href = `/test-detail.html/${encodeURIComponent(project.id)}`; 
+        };
+        
+        // 免费标签显示
+        try {
+          const pricingEl = document.getElementById('test-card-pricing');
+          if (pricingEl && (project.pricingType === '免费' || project.pricingType === 'free')) {
+            pricingEl.classList.remove('hidden');
+          }
+        } catch(_) {}
+        
+        // 显示卡片
+        sec.classList.remove('hidden');
+        console.log(`✅ 推荐测试项目加载完成: ${testId}`);
+      }
       
+    } catch (error) {
+      console.error(`❌ 加载推荐测试项目失败: ${testId}`, error);
+      
+      // 即使失败也显示fallback卡片
+      titleEl.textContent = testId === 'mbti' ? 'MBTI Personality Test' : 'Test Project';
+      peopleEl.textContent = '';
+      imgEl.src = map[testId] || '/assets/images/logo.png';
+      btnEl.onclick = function(){ 
+        location.href = `/test-detail.html/${encodeURIComponent(testId)}`; 
+      };
       sec.classList.remove('hidden');
     }
   }
@@ -260,10 +333,11 @@
     renderMarkdown(b.content);
     try { if (window.Analytics) window.Analytics.logDetailRead(slug); } catch(_) {}
 
-    // Recommended test card - 异步加载，不阻塞主要内容
+    // Recommended test card - 并行加载，不阻塞主要内容
     const testId = b.test_project_id;
     if (testId) {
-      // 异步加载推荐测试，不等待结果
+      // 立即开始加载推荐测试，与推荐文章并行
+      console.log(`🚀 开始并行加载推荐测试项目: ${testId}`);
       loadRecommendedTest(testId).catch(e => console.log('推荐测试加载失败:', e));
     }
 
