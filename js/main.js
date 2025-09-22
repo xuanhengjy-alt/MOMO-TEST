@@ -222,9 +222,17 @@ function renderProjectCard(p, tpl, container, index) {
     pricingLabel.classList.remove('hidden');
   }
 
-  // 设置点击事件
+  // 设置点击事件（使用 nameEn 生成的 slug，回退到 id）
   btn.addEventListener('click', () => {
-    location.href = `/test-detail.html/${encodeURIComponent(p.id)}`;
+    const toSlug = (s) => String(s || '')
+      .toLowerCase()
+      .trim()
+      .replace(/[\s/_.,:：—-]+/g, '-')
+      .replace(/[^a-z0-9-]/g, '')
+      .replace(/-+/g, '-');
+    const slug = toSlug(p.nameEn || p.name || p.id);
+    const path = slug ? slug : encodeURIComponent(p.id);
+    location.href = `/test-detail.html/${path}`;
   });
 
   // 添加卡片到容器，使用淡入动画
