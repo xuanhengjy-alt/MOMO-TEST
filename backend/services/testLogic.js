@@ -2085,81 +2085,66 @@ class TestLogicService {
     };
   }
 
-  // Social Test Anxiety Test 计算
+  // Social Test Anxiety Test 计算（改为DB驱动，每题每选项取score_value.score）
   async scoreSocialAnxietyTest(answers) {
     try {
-      // 评分映射 (根据create-social-anxiety-test.js中的规则)
-      const scoreMap = {
-        1:  [1,2,3,4,5],   // 题目1: 选项1-5对应分数1-5
-        2:  [1,2,3,4,5],   // 题目2: 选项1-5对应分数1-5
-        3:  [5,4,3,2,1],   // 题目3: 选项1-5对应分数5-1 (反向)
-        4:  [1,2,3,4,5],   // 题目4: 选项1-5对应分数1-5
-        5:  [1,2,3,4,5],   // 题目5: 选项1-5对应分数1-5
-        6:  [5,4,3,2,1],   // 题目6: 选项1-5对应分数5-1 (反向)
-        7:  [1,2,3,4,5],   // 题目7: 选项1-5对应分数1-5
-        8:  [1,2,3,4,5],   // 题目8: 选项1-5对应分数1-5
-        9:  [1,2,3,4,5],   // 题目9: 选项1-5对应分数1-5
-        10: [5,4,3,2,1],   // 题目10: 选项1-5对应分数5-1 (反向)
-        11: [1,2,3,4,5],   // 题目11: 选项1-5对应分数1-5
-        12: [1,2,3,4,5],   // 题目12: 选项1-5对应分数1-5
-        13: [1,2,3,4,5],   // 题目13: 选项1-5对应分数1-5
-        14: [1,2,3,4,5],   // 题目14: 选项1-5对应分数1-5
-        15: [5,4,3,2,1]    // 题目15: 选项1-5对应分数5-1 (反向)
-      };
-      
-      // 计算总分
-      let totalScore = 0;
-      answers.forEach((answerIndex, questionIndex) => {
-        const questionNum = questionIndex + 1;
-        if (scoreMap[questionNum] && answerIndex >= 0 && answerIndex < scoreMap[questionNum].length) {
-          totalScore += scoreMap[questionNum][answerIndex];
-        }
-      });
-      
-      // 根据分数确定结果类型
-      let resultType = '';
-      if (totalScore >= 61) {
-        resultType = 'SA_SEVERE';
-      } else if (totalScore >= 41) {
-        resultType = 'SA_MILD';
-      } else {
-        resultType = 'SA_NONE';
+      // 读取数据库里该项目所有题目的选项分值（按题号、选项序）
+      const qres = await query(`
+        SELECT q.question_number, o.option_number, o.score_value
+        FROM questions q
+        JOIN question_options o ON o.question_id = q.id
+        WHERE q.project_id = (SELECT id FROM test_projects WHERE project_id = 'social_anxiety_test')
+        ORDER BY q.question_number ASC, o.option_number ASC
+      `);
+
+      // 构建 question_number -> [scores per option_index(0-based)]
+      const scoreMap = new Map();
+      for (const row of qres.rows) {
+        const qn = Number(row.question_number);
+        if (!scoreMap.has(qn)) scoreMap.set(qn, []);
+        const arr = scoreMap.get(qn);
+        const optIdx = Number(row.option_number) - 1; // DB从1开始，前端answers从0开始
+        let s = 0;
+        try {
+          const v = row.score_value || {};
+          s = typeof v === 'object' && v !== null ? (v.score ?? 0) : 0;
+        } catch (_) { s = 0; }
+        arr[optIdx] = s;
       }
-      
-      // 从数据库获取结果类型信息
+
+      // 逐题累加得分
+      let totalScore = 0;
+      for (let i = 0; i < answers.length && i < 50; i++) { // 安全上限
+        const qn = i + 1;
+        const optIndex = Number(answers[i]);
+        const arr = scoreMap.get(qn) || [];
+        if (optIndex >= 0 && optIndex < arr.length) totalScore += (arr[optIndex] || 0);
+      }
+
+      // 区间映射与原来保持一致
+      let resultType = '';
+      if (totalScore >= 61) resultType = 'SA_SEVERE';
+      else if (totalScore >= 41) resultType = 'SA_MILD';
+      else resultType = 'SA_NONE';
+
+      // 读取对应类型文案
       const resultQuery = await query(`
-        SELECT 
-          rt.type_code, 
-          rt.type_name_en, 
-          rt.description_en, 
-          rt.analysis_en
+        SELECT description_en, analysis_en
         FROM result_types rt
         JOIN test_projects tp ON rt.project_id = tp.id
         WHERE tp.project_id = 'social_anxiety_test' AND rt.type_code = $1
+        LIMIT 1
       `, [resultType]);
-      
-      if (resultQuery.rows.length > 0) {
-        const result = resultQuery.rows[0];
-        return {
-          summary: result.description_en || result.type_name_en || resultType,
-          analysis: result.analysis_en || '',
-          summaryEn: result.description_en || result.type_name_en || resultType,
-          analysisEn: result.analysis_en || '',
-          totalScore: totalScore,
-          resultType: resultType,
-          description: result.description_en || ''
-        };
-      } else {
-        // 如果没有找到数据库结果，返回基本结果
-        return {
-          summary: `Score: ${totalScore}/75`,
-          analysis: `Your social anxiety level score is ${totalScore} out of 75.`,
-          summaryEn: `Score: ${totalScore}/75`,
-          analysisEn: `Your social anxiety level score is ${totalScore} out of 75.`,
-          totalScore: totalScore,
-          resultType: resultType
-        };
-      }
+
+      const row = resultQuery.rows[0] || {};
+      return {
+        summary: row.description_en || resultType,
+        analysis: row.analysis_en || '',
+        summaryEn: row.description_en || resultType,
+        analysisEn: row.analysis_en || '',
+        totalScore,
+        resultType
+      };
     } catch (error) {
       console.error('Error calculating social anxiety test result:', error);
       return {
