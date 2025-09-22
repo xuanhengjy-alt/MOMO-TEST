@@ -2104,33 +2104,44 @@ class TestLogicService {
         ORDER BY qn ASC, o.option_number ASC
       `);
 
-      // 构建 question_number -> [scores per option_index(0-based)]
-      const scoreMap = new Map();
-      for (const row of qres.rows) {
-        const qn = Number(row.qn);
-        if (!scoreMap.has(qn)) scoreMap.set(qn, []);
-        const arr = scoreMap.get(qn);
-        const optIdx = Number(row.option_number) - 1; // DB从1开始，前端answers从0开始
-        let s = 0;
-        try {
-          const v = row.score_value || {};
-          if (typeof v === 'object' && v !== null) {
-            const raw = (v.score ?? v.value ?? 0);
-            s = Number(raw) || 0;
-          } else {
-            s = 0;
-          }
-        } catch (_) { s = 0; }
-        arr[optIdx] = s;
-      }
-
-      // 逐题累加得分
       let totalScore = 0;
-      for (let i = 0; i < answers.length && i < 50; i++) { // 安全上限
-        const qn = i + 1;
-        const optIndex = Number(answers[i]);
-        const arr = scoreMap.get(qn) || [];
-        if (optIndex >= 0 && optIndex < arr.length) totalScore += (arr[optIndex] || 0);
+      if (qres.rows.length > 0) {
+        // 构建 question_number -> [scores per option_index(0-based)]
+        const scoreMap = new Map();
+        for (const row of qres.rows) {
+          const qn = Number(row.qn);
+          if (!scoreMap.has(qn)) scoreMap.set(qn, []);
+          const arr = scoreMap.get(qn);
+          const optIdx = Number(row.option_number) - 1; // DB从1开始，前端answers从0开始
+          let s = 0;
+          try {
+            const v = row.score_value || {};
+            if (typeof v === 'object' && v !== null) {
+              const raw = (v.score ?? v.value ?? 0);
+              s = Number(raw) || 0;
+            } else {
+              s = 0;
+            }
+          } catch (_) { s = 0; }
+          arr[optIdx] = s;
+        }
+        // 逐题累加得分
+        for (let i = 0; i < answers.length && i < 50; i++) {
+          const qn = i + 1;
+          const optIndex = Number(answers[i]);
+          const arr = scoreMap.get(qn) || [];
+          if (optIndex >= 0 && optIndex < arr.length) totalScore += (arr[optIndex] || 0);
+        }
+      } else {
+        // Fallback：若DB无配置，按标准SA量表位置反向(3,6,10,15)进行计分
+        const reversed = new Set([3,6,10,15]);
+        for (let i = 0; i < answers.length && i < 15; i++) {
+          const qi = i + 1;
+          const optIndex = Number(answers[i]); // 0..4 对应 A..E
+          if (optIndex < 0 || optIndex > 4 || Number.isNaN(optIndex)) continue;
+          const score = reversed.has(qi) ? (5 - optIndex) : (optIndex + 1);
+          totalScore += score;
+        }
       }
 
       // 区间映射与原来保持一致
