@@ -253,6 +253,8 @@ async function calculateTestResult(testType, answers, projectInternalId, project
 
     // 回退到本地实现的少数类型
     switch (testType) {
+      case 'social_anxiety_test':
+        return await calculateSocialAnxietyDirect(answers, projectInternalId);
       case 'eq_test':
         return await calculateEqTestResult(answers, projectInternalId);
       case 'mbti':
@@ -467,6 +469,84 @@ async function calculateDefaultResult(answers, projectInternalId) {
       summary: 'Test Completed',
       analysis: 'You have completed the test successfully.',
       type: 'default'
+    };
+  }
+}
+
+// 直连DB的社交焦虑计分（完全内联，避免服务层异常时仍可工作）
+async function calculateSocialAnxietyDirect(answers, projectInternalId) {
+  try {
+    const qres = await query(`
+      SELECT 
+        COALESCE(
+          q.question_number,
+          q.order_index,
+          ROW_NUMBER() OVER (ORDER BY COALESCE(q.order_index, q.id))
+        ) AS qn,
+        o.option_number,
+        o.score_value
+      FROM questions q
+      JOIN question_options o ON o.question_id = q.id
+      WHERE q.project_id = $1
+      ORDER BY qn ASC, o.option_number ASC
+    `, [projectInternalId]);
+
+    let totalScore = 0;
+    if (qres.rows.length > 0) {
+      const scoreMap = new Map();
+      for (const row of qres.rows) {
+        const qn = Number(row.qn);
+        if (!scoreMap.has(qn)) scoreMap.set(qn, []);
+        const arr = scoreMap.get(qn);
+        const optIdx = Number(row.option_number) - 1;
+        let s = 0;
+        try {
+          const v = row.score_value || {};
+          if (typeof v === 'object' && v !== null) {
+            const raw = (v.score ?? v.value ?? 0);
+            const n = Number(raw) || 0;
+            s = n > 5 ? (n - 4) : n; // 归一化到1..5
+          }
+        } catch (_) { s = 0; }
+        arr[optIdx] = s;
+      }
+      for (let i = 0; i < answers.length; i++) {
+        const qn = i + 1;
+        const optIndex = Number(answers[i]);
+        const arr = scoreMap.get(qn) || [];
+        if (optIndex >= 0 && optIndex < arr.length) totalScore += (arr[optIndex] || 0);
+      }
+    } else {
+      // DB无配置兜底：3/6/10/15反向
+      const reversed = new Set([3,6,10,15]);
+      for (let i = 0; i < answers.length && i < 15; i++) {
+        const qi = i + 1;
+        const optIndex = Number(answers[i]);
+        if (optIndex < 0 || optIndex > 4 || Number.isNaN(optIndex)) continue;
+        const score = reversed.has(qi) ? (5 - optIndex) : (optIndex + 1);
+        totalScore += score;
+      }
+    }
+
+    const resultType = totalScore >= 61 ? 'SA_SEVERE' : (totalScore >= 41 ? 'SA_MILD' : 'SA_NONE');
+    const r = await query(`
+      SELECT description_en, analysis_en
+      FROM result_types WHERE project_id = $1 AND type_code = $2
+      LIMIT 1
+    `, [projectInternalId, resultType]);
+    const row = r.rows[0] || {};
+    return {
+      summary: row.description_en || resultType,
+      analysis: row.analysis_en || '',
+      resultType,
+      totalScore
+    };
+  } catch (e) {
+    console.error('❌ SA direct calc error:', e.message);
+    return {
+      summary: 'Calculation Error',
+      analysis: 'Unable to calculate test result. Please try again.',
+      type: 'error'
     };
   }
 }
