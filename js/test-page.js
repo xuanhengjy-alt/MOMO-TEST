@@ -1,4 +1,9 @@
 (async function() {
+  // 全局变量声明
+  let cachedQuestions = null;
+  let isLoadingQuestions = false;
+  let isLiked = false;
+  
   // 支持 pretty URL: /test-detail.html/<id-or-slug>
   function extractIdFromUrl(){
     try {
@@ -108,78 +113,28 @@
     return;
   }
 
-  // 优化API请求策略：优先使用缓存，并行请求非关键数据
+  // 简化API请求策略：优先使用缓存，快速显示
   let project;
-  try {
-    console.log('🔍 开始优化API请求策略，项目ID:', id);
-    
-    // 第一步：优先从已缓存的项目列表中获取基础数据
-    const cachedProjects = window.ApiService.getFromCache('test_projects');
-    if (cachedProjects && cachedProjects.length > 0) {
-      const cachedProject = cachedProjects.find(p => p.id === id);
-      if (cachedProject) {
-        console.log('✅ 从缓存获取项目基础数据');
-        project = cachedProject;
-      }
+  console.log('🔍 开始简化API请求策略，项目ID:', id);
+  
+  // 第一步：优先从缓存获取项目数据
+  const cachedProjects = window.ApiService.getFromCache('test_projects');
+  if (cachedProjects && cachedProjects.length > 0) {
+    const cachedProject = cachedProjects.find(p => p.id === id);
+    if (cachedProject) {
+      console.log('✅ 从缓存获取项目数据');
+      project = cachedProject;
     }
-    
-    // 第二步：并行请求详细数据和补充信息（不阻塞主要显示）
-    const [projectDetailResult, questionsResult, likeStatusResult] = await Promise.allSettled([
-      // 项目详细信息（如果缓存数据不完整）
-      project ? Promise.resolve(project) : window.ApiService.getTestProject(id),
-      // 题目数据（后台获取，不阻塞显示）
-      Promise.race([
-        window.ApiService.getTestQuestions(id),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Questions timeout')), 8000))
-      ]).catch(() => null),
-      // 点赞状态（后台获取，不阻塞显示）
-      Promise.race([
-        window.ApiService.checkLikeStatus(id),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Like status timeout')), 5000))
-      ]).catch(() => ({ likes: 0, liked: false }))
-    ]);
-    
-    // 处理项目数据
-    if (projectDetailResult.status === 'fulfilled' && projectDetailResult.value) {
-      // 如果从缓存获取了基础数据，合并详细信息
-      if (project && projectDetailResult.value !== project) {
-        project = { ...project, ...projectDetailResult.value };
-        console.log('✅ 合并缓存和详细项目数据');
-      } else if (!project) {
-        project = projectDetailResult.value;
-        console.log('✅ 从API获取项目详细信息');
-      }
-    } else {
-      console.warn('⚠️ 项目详细信息获取失败，使用缓存数据');
-    }
-    
-    // 预缓存题目数据（如果获取成功）
-    if (questionsResult.status === 'fulfilled' && questionsResult.value) {
-      cachedQuestions = questionsResult.value;
-      console.log('✅ 题目数据预缓存成功，数量:', questionsResult.value.length);
-    } else {
-      console.log('⚠️ 题目数据获取失败，将在需要时单独获取');
-    }
-    
-    // 预设置点赞状态（如果获取成功）
-    if (likeStatusResult.status === 'fulfilled' && likeStatusResult.value) {
-      isLiked = likeStatusResult.value.liked || false;
-      console.log('✅ 点赞状态预设置成功');
-    } else {
-      console.log('⚠️ 点赞状态获取失败，将在需要时单独获取');
-    }
-    
-  } catch (e) {
-    console.warn('⚠️ 并行请求失败，回退到单个请求:', e);
-    // 回退到单个请求
+  }
+  
+  // 第二步：如果缓存没有数据，才发起API请求
+  if (!project) {
     try {
+      console.log('⚠️ 缓存无数据，发起API请求');
       project = await window.ApiService.getTestProject(id);
-      if (!project) {
-        throw new Error('API返回空数据');
-      }
-      console.log('✅ 单个请求获取项目数据成功');
-    } catch (fallbackError) {
-      console.warn('⚠️ API失败，使用回退数据:', fallbackError);
+      console.log('✅ API请求获取项目数据成功');
+    } catch (error) {
+      console.warn('⚠️ API请求失败，使用回退数据:', error);
       const fallbackProjects = window.ApiService.getFallbackProjects();
       project = fallbackProjects.find(p => p.id === id);
       if (project) {
@@ -187,6 +142,32 @@
       }
     }
   }
+  
+  // 第三步：后台获取题目数据（不阻塞显示）
+  setTimeout(async () => {
+    try {
+      const questions = await window.ApiService.getTestQuestions(id);
+      if (questions) {
+        cachedQuestions = questions;
+        console.log('✅ 后台获取题目数据成功，数量:', questions.length);
+      }
+    } catch (error) {
+      console.log('⚠️ 后台获取题目数据失败:', error);
+    }
+  }, 50); // 减少延迟
+  
+  // 第四步：后台获取点赞状态（不阻塞显示）
+  setTimeout(async () => {
+    try {
+      const likeStatus = await window.ApiService.checkLikeStatus(id);
+      if (likeStatus) {
+        isLiked = likeStatus.liked || false;
+        console.log('✅ 后台获取点赞状态成功');
+      }
+    } catch (error) {
+      console.log('⚠️ 后台获取点赞状态失败:', error);
+    }
+  }, 100); // 减少延迟
   
   if (!project) { 
     console.error('❌ 无法获取项目数据，重定向到主页');
@@ -554,8 +535,7 @@
   testedCount.textContent = formatNumber(tested);
   likeCount.textContent = formatNumber(likes);
 
-  // 初始化点赞状态
-  let isLiked = false;
+  // 点赞状态已在全局声明
   
   // 检查用户点赞状态
   async function checkLikeStatus() {
@@ -638,8 +618,6 @@
   }
 
   // 测试进程（优先从API获取，回退到本地逻辑）
-  let cachedQuestions = null;
-  let isLoadingQuestions = false; // 防止重复加载
   
   async function getQList() {
     if (cachedQuestions) return cachedQuestions;
