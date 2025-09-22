@@ -167,7 +167,7 @@ async function handleSubmitResult(req, res) {
     const testType = projectQuery.rows[0].test_type;
     
     // 计算测试结果
-    const result = await calculateTestResult(testType, answers, projectInternalId);
+    const result = await calculateTestResult(testType, answers, projectInternalId, projectId);
     
     // 保存测试结果到数据库
     const resultId = await saveTestResult({
@@ -224,13 +224,18 @@ async function handleSubmitResult(req, res) {
 }
 
 // 计算测试结果（统一委托 TestLogicService；个别特例仍可留在本文件）
-async function calculateTestResult(testType, answers, projectInternalId) {
+async function calculateTestResult(testType, answers, projectInternalId, projectIdKey) {
   try {
     // 优先尝试通过服务层统一计算（覆盖大多数测试类型）
     try {
       const TestLogic = require('../backend/services/testLogic');
       if (TestLogic && typeof TestLogic.calculateResult === 'function') {
-        const res = await TestLogic.calculateResult(testType, answers);
+        const keyForService = (
+          (testType && String(testType).toLowerCase()) ||
+          (projectIdKey && String(projectIdKey).toLowerCase()) ||
+          ''
+        );
+        const res = await TestLogic.calculateResult(keyForService, answers);
         if (res && res.summary) return res;
       }
     } catch (_) {}
