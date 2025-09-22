@@ -87,7 +87,7 @@ class Footer {
     // 三个快捷链接的 slug（优先数据源，其次显式备选）
     const mbtiSlug = resolveSlugById('mbti') || 'mbtionline-career-personality-test';
     const discSlug = resolveSlugById('disc40') || 'disc-personality-test';
-    const enneagramSlug = resolveSlugById('enneagram_en') || 'enneagram-personality-test';
+    const enneagramSlug = resolveSlugById('enneagram_en') || 'enneagram-personality-test-free';
     
     return `
       <footer class="footer">
