@@ -275,9 +275,16 @@
   // 规范化 Markdown 粗体语法，修复类似 "**Label: **" 中粗体内尾随空格导致不生效的问题
   function normalizeStrong(md) {
     if (!md) return '';
-    return String(md).replace(/\*\*\s*([^*][^*]*?)\s*\*\*/g, function(_, inner){
+    let s = String(md);
+    // 1) 规范化 ** 加粗：去除内部多余空格
+    s = s.replace(/\*\*\s*([^*][^*]*?)\s*\*\*/g, function(_, inner){
       return '**' + inner.replace(/^\s+|\s+$/g, '') + '**';
     });
+    // 2) 兼容数据中写成 “Strengths:* / Weaknesses:*” 的写法，转换为标准加粗
+    s = s.replace(/\b(Strengths|Weaknesses)\s*:\s*\*/gi, function(_, label){
+      return `**${label}:**`;
+    });
+    return s;
   }
 
   // 将原始 MBTI 文本粗加工为 Markdown：按常见关键词插入多级标题与列表符号
@@ -390,6 +397,8 @@
   let calcNoticeEl = null;
   let calcProgressBar = null;
   let progressInterval = null;
+  let progressRafId = null;
+  let progressStartTs = 0;
   
   function showCalculatingNotice(show) {
     try {
@@ -471,21 +480,31 @@
   // 真实进度条动画
   function startProgressAnimation() {
     if (!calcProgressBar) return;
-    
-    let progress = 0;
-    const targetProgress = 90; // 最多到90%，等待API完成时到100%
-    
-    progressInterval = setInterval(() => {
-      progress += Math.random() * 15 + 5; // 每次增加5-20%
-      
-      if (progress >= targetProgress) {
-        progress = targetProgress;
-        clearInterval(progressInterval);
-        progressInterval = null;
+    // 采用近似匀速的缓动曲线，避免前快后慢的突兀感
+    // 目标在 ~5.5s 内达到 88%~90%
+    const target = 90;
+    const duration = 5500; // ms
+    const easeInOut = (t) => (1 - Math.cos(Math.PI * t)) / 2; // 0..1 → 0..1
+
+    // 清理旧动画
+    if (progressInterval) { clearInterval(progressInterval); progressInterval = null; }
+    if (progressRafId) { cancelAnimationFrame(progressRafId); progressRafId = null; }
+    progressStartTs = performance.now();
+
+    const step = (nowTs) => {
+      const elapsed = nowTs - progressStartTs;
+      const t = Math.min(1, elapsed / duration);
+      const base = target * easeInOut(t);
+      const jitter = (Math.random() - 0.5) * 0.8; // 轻微抖动，显得更真实
+      const value = Math.max(0, Math.min(target, base + jitter));
+      calcProgressBar.style.width = value + '%';
+      if (t < 1) {
+        progressRafId = requestAnimationFrame(step);
+      } else {
+        progressRafId = null;
       }
-      
-      calcProgressBar.style.width = progress + '%';
-    }, 200);
+    };
+    progressRafId = requestAnimationFrame(step);
   }
   
   // 完成进度条（API完成时调用）
@@ -493,6 +512,10 @@
     if (progressInterval) {
       clearInterval(progressInterval);
       progressInterval = null;
+    }
+    if (progressRafId) {
+      cancelAnimationFrame(progressRafId);
+      progressRafId = null;
     }
     
     if (calcProgressBar) {
