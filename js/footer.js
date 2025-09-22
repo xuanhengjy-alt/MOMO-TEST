@@ -80,9 +80,9 @@ class Footer {
             <ul>
               <li><a href="${linkPrefix}index.html">${this.getText('testHome')}</a></li>
               <li><a href="${linkPrefix}blog.html">${this.getText('blog')}</a></li>
-              <li><a href="${linkPrefix}test-detail.html?id=mbti">${this.getText('mbtiTest')}</a></li>
-              <li><a href="${linkPrefix}test-detail.html?id=disc40">${this.getText('discTest')}</a></li>
-              <li><a href="${linkPrefix}test-detail.html?id=enneagram_en">${this.getText('enneagramTest')}</a></li>
+              <li><a href="${linkPrefix}test-detail.html/mbti">${this.getText('mbtiTest')}</a></li>
+              <li><a href="${linkPrefix}test-detail.html/disc40">${this.getText('discTest')}</a></li>
+              <li><a href="${linkPrefix}test-detail.html/enneagram-en">${this.getText('enneagramTest')}</a></li>
             </ul>
           </div>
         </div>

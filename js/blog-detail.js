@@ -196,9 +196,17 @@
         const img0 = map[project.id] || project.image || '/assets/images/logo.png';
         imgEl.src = img0.startsWith('/') ? img0 : `/${img0}`;
         
-        // 设置点击事件
+        // 设置点击事件（使用 nameEn 生成的 slug，回退到 id）
         btnEl.onclick = function(){ 
-          location.href = `/test-detail.html/${encodeURIComponent(project.id)}`; 
+          const toSlug = (s) => String(s || '')
+            .toLowerCase()
+            .trim()
+            .replace(/[\s/_.,:：—-]+/g, '-')
+            .replace(/[^a-z0-9-]/g, '')
+            .replace(/-+/g, '-');
+          const slug = toSlug(project.nameEn || project.name || project.id);
+          const path = slug ? slug : encodeURIComponent(project.id);
+          location.href = `/test-detail.html/${path}`; 
         };
         
         // 免费标签显示
