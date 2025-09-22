@@ -866,7 +866,14 @@
   })();
 
   async function renderProgress() {
-    // 跳转型测试不显示进度条（支持运行时动态识别）
+    // 先确保题目已获取，用于动态判定是否为跳转型
+    const totalList = await getQList();
+    const hasJump = (() => {
+      try { return totalList.some(q => (q.opts || []).some(o => (o && (o.next != null || o.resultCode)))); } catch(_) { return false; }
+    })();
+    if (hasJump) { project.isJumpType = true; }
+
+    // 跳转型测试不显示进度条
     if (project && project.isJumpType) {
       try {
         progressBar.parentElement.classList.add('hidden');
@@ -879,7 +886,7 @@
         progressText.classList.remove('hidden');
       } catch(_) {}
     }
-    const total = (await getQList()).length;
+    const total = totalList.length;
     const done = Math.min(qIndex, total);
     const pct = total ? Math.round(done / total * 100) : 0;
     progressBar.style.width = pct + '%';
@@ -1012,7 +1019,10 @@
             }
           }
           if (opt.next != null) {
-            qIndex = Math.max(0, Math.min((opt.next - 1), qlist.length));
+            // next 可能为字符串数字或真实数字
+            const nextNum = Number(opt.next);
+            const target = Number.isFinite(nextNum) ? (nextNum - 1) : (qIndex + 1);
+            qIndex = Math.max(0, Math.min(target, qlist.length));
             renderProgress();
             renderQuestion();
             return;
