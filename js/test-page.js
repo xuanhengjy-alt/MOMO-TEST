@@ -808,11 +808,17 @@
           const hasJump = convertedQuestions.some(q => (q.opts || []).some(o => (o && (o.next != null && Number.isFinite(o.next)) || (o.resultCode != null && String(o.resultCode).trim() !== ''))));
           // 暴露给 Console 以便排查
           try { window.lastConvertedQuestions = convertedQuestions; } catch(_) {}
-          if (hasJump) { project.isJumpType = true; }
+          console.log('🔍 跳转型测试检测结果:', hasJump);
+          if (hasJump) { 
+            project.isJumpType = true; 
+            console.log('✅ 设置为跳转型测试:', project.id);
+          }
         } catch(_) {}
         
-        console.log('✅ 转换后的题目数据:', convertedQuestions.slice(0, 2)); // 调试日志
+        console.log('✅ 转换后的题目数据:', convertedQuestions); // 调试日志
         console.log('📊 题目总数:', convertedQuestions.length);
+        console.log('🔍 项目ID:', project.id);
+        console.log('🔍 是否为跳转型:', project.isJumpType);
         
         // 一致性校验：MBTI 必须 93题且每题2选项(A/B)
         if (project && project.id === 'mbti') {
@@ -1022,6 +1028,7 @@
       btn.addEventListener('click', async () => {
         // 跳转型支持：若存在 next/resultCode 则走分支
         if (opt && (opt.next != null || opt.resultCode)) {
+          console.log('🚀 检测到跳转逻辑:', { next: opt.next, resultCode: opt.resultCode, text: opt.text });
           // 保存选择（保留为索引，兼容现有评分）
           var ans = (opt && typeof opt.n === 'number') ? (opt.n - 1) : idx;
           answers.push(ans);
@@ -1068,6 +1075,7 @@
             // next 兜底解析，防止运行时被覆盖或为字符串
             const nextParsed = parseIntLoose(opt.next);
             const target = Number.isFinite(nextParsed) ? (nextParsed - 1) : (qIndex + 1);
+            console.log('🔄 执行跳转:', { from: qIndex + 1, to: target + 1, nextParsed, target });
             qIndex = Math.max(0, Math.min(target, qlist.length));
             renderProgress();
             renderQuestion();
