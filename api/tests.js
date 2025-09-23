@@ -242,7 +242,7 @@ async function handleQuestionsRequest(req, res, projectId) {
       SELECT 
         q.id, 
         q.question_text_en as question_text,
-        q.question_number as order_index,
+        q.order_index,
         COALESCE(
           json_agg(
             json_build_object(
@@ -256,8 +256,8 @@ async function handleQuestionsRequest(req, res, projectId) {
       FROM questions q
       LEFT JOIN question_options qo ON q.id = qo.question_id
       WHERE q.project_id = $1
-      GROUP BY q.id, q.question_text_en, q.question_number
-      ORDER BY q.question_number
+      GROUP BY q.id, q.question_text_en, q.order_index
+      ORDER BY q.order_index
     `, [projectInternalId]);
     
     const questions = questionsQuery.rows.map(row => ({

@@ -101,7 +101,7 @@ router.get('/:projectId/questions', async (req, res) => {
     // 从数据库获取题目
     const questionsResult = await query(`
       SELECT 
-        q.question_number,
+        q.order_index as question_number,
         q.question_text_en,
         q.question_type,
         json_agg(
@@ -115,8 +115,8 @@ router.get('/:projectId/questions', async (req, res) => {
       FROM questions q
       LEFT JOIN question_options o ON q.id = o.question_id
       WHERE q.project_id = $1
-      GROUP BY q.id, q.question_number, q.question_text_en, q.question_type
-      ORDER BY q.question_number
+      GROUP BY q.id, q.order_index, q.question_text_en, q.question_type
+      ORDER BY q.order_index
     `, [project.id]);
 
     const questions = questionsResult.rows.map(row => ({
