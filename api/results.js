@@ -332,7 +332,7 @@ async function calculateTestResult(testType, answers, projectInternalId, project
     const dbDrivenTests = ['social_anxiety_test', 'anxiety_depression_test'];
     
     // 定义已有专门计算逻辑的测试类型
-    const specializedTests = ['eq_test', 'mbti', 'enneagram', 'violence_index', 'personality_charm_1min', 'loneliness_1min'];
+    const specializedTests = ['eq_test', 'mbti', 'enneagram', 'violence_index', 'personality_charm_1min', 'loneliness_1min', 'mental_age_test'];
     
     const keyForService = (testType || '').toLowerCase() || (projectIdKey || '').toLowerCase();
     

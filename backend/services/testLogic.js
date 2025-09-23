@@ -966,7 +966,7 @@ class TestLogicService {
     // 从数据库获取完整的分析
     try {
       const result = await query(`
-        SELECT rt.analysis_en, rt.type_name_en
+        SELECT rt.description_en, rt.analysis_en, rt.type_name_en
         FROM result_types rt
         JOIN test_projects tp ON rt.project_id = tp.id
         WHERE tp.project_id = 'mental_age_test_en' AND rt.type_code = $1
@@ -976,7 +976,7 @@ class TestLogicService {
         const mentalAgeData = result.rows[0];
         return {
           summary: mentalAgeData.description_en || summary,
-          summaryEn: mentalAgeData.description_en || summary,
+          description_en: mentalAgeData.description_en || summary,
           analysis: mentalAgeData.analysis_en || '',
           analysisEn: mentalAgeData.analysis_en || '',
           typeName: mentalAgeData.type_name_en,
@@ -992,7 +992,7 @@ class TestLogicService {
     // 如果数据库查询失败，返回默认结果
     return {
       summary: summary,
-      summaryEn: summary,
+      description_en: summary,
       analysis: `Your mental age: **${summary}** (Score: ${total}/100).`,
       analysisEn: `Your mental age: **${summary}** (Score: ${total}/100).`,
       typeName: summary,
