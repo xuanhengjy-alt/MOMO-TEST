@@ -263,8 +263,9 @@
           inBulletList = false;
         }
         
+        // 处理双星号格式：加粗显示，不添加圆点或缩进
+        let processedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>');
         // 高亮MBTI类型代码
-        let processedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-rose-600">$1</strong>');
         processedLine = processedLine.replace(new RegExp(`\\b${mbtiType}\\b`, 'g'), `<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-md font-semibold">${mbtiType}</span>`);
         
         html += `<p class="text-gray-700 leading-relaxed mb-4">${processedLine}</p>`;
@@ -290,11 +291,30 @@
     s = s.replace(/\*\*\s*([^*][^*]*?)\s*\*\*/g, function(_, inner){
       return '**' + inner.replace(/^\s+|\s+$/g, '') + '**';
     });
-    // 2) 兼容数据中写成 “Strengths:* / Weaknesses:*” 的写法，转换为标准加粗
+    // 2) 兼容数据中写成 "Strengths:* / Weaknesses:*" 的写法，转换为标准加粗
     s = s.replace(/\b(Strengths|Weaknesses)\s*:\s*\*/gi, function(_, label){
       return `**${label}:**`;
     });
     return s;
+  }
+
+  // 处理Analysis内容中的双星号格式：确保加粗显示，不添加圆点或缩进
+  function processAnalysisMarkdown(content) {
+    if (!content) return '';
+    
+    // 处理双星号格式：**text** -> <strong>text</strong>
+    let processed = content.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>');
+    
+    // 确保双星号内容不会被误识别为列表项
+    processed = processed.replace(/<strong class="font-semibold">([^<]+)<\/strong>/g, function(match, text) {
+      // 如果双星号内容后面有冒号，确保它不会被当作列表项处理
+      if (text.includes(':')) {
+        return `<strong class="font-semibold">${text}</strong>`;
+      }
+      return match;
+    });
+    
+    return processed;
   }
 
   // 将原始 MBTI 文本粗加工为 Markdown：按常见关键词插入多级标题与列表符号
@@ -1375,10 +1395,13 @@
             const mdHtml = window.marked.parse(enhanced);
             resultAnalysis.innerHTML = window.DOMPurify.sanitize(mdHtml);
           } else {
-            resultAnalysis.innerHTML = formatMbtiAnalysis(rawAnalysis, finalResult.description_en || finalResult.summary);
+            // 使用新的处理函数确保双星号格式正确显示
+            const processedAnalysis = processAnalysisMarkdown(rawAnalysis || '');
+            resultAnalysis.innerHTML = formatMbtiAnalysis(processedAnalysis, finalResult.description_en || finalResult.summary);
           }
         } catch(_) {
-          resultAnalysis.innerHTML = formatMbtiAnalysis(rawAnalysis, finalResult.description_en || finalResult.summary);
+          const processedAnalysis = processAnalysisMarkdown(rawAnalysis || '');
+          resultAnalysis.innerHTML = formatMbtiAnalysis(processedAnalysis, finalResult.description_en || finalResult.summary);
         }
       }
       
