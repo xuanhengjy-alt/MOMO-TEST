@@ -231,7 +231,7 @@ async function handleSubmitResult(req, res, opts = {}) {
             await query(`
               SELECT 
                 COALESCE(
-                  q.order_index,
+                  q.question_number,
                   ROW_NUMBER() OVER (ORDER BY q.id)
                 ) AS qn,
                 o.option_number,
@@ -596,7 +596,7 @@ async function calculateDbDrivenResult(answers, projectInternalId, testType) {
     const qres = await query(`
       SELECT 
         COALESCE(
-          q.order_index,
+          q.question_number,
           ROW_NUMBER() OVER (ORDER BY q.id)
         ) AS qn,
         o.option_number,
@@ -728,7 +728,7 @@ async function calculateSocialAnxietyDirect(answers, projectInternalId) {
     const qres = await query(`
       SELECT 
         COALESCE(
-          q.order_index,
+          q.question_number,
           ROW_NUMBER() OVER (ORDER BY q.id)
         ) AS qn,
         o.option_number,

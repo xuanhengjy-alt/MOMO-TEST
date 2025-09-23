@@ -1187,11 +1187,11 @@ class TestLogicService {
     try {
       // 读取题库中每题各选项携带的四维度得分（存于 score_value JSON）
       const qres = await query(`
-        SELECT q.order_index, o.option_number, o.score_value
+        SELECT q.question_number, o.option_number, o.score_value
         FROM questions q
         JOIN question_options o ON o.question_id = q.id
         WHERE q.project_id = (SELECT id FROM test_projects WHERE project_id = 'temperament_type_test')
-        ORDER BY q.order_index ASC, o.option_number ASC
+        ORDER BY q.question_number ASC, o.option_number ASC
       `);
 
       // scoreMap: question_number -> [{CHOLERIC: x, SANGUINE: y, PHLEGMATIC: z, MELANCHOLIC: w} per option]
@@ -1567,11 +1567,11 @@ class TestLogicService {
     try {
       // 读取所有题目的选项评分
       const qres = await query(`
-        SELECT q.order_index, o.option_number, o.score_value
+        SELECT q.question_number, o.option_number, o.score_value
         FROM questions q
         JOIN question_options o ON o.question_id = q.id
         WHERE q.project_id = (SELECT id FROM test_projects WHERE project_id = 'creativity_test')
-        ORDER BY q.order_index ASC, o.option_number ASC
+        ORDER BY q.question_number ASC, o.option_number ASC
       `);
 
       const scoreMap = new Map();
@@ -1665,11 +1665,11 @@ class TestLogicService {
     try {
       // 读取每题各选项附带的 resultCode（存放在 score_value JSON 中）
       const qres = await query(`
-        SELECT q.order_index as question_number, o.option_number, o.score_value
+        SELECT q.question_number, o.option_number, o.score_value
         FROM questions q
         JOIN question_options o ON o.question_id = q.id
         WHERE q.project_id = (SELECT id FROM test_projects WHERE project_id = 'violence_index')
-        ORDER BY q.order_index ASC, o.option_number ASC
+        ORDER BY q.question_number ASC, o.option_number ASC
       `);
 
       // 构建跳转表：题号 -> 选项数组（包含 resultCode 与 next）
@@ -1795,11 +1795,11 @@ class TestLogicService {
     try {
       // 读取每题各选项附带的 resultCode/next（存放在 score_value JSON 中）
       const qres = await query(`
-        SELECT q.order_index as question_number, o.option_number, o.score_value
+        SELECT q.question_number, o.option_number, o.score_value
         FROM questions q
         JOIN question_options o ON o.question_id = q.id
         WHERE q.project_id = (SELECT id FROM test_projects WHERE project_id = 'personality_charm_1min')
-        ORDER BY q.order_index ASC, o.option_number ASC
+        ORDER BY q.question_number ASC, o.option_number ASC
       `);
 
       const jumpMap = new Map();
@@ -2092,7 +2092,7 @@ class TestLogicService {
       const qres = await query(`
         SELECT 
           COALESCE(
-            q.order_index,
+            q.question_number,
             ROW_NUMBER() OVER (ORDER BY q.id)
           ) AS qn,
           o.option_number,
@@ -2303,11 +2303,11 @@ class TestLogicService {
     try {
       // 读取题目与选项的实际评分（score_value.score），确保正反向题按DB计算
       const qres = await query(`
-        SELECT q.order_index, o.option_number, o.score_value
+        SELECT q.question_number, o.option_number, o.score_value
         FROM questions q
         JOIN question_options o ON o.question_id = q.id
         WHERE q.project_id = (SELECT id FROM test_projects WHERE project_id = 'anxiety_depression_test')
-        ORDER BY q.order_index ASC, o.option_number ASC
+        ORDER BY q.question_number ASC, o.option_number ASC
       `);
 
       // 构建 (question_number -> [scores per option_number]) 的映射
