@@ -819,6 +819,7 @@
         console.log('📊 题目总数:', convertedQuestions.length);
         console.log('🔍 项目ID:', project.id);
         console.log('🔍 是否为跳转型:', project.isJumpType);
+        console.log('🚀 代码版本: 2025-01-17 修复版本');
         
         // 一致性校验：MBTI 必须 93题且每题2选项(A/B)
         if (project && project.id === 'mbti') {
