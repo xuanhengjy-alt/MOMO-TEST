@@ -402,6 +402,7 @@ async function calculateEqTestResult(answers, projectInternalId) {
     if (resultTypes.rows.length === 0) {
       return {
         summary: 'High Emotional Intelligence',
+        description_en: 'High Emotional Intelligence',
         analysis: 'You have good emotional intelligence skills.',
         type: 'high_eq'
       };
@@ -435,6 +436,7 @@ async function calculateEqTestResult(answers, projectInternalId) {
     console.error('❌ 计算EQ测试结果失败:', error);
     return {
       summary: 'High Emotional Intelligence',
+      description_en: 'High Emotional Intelligence',
       analysis: 'You have good emotional intelligence skills.',
       type: 'high_eq'
     };
@@ -484,6 +486,7 @@ async function calculateMbtiResult(answers, projectInternalId) {
     
     return {
       summary: `${mbtiType} Personality Type`,
+      description_en: `${mbtiType} Personality Type`,
       analysis: `You are an ${mbtiType} personality type.`,
       type: mbtiType
     };
@@ -492,6 +495,7 @@ async function calculateMbtiResult(answers, projectInternalId) {
     console.error('❌ 计算MBTI结果失败:', error);
     return {
       summary: 'ENFP - The Campaigner',
+      description_en: 'ENFP - The Campaigner',
       analysis: 'You are an ENFP personality type, known as The Campaigner.',
       type: 'ENFP'
     };
@@ -536,6 +540,7 @@ async function calculateEnneagramResult(answers, projectInternalId) {
     
     return {
       summary: `Type ${dominantType}`,
+      description_en: `Type ${dominantType}`,
       analysis: `You are Enneagram Type ${dominantType}.`,
       type: `type_${dominantType}`
     };
@@ -544,6 +549,7 @@ async function calculateEnneagramResult(answers, projectInternalId) {
     console.error('❌ 计算九型人格结果失败:', error);
     return {
       summary: 'Type 7 - The Enthusiast',
+      description_en: 'Type 7 - The Enthusiast',
       analysis: 'You are Enneagram Type 7, known as The Enthusiast.',
       type: 'type_7'
     };
@@ -573,6 +579,7 @@ async function calculateDefaultResult(answers, projectInternalId) {
     
     return {
       summary: 'Test Completed',
+      description_en: 'Test Completed',
       analysis: 'You have completed the test successfully.',
       type: 'default'
     };
@@ -581,6 +588,7 @@ async function calculateDefaultResult(answers, projectInternalId) {
     console.error('❌ 计算默认结果失败:', error);
     return {
       summary: 'Test Completed',
+      description_en: 'Test Completed',
       analysis: 'You have completed the test successfully.',
       type: 'default'
     };
