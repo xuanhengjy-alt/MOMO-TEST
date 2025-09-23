@@ -1035,6 +1035,17 @@
           try { sv = JSON.parse(sv); } catch(_) { sv = {}; }
         }
         const rawNext = (opt.next != null ? opt.next : (sv && sv.next != null ? sv.next : null));
+        
+        // 定义 numFrom 函数（局部作用域）
+        const numFrom = (v) => {
+          if (v === null || v === undefined) return null;
+          if (typeof v === 'number' && Number.isFinite(v)) return v;
+          const s = String(v).trim();
+          if (!s) return null;
+          const m = s.match(/(-?\d+)/);
+          return m ? parseInt(m[1], 10) : null;
+        };
+        
         const next = numFrom(rawNext);
         const resultCode = (opt.resultCode != null ? opt.resultCode : (sv && sv.resultCode != null ? sv.resultCode : null));
         
