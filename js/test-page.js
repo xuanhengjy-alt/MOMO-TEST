@@ -351,7 +351,7 @@
       { re: /^(Their\s*best)\b/i, h: '## Their Best' },
       { re: /^(Strengths)\b/i, h: '## Strengths' },
       { re: /^(Potential\s*(areas|flaws).*)\b/i, h: '## Potential Areas' },
-      { re: /^(Suitable\s*(occupations|jobs)?)\b/i, h: '## Suitable Occupations' },
+      { re: /^(Suitable\s+(occupations|jobs|careers|fields|work|roles|positions|professions|industries))\s*$/i, h: '## Suitable Occupations', excludePattern: /\[.*\]/ },
       { re: /^(Contribution)\b/i, h: '## Contribution' },
       { re: /^(Preferred\s*(work|environment))\b/i, h: '## Preferred Work Environment' },
       { re: /^(Development\s*(suggestions?|advice))\b/i, h: '## Development Suggestions' },
@@ -394,6 +394,10 @@
         const matches = r.re.test(line);
         // 如果有maxLength限制，检查长度
         if (matches && r.maxLength && line.length > r.maxLength) {
+          return false;
+        }
+        // 如果有排除模式，检查是否匹配
+        if (matches && r.excludePattern && r.excludePattern.test(line)) {
           return false;
         }
         return matches;
