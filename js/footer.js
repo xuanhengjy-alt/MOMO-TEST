@@ -1,7 +1,7 @@
 // Footer Component
 class Footer {
   constructor() {
-    this.websiteUrl = 'https://momotest.aithink.app';
+    this.websiteUrl = 'https://momo-test.com/';
     this.texts = {
       'zh-CN': {
         description: '专业的心理测试平台，提供MBTI、DISC、九型人格等多种科学心理测试，帮助您更好地了解自己。',
