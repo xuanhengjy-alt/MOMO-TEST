@@ -302,19 +302,24 @@
   function processAnalysisMarkdown(content) {
     if (!content) return '';
     
-    // 处理双星号格式：**text** -> <strong>text</strong>
+    // 预处理双星号格式：**text** -> <strong>text</strong>（在Markdown解析之前处理）
     let processed = content.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>');
     
-    // 确保双星号内容不会被误识别为列表项
-    processed = processed.replace(/<strong class="font-semibold">([^<]+)<\/strong>/g, function(match, text) {
-      // 如果双星号内容后面有冒号，确保它不会被当作列表项处理
-      if (text.includes(':')) {
-        return `<strong class="font-semibold">${text}</strong>`;
-      }
-      return match;
-    });
-    
     return processed;
+  }
+
+  // 后处理Markdown解析结果：修复可能的格式问题
+  function postProcessMarkdown(htmlContent) {
+    if (!htmlContent) return '';
+    
+    // 修复可能被错误解析的双星号内容
+    // 将 <em>text</em>* 修复为 <strong>text</strong>
+    htmlContent = htmlContent.replace(/<em>(.*?)<\/em>\*/g, '<strong class="font-semibold">$1</strong>');
+    
+    // 将单独的 <em>text:</em> 修复为 <strong>text:</strong>
+    htmlContent = htmlContent.replace(/<em>(.*?:)<\/em>/g, '<strong class="font-semibold">$1</strong>');
+    
+    return htmlContent;
   }
 
   // 将原始 MBTI 文本粗加工为 Markdown：按常见关键词插入多级标题与列表符号
@@ -1362,7 +1367,9 @@
                 if (window.marked && window.DOMPurify) {
             const enhanced = toMarkdownWithHeadings(normalizeStrong(rawAnalysis || ''));
                   const mdHtml = window.marked.parse(enhanced);
-                  resultAnalysis.innerHTML = window.DOMPurify.sanitize(mdHtml);
+                  const sanitizedHtml = window.DOMPurify.sanitize(mdHtml);
+                  // 后处理修复可能的格式问题
+                  resultAnalysis.innerHTML = postProcessMarkdown(sanitizedHtml);
                 } else {
             // 回退到格式化函数
             resultAnalysis.innerHTML = formatMbtiAnalysis(rawAnalysis, finalResult.description_en || finalResult.summary);
@@ -1378,7 +1385,9 @@
           if (window.marked && window.DOMPurify) {
             const enhanced = toMarkdownWithHeadings(normalizeStrong(rawAnalysis || ''));
             const mdHtml = window.marked.parse(enhanced);
-            resultAnalysis.innerHTML = window.DOMPurify.sanitize(mdHtml);
+            const sanitizedHtml = window.DOMPurify.sanitize(mdHtml);
+            // 后处理修复可能的格式问题
+            resultAnalysis.innerHTML = postProcessMarkdown(sanitizedHtml);
           } else {
             resultAnalysis.innerHTML = formatMbtiAnalysis(rawAnalysis, finalResult.description_en || finalResult.summary);
           }
@@ -1393,7 +1402,9 @@
           if (window.marked && window.DOMPurify) {
             const enhanced = toMarkdownWithHeadings(normalizeStrong(rawAnalysis || ''));
             const mdHtml = window.marked.parse(enhanced);
-            resultAnalysis.innerHTML = window.DOMPurify.sanitize(mdHtml);
+            const sanitizedHtml = window.DOMPurify.sanitize(mdHtml);
+            // 后处理修复可能的格式问题
+            resultAnalysis.innerHTML = postProcessMarkdown(sanitizedHtml);
           } else {
             // 使用新的处理函数确保双星号格式正确显示
             const processedAnalysis = processAnalysisMarkdown(rawAnalysis || '');
