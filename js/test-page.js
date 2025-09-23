@@ -359,9 +359,8 @@
       // DISC 相关标题
       { re: /^(Dominance|Influence|Steadiness|Compliance)\b/i, h: '## $1' },
       
-      // 九型人格相关标题
-      { re: /^(The\s+(Perfectionist|Helper|Achiever|Individualist|Investigator|Loyalist|Enthusiast|Challenger|Peacemaker).*)$/i, h: '## $1' },
-      { re: /^(\*\*)?\[(Desire\s*Trait|Basic\s*Thought|Main\s*Characteristics|Main\s*Traits|Suitable\s*Careers)\](\*\*)?:?$/i, h: '### $2' },
+      // 九型人格相关标题 - 只匹配简短的标题行，不匹配长段落
+      { re: /^(The\s+(Perfectionist|Helper|Achiever|Individualist|Investigator|Loyalist|Enthusiast|Challenger|Peacemaker)(?:\s*,\s*The\s+\w+)?(?:\s*,\s*The\s+\w+)?)$/i, h: '## $1', maxLength: 50 },
       
       // 社交焦虑和抑郁相关标题
       { re: /^(Low|Mild|Moderate|High|Severe)\s+(Social\s*Anxiety|Anxiety\s*&\s*Depression)$/i, h: '## $1 $2' },
@@ -391,7 +390,14 @@
     for (let rawLine of lines) {
       const line = rawLine.trim();
       if (!line) { out.push(''); continue; }
-      const rule = headingRules.find(r => r.re.test(line));
+      const rule = headingRules.find(r => {
+        const matches = r.re.test(line);
+        // 如果有maxLength限制，检查长度
+        if (matches && r.maxLength && line.length > r.maxLength) {
+          return false;
+        }
+        return matches;
+      });
       if (rule) { 
         if (typeof rule.h === 'function') {
           out.push(rule.h(line.match(rule.re)));
