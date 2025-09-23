@@ -325,6 +325,9 @@
     // 修复所有剩余的 <em> 标签为 <strong>（针对双星号内容）
     htmlContent = htmlContent.replace(/<em>(.*?)<\/em>/g, '<strong class="font-semibold">$1</strong>');
     
+    // 修复可能的正则表达式占位符泄露问题
+    htmlContent = htmlContent.replace(/\$(\d+)/g, '$$$$$1');
+    
     return htmlContent;
   }
 
@@ -358,7 +361,7 @@
       
       // 九型人格相关标题
       { re: /^(The\s+(Perfectionist|Helper|Achiever|Individualist|Investigator|Loyalist|Enthusiast|Challenger|Peacemaker).*)$/i, h: '## $1' },
-      { re: /^(Desire\s*Trait|Basic\s*Thought|Main\s*Characteristics|Main\s*Traits|Suitable\s*Careers)$/i, h: '### $1' },
+      { re: /^(\*\*)?\[(Desire\s*Trait|Basic\s*Thought|Main\s*Characteristics|Main\s*Traits|Suitable\s*Careers)\](\*\*)?:?$/i, h: '### $2' },
       
       // 社交焦虑和抑郁相关标题
       { re: /^(Low|Mild|Moderate|High|Severe)\s+(Social\s*Anxiety|Anxiety\s*&\s*Depression)$/i, h: '## $1 $2' },
@@ -393,7 +396,15 @@
         if (typeof rule.h === 'function') {
           out.push(rule.h(line.match(rule.re)));
         } else {
-          out.push(rule.h);
+          const match = line.match(rule.re);
+          let processedHeading = rule.h;
+          if (match) {
+            // 替换占位符 $1, $2, etc.
+            processedHeading = processedHeading.replace(/\$(\d+)/g, (placeholder, index) => {
+              return match[parseInt(index)] || placeholder;
+            });
+          }
+          out.push(processedHeading);
         }
         continue; 
       }
