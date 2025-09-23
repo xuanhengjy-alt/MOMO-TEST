@@ -231,9 +231,8 @@ async function handleSubmitResult(req, res, opts = {}) {
             await query(`
               SELECT 
                 COALESCE(
-                  q.question_number,
                   q.order_index,
-                  ROW_NUMBER() OVER (ORDER BY COALESCE(q.order_index, q.id))
+                  ROW_NUMBER() OVER (ORDER BY q.id)
                 ) AS qn,
                 o.option_number,
                 o.score_value
@@ -333,7 +332,7 @@ async function calculateTestResult(testType, answers, projectInternalId, project
     const dbDrivenTests = ['social_anxiety_test', 'anxiety_depression_test'];
     
     // 定义已有专门计算逻辑的测试类型
-    const specializedTests = ['eq_test', 'mbti', 'enneagram'];
+    const specializedTests = ['eq_test', 'mbti', 'enneagram', 'violence_index', 'personality_charm_1min', 'loneliness_1min'];
     
     const keyForService = (testType || '').toLowerCase() || (projectIdKey || '').toLowerCase();
     
@@ -345,7 +344,23 @@ async function calculateTestResult(testType, answers, projectInternalId, project
     
     // 2. 回退到本地专门实现（适用于有特殊逻辑的测试）
     if (specializedTests.includes(keyForService)) {
-      console.log(`🔧 使用本地专门实现: ${keyForService}`);
+      console.log(`🔧 使用专门实现: ${keyForService}`);
+      
+      // 尝试通过TestLogicService处理
+      try {
+        const TestLogic = require('../backend/services/testLogic');
+        if (TestLogic && typeof TestLogic.calculateResult === 'function') {
+          const result = await TestLogic.calculateResult(keyForService, answers);
+          if (result && result.summary) {
+            console.log(`✅ TestLogicService处理成功: ${keyForService}`);
+            return result;
+          }
+        }
+      } catch (serviceError) {
+        console.log(`⚠️ TestLogicService处理失败: ${keyForService}, 错误: ${serviceError.message}`);
+      }
+      
+      // 如果TestLogicService失败，回退到本地实现
       switch (keyForService) {
         case 'eq_test':
           return await calculateEqTestResult(answers, projectInternalId);
@@ -353,6 +368,10 @@ async function calculateTestResult(testType, answers, projectInternalId, project
           return await calculateMbtiResult(answers, projectInternalId);
         case 'enneagram':
           return await calculateEnneagramResult(answers, projectInternalId);
+        default:
+          // 其他专门测试如果TestLogicService也失败了，使用默认逻辑
+          console.log(`⚠️ 专门测试 ${keyForService} 的TestLogicService失败，使用默认逻辑`);
+          break;
       }
     }
 
@@ -577,7 +596,7 @@ async function calculateDbDrivenResult(answers, projectInternalId, testType) {
     const qres = await query(`
       SELECT 
         COALESCE(
-          q.question_number,
+          q.order_index,
           ROW_NUMBER() OVER (ORDER BY q.id)
         ) AS qn,
         o.option_number,
@@ -709,7 +728,7 @@ async function calculateSocialAnxietyDirect(answers, projectInternalId) {
     const qres = await query(`
       SELECT 
         COALESCE(
-          q.question_number,
+          q.order_index,
           ROW_NUMBER() OVER (ORDER BY q.id)
         ) AS qn,
         o.option_number,
