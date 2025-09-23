@@ -319,13 +319,24 @@
     // 将单独的 <em>text:</em> 修复为 <strong>text:</strong>
     htmlContent = htmlContent.replace(/<em>(.*?:)<\/em>/g, '<strong class="font-semibold">$1</strong>');
     
+    // 修复带冒号的双星号内容：<em>text:</em>* -> <strong>text:</strong>
+    htmlContent = htmlContent.replace(/<em>(.*?:)<\/em>\*/g, '<strong class="font-semibold">$1</strong>');
+    
+    // 修复所有剩余的 <em> 标签为 <strong>（针对双星号内容）
+    htmlContent = htmlContent.replace(/<em>(.*?)<\/em>/g, '<strong class="font-semibold">$1</strong>');
+    
     return htmlContent;
   }
 
   // 将原始 MBTI 文本粗加工为 Markdown：按常见关键词插入多级标题与列表符号
   function toMarkdownWithHeadings(raw) {
     if (!raw) return '';
-    const lines = String(raw).split('\n');
+    
+    // 预处理：将双星号内容转换为HTML，避免Markdown解析器错误处理
+    let processed = String(raw);
+    processed = processed.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>');
+    
+    const lines = processed.split('\n');
     const out = [];
     const headingRules = [
       // 通用标题规则 - 处理已有的Markdown标题
@@ -819,7 +830,7 @@
             const next = numFrom(rawNext);
             const resultCode = (opt.resultCode != null ? opt.resultCode : (sv && sv.resultCode != null ? sv.resultCode : null));
             return {
-              text: opt.text || opt.option_text || '',
+            text: opt.text || opt.option_text || '',
               value: (typeof opt.value === 'number' ? opt.value : (typeof sv === 'object' && sv && typeof sv.score === 'number' ? sv.score : (typeof sv === 'number' ? sv : 0))),
               next: next,
               resultCode: resultCode,
