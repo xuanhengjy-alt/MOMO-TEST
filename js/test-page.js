@@ -1028,13 +1028,25 @@
       btn.textContent = text;
       btn.addEventListener('click', async () => {
         console.log('🔍 选项点击事件:', { opt, idx, text });
+        
+        // 解析选项的跳转信息
+        let sv = opt.score_value || opt.value || {};
+        if (typeof sv === 'string') {
+          try { sv = JSON.parse(sv); } catch(_) { sv = {}; }
+        }
+        const rawNext = (opt.next != null ? opt.next : (sv && sv.next != null ? sv.next : null));
+        const next = numFrom(rawNext);
+        const resultCode = (opt.resultCode != null ? opt.resultCode : (sv && sv.resultCode != null ? sv.resultCode : null));
+        
+        console.log('🔍 解析后的跳转信息:', { next, resultCode, sv, rawNext });
+        
         // 跳转型支持：若存在 next/resultCode 则走分支
-        if (opt && (opt.next != null || opt.resultCode)) {
-          console.log('🚀 检测到跳转逻辑:', { next: opt.next, resultCode: opt.resultCode, text: opt.text });
+        if (next != null || resultCode) {
+          console.log('🚀 检测到跳转逻辑:', { next, resultCode, text: opt.text });
           // 保存选择（保留为索引，兼容现有评分）
           var ans = (opt && typeof opt.n === 'number') ? (opt.n - 1) : idx;
           answers.push(ans);
-          if (opt.resultCode) {
+          if (resultCode) {
             // 直接出结果：调用后端，前端只显示后端返回的 description_en/analysis
             try {
               // 跳转型：命中结果码，开始计算（防重复提交）
@@ -1073,9 +1085,9 @@
               // 后端失败则回退为本地渲染（极端容错）
             }
           }
-          if (opt.next != null) {
+          if (next != null) {
             // next 兜底解析，防止运行时被覆盖或为字符串
-            const nextParsed = parseIntLoose(opt.next);
+            const nextParsed = parseIntLoose(next);
             const target = Number.isFinite(nextParsed) ? (nextParsed - 1) : (qIndex + 1);
             console.log('🔄 执行跳转:', { from: qIndex + 1, to: target + 1, nextParsed, target });
             qIndex = Math.max(0, Math.min(target, qlist.length));
