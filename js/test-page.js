@@ -1026,6 +1026,7 @@
       btn.className = 'w-full text-left px-4 py-3 rounded border hover:bg-gray-50';
       btn.textContent = text;
       btn.addEventListener('click', async () => {
+        console.log('🔍 选项点击事件:', { opt, idx, text });
         // 跳转型支持：若存在 next/resultCode 则走分支
         if (opt && (opt.next != null || opt.resultCode)) {
           console.log('🚀 检测到跳转逻辑:', { next: opt.next, resultCode: opt.resultCode, text: opt.text });
