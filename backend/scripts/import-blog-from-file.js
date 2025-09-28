@@ -40,6 +40,9 @@ function parseFileContent(raw) {
   const lines = raw.split(/\r?\n/);
   const data = { title: '', cover_image_url: '', summary: '', content_md: '', test_project_id: '' };
   let mode = 'meta';
+  let summaryLines = [];
+  let inSummary = false;
+  
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     if (mode === 'meta') {
@@ -58,18 +61,43 @@ function parseFileContent(raw) {
         continue;
       }
       if (/^summary\s*:/i.test(line)) {
-        data.summary = line.replace(/^summary\s*:/i, '').trim();
+        // 检查这一行是否只有 summary: 还是有内容
+        const summaryContent = line.replace(/^summary\s*:/i, '').trim();
+        if (summaryContent) {
+          summaryLines.push(summaryContent);
+        }
+        inSummary = true;
         continue;
       }
       if (/^content_md\s*:/i.test(line)) {
         mode = 'content';
-        // remaining lines are content, skip current label line
+        // 结束summary收集
+        if (inSummary) {
+          data.summary = summaryLines.join(' ');
+        }
+        inSummary = false;
         continue;
+      }
+      
+      // 如果在summary模式中，收集summary内容
+      if (inSummary && line.trim()) {
+        summaryLines.push(line.trim());
+      } else if (inSummary && !line.trim()) {
+        // 空行也加入，但用空格代替换行
+        if (summaryLines.length > 0) {
+          summaryLines.push(' ');
+        }
       }
     } else {
       data.content_md += (data.content_md ? '\n' : '') + line;
     }
   }
+  
+  // 如果还在summary模式中，结束收集
+  if (inSummary && summaryLines.length > 0) {
+    data.summary = summaryLines.join(' ');
+  }
+  
   return data;
 }
 
